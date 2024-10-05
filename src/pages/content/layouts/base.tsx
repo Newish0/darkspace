@@ -86,28 +86,36 @@ function NavContent() {
 const Layout: Component<RouteSectionProps<unknown>> = (props) => {
     return (
         <div class="flex h-screen">
-            {/* Mobile view */}
-            <Sheet>
-                <SheetTrigger
-                    as={Button}
-                    variant="outline"
-                    size="icon"
-                    class="lg:hidden fixed top-4 left-4 z-40"
-                >
-                    <Menu class="h-4 w-4" />
-                </SheetTrigger>
-                <SheetContent position="left" class="w-[240px] sm:w-[300px] bg-primary-foreground" >
-                    <NavContent />
-                </SheetContent>
-            </Sheet>
-
             {/* Desktop view */}
-            <aside class="hidden lg:flex flex-col w-64 border-r">
+            <aside class="flex-shrink-0 hidden lg:flex flex-col w-64 border-r">
                 <NavContent />
             </aside>
 
-            {/* Main content area */}
-            <main class="flex-1 p-4">{props.children}</main>
+            <div class="flex-1 flex flex-col">
+                {/* Top bar */}
+                <div class="flex items-center justify-between p-x pt-4">
+                    {/* Mobile view */}
+                    <Sheet>
+                        <SheetTrigger
+                            as={Button}
+                            variant="outline"
+                            size="icon"
+                            class="lg:hidden sticky top-4 left-4 z-40"
+                        >
+                            <Menu class="h-4 w-4" />
+                        </SheetTrigger>
+                        <SheetContent
+                            position="left"
+                            class="w-[240px] sm:w-[300px] bg-primary-foreground"
+                        >
+                            <NavContent />
+                        </SheetContent>
+                    </Sheet>
+                </div>
+
+                {/* Main content area */}
+                <main class="flex-1 p-4 h-full overflow-auto">{props.children}</main>
+            </div>
         </div>
     );
 };

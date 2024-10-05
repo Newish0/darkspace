@@ -1,13 +1,12 @@
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { CalendarIcon, BookOpenIcon } from "lucide-solid";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { BookOpenIcon, CalendarIcon } from "lucide-solid";
 
-import { template } from "solid-js/web";
+import { getImgFromImgRefLink, IClass } from "@/services/BS/index";
+import { createResource, Show } from "solid-js";
 import UnsafeHtml from "./unsafe-html";
-import { getImgFromImgRefLink, IClass } from "@/services/BS";
-import { createResource } from "solid-js";
 
 export default function CourseCard({ course }: { course: IClass }) {
     const [bannerImg] = createResource(() =>
@@ -23,8 +22,20 @@ export default function CourseCard({ course }: { course: IClass }) {
         });
     };
 
+    const actuallyActive = () => {
+        if (!course.startDate || !course.endDate) return course.isActive;
+        const now = new Date();
+        const start = new Date(course.startDate);
+        const end = new Date(course.endDate);
+        return now >= start && now <= end;
+    };
+
+    const disabled = () => (course.id ? false : true);
+
+    const darkSpaceCourseLink = () => `/courses/${course.id}`;
+
     return (
-        <Card class="overflow-hidden">
+        <Card class={cn("overflow-hidden", disabled() ? "cursor-not-allowed opacity-70" : "")}>
             <div class="relative">
                 <div
                     class="h-32 bg-cover bg-center"
@@ -45,8 +56,8 @@ export default function CourseCard({ course }: { course: IClass }) {
                     <div>
                         <h3 class="text-2xl font-bold">{course.name}</h3>
                     </div>
-                    <Badge variant={course.isActive ? "default" : "secondary"}>
-                        {course.isActive ? "Active" : "Inactive"}
+                    <Badge variant={actuallyActive() ? "default" : "secondary"}>
+                        {actuallyActive() ? "Active" : "Inactive"}
                     </Badge>
                 </div>
 
@@ -70,9 +81,14 @@ export default function CourseCard({ course }: { course: IClass }) {
                 </div>
             </CardContent>
             <CardFooter>
-                <a href={course.link} class={cn(buttonVariants({ variant: "link" }), "w-full")}>
-                    Go to Course
-                </a>
+                <Show when={!disabled()}>
+                    <a
+                        href={darkSpaceCourseLink()}
+                        class={cn(buttonVariants({ variant: "link" }), "w-full")}
+                    >
+                        Go to Course
+                    </a>
+                </Show>
             </CardFooter>
         </Card>
     );
