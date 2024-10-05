@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@corvu/resizable':
+    specifier: ^0.2.3
+    version: 0.2.3(solid-js@1.9.1)
   '@kobalte/core':
     specifier: ^0.13.6
     version: 0.13.6(solid-js@1.9.1)
@@ -380,6 +383,15 @@ packages:
     dev: false
     bundledDependencies:
       - is-unicode-supported
+
+  /@corvu/resizable@0.2.3(solid-js@1.9.1):
+    resolution: {integrity: sha512-UwpObxqKlx1mc3G496Daz9NjK25Gx1V5fB8zIGazbq5tJs7aU8RjPW4png5OoNpMyxV7GQWjQtVc59zaAEVAJg==}
+    peerDependencies:
+      solid-js: ^1.8
+    dependencies:
+      '@corvu/utils': 0.4.2(solid-js@1.9.1)
+      solid-js: 1.9.1
+    dev: false
 
   /@corvu/utils@0.4.2(solid-js@1.9.1):
     resolution: {integrity: sha512-Ox2kYyxy7NoXdKWdHeDEjZxClwzO4SKM8plAaVwmAJPxHMqA0rLOoAsa+hBDwRLpctf+ZRnAd/ykguuJidnaTA==}

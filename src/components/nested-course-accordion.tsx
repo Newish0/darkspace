@@ -51,7 +51,6 @@ const ModuleAccordion = (props: { modules: IModule[] }) => {
 export default function NestedCourseAccordion(props: { modules: IModule[] }) {
     return (
         <div class="w-full">
-            <h2 class="text-2xl font-bold mb-4">Module List</h2>
             <ModuleAccordion modules={props.modules} />
         </div>
     );
