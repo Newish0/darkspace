@@ -6,7 +6,7 @@ import { Button } from "./button";
 interface RouteSectionProps {
     title: string;
     allowBack?: boolean;
-    children: JSX.Element;
+    children?: JSX.Element;
 }
 
 const PageWrapper: Component<RouteSectionProps> = (props) => {

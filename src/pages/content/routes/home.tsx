@@ -1,6 +1,6 @@
 import CourseCard from "@/components/course-card";
 import PageWrapper from "@/components/ui/page-wrapper";
-import { getEnrollments } from "@/services/BS/index";
+import { getEnrollments } from "@/services/BS/api";
 import { createQuery } from "@tanstack/solid-query";
 import { For, Match, Switch } from "solid-js";
 

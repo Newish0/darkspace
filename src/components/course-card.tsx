@@ -4,9 +4,10 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { cn } from "@/lib/utils";
 import { BookOpenIcon, CalendarIcon } from "lucide-solid";
 
-import { getImgFromImgRefLink, IClass } from "@/services/BS/index";
+import { getImgFromImgRefLink, IClass } from "@/services/BS/api";
 import { createResource, Show } from "solid-js";
 import UnsafeHtml from "./unsafe-html";
+import { A } from "@solidjs/router";
 
 export default function CourseCard({ course }: { course: IClass }) {
     const [bannerImg] = createResource(() =>
@@ -82,12 +83,12 @@ export default function CourseCard({ course }: { course: IClass }) {
             </CardContent>
             <CardFooter>
                 <Show when={!disabled()}>
-                    <a
+                    <A
                         href={darkSpaceCourseLink()}
                         class={cn(buttonVariants({ variant: "link" }), "w-full")}
                     >
                         Go to Course
-                    </a>
+                    </A>
                 </Show>
             </CardFooter>
         </Card>
