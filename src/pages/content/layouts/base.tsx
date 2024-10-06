@@ -114,7 +114,7 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
                 </div>
 
                 {/* Main content area */}
-                <main class="flex-1 p-4 h-full overflow-auto">{props.children}</main>
+                <main class="flex-1 h-full overflow-auto">{props.children}</main>
             </div>
         </div>
     );

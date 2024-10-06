@@ -18,7 +18,7 @@ const PageWrapper: Component<RouteSectionProps> = (props) => {
     };
 
     return (
-        <div class="relative flex flex-col h-full">
+        <div class="relative flex flex-col h-full p-2">
             <div class="flex items-center gap-4 flex-0">
                 <Show when={props.allowBack}>
                     <Button onClick={goBack} variant="link" size="icon">
@@ -29,7 +29,7 @@ const PageWrapper: Component<RouteSectionProps> = (props) => {
                 <h1 class="text-2xl font-semibold">{props.title}</h1>
             </div>
 
-            <Separator class="my-4" />
+            <Separator class="my-2" />
 
             <div class={cn("flex-1", props.hideOverflow ? "overflow-hidden" : "")}>
                 {props.children}

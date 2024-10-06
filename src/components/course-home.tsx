@@ -36,12 +36,12 @@ export default function CourseHome({
 
     return (
         <PageWrapper title="Course" allowBack={true} hideOverflow={true}>
-            <Resizable class="h-full rounded-lg shadow-sm border my-2">
+            <Resizable class="h-full rounded-lg shadow-sm border">
                 <ResizablePanel initialSize={0.2} class="overflow-hidden">
-                    <div class="h-full">
+                    <div class="flex flex-col h-full">
                         <h2 class="text-2xl font-bold border-b px-4 py-2">Module List</h2>
 
-                        <div class="h-full overflow-auto p-4">
+                        <div class="h-full flex-shrink-1 overflow-auto p-4">
                             <div class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}>
                                 <A href={`/courses/${courseId}/`}>Home</A>
                             </div>
@@ -67,7 +67,7 @@ export default function CourseHome({
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel initialSize={0.65} class="overflow-hidden">
-                    <div class="h-full">
+                    <div class="flex flex-col h-full">
                         <Show
                             when={children !== undefined}
                             fallback={
@@ -106,7 +106,7 @@ function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }
         <>
             <h2 class="text-2xl font-bold border-b px-4 py-2">Announcements</h2>
 
-            <div class="h-full overflow-auto space-y-4 p-4">
+            <div class="h-full flex-shrink-1 overflow-auto p-4 space-y-4">
                 <For each={announcements}>
                     {(a) => (
                         <div class="rounded-lg border p-2">
@@ -118,7 +118,7 @@ function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }
                                 </div>
                             </div>
                             <Separator class="my-2" />
-                            <UnsafeHtml unsafeHtml={a.html} class="md" />
+                            <UnsafeHtml unsafeHtml={a.html} class="md overflow-auto" />
                         </div>
                     )}
                 </For>
