@@ -1,13 +1,13 @@
-import { Component, createSignal } from "solid-js";
+import { Component, ComponentProps } from "solid-js";
 import DOMPurify from "dompurify";
 
-interface UnsafeHtmlProps {
+interface UnsafeHtmlProps extends ComponentProps<"div"> {
     unsafeHtml: string;
 }
 
-const UnsafeHtml: Component<UnsafeHtmlProps> = ({ unsafeHtml }) => {
+const UnsafeHtml: Component<UnsafeHtmlProps> = ({ unsafeHtml, ...props }) => {
     const sanitizedHtml = () => DOMPurify.sanitize(unsafeHtml);
-    return <div innerHTML={sanitizedHtml()}></div>;
+    return <div {...props} innerHTML={sanitizedHtml()}></div>;
 };
 
 export default UnsafeHtml;

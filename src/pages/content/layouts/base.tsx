@@ -106,7 +106,7 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
                         </SheetTrigger>
                         <SheetContent
                             position="left"
-                            class="w-[240px] sm:w-[300px] bg-primary-foreground"
+                            class="w-[240px] sm:w-[300px] bg-background text-foreground"
                         >
                             <NavContent />
                         </SheetContent>

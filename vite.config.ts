@@ -24,6 +24,7 @@ export default defineConfig({
         solidPlugin(),
         webExtension({
             manifest: generateManifest,
+            // watchFilePaths: ["src/pages"],
         }),
     ],
     resolve: {

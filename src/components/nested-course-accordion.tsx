@@ -30,7 +30,7 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
     const renderModule = (module: IModule) => (
         <Switch>
             <Match when={module.children && module.children.length}>
-                <AccordionItem value={module.moduleId}>
+                <AccordionItem value={module.moduleId} class="border-none">
                     <AccordionTrigger onClick={() => toggleItem(module.moduleId)}>
                         {module.name}
                     </AccordionTrigger>
@@ -40,7 +40,7 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
                 </AccordionItem>
             </Match>
             <Match when={!module.children || !module.children.length}>
-                <div class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline">
+                <div class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}>
                     <A href={`/courses/${props.courseId}/m/${module.moduleId}`}>{module.name}</A>
                 </div>
             </Match>
@@ -53,6 +53,9 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
         </Accordion>
     );
 };
+
+export const NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES =
+    "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline";
 
 export default function NestedCourseAccordion(props: { modules: IModule[]; courseId: string }) {
     return (
