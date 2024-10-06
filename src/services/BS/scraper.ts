@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+
 const COURSE_MODULE_URL = "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/Home";
 
 // Course Modules
@@ -16,12 +18,17 @@ export interface IModule {
     children?: IModule[];
 }
 
+function htmlToDocument(unsafeHtml: string) {
+    const parser = new DOMParser();
+    const sanitizedHtml = DOMPurify.sanitize(unsafeHtml);
+    return parser.parseFromString(sanitizedHtml, "text/html");
+}
+
 export async function getCourseModules(courseId: string): Promise<IModule[]> {
     const html = await fetch(COURSE_MODULE_URL.replace("{{COURSE_ID}}", courseId)).then((res) =>
         res.text()
     );
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
+    const doc = htmlToDocument(html);
     const moduleTree = doc.querySelector(COURSE_MODULE_MODULE_TREE_SELECTOR);
 
     // Add Overview, Bookmarks, and Course Schedule modules
@@ -78,13 +85,10 @@ export interface IAnnouncement {
  *
  */
 export async function getCourseAnnouncements(courseId: string): Promise<IAnnouncement[]> {
-    const parser = new DOMParser();
     const htmlString = await fetch(COURSE_ANNOUNCEMENTS_URL.replace("{{CLASS_ID}}", courseId)).then(
         (res) => res.text()
     );
-    const doc = parser.parseFromString(htmlString, "text/html");
-
-    console.log(htmlString);
+    const doc = htmlToDocument(htmlString);
 
     /**
      * The following code assumes that the HTML structure of the page is as follows:
@@ -117,4 +121,85 @@ export async function getCourseAnnouncements(courseId: string): Promise<IAnnounc
 
         return announcement;
     });
+}
+
+const D2L_PARTIAL_WHILE1 = "while(1);";
+
+function parseD2LPartial(d2lPartial: string) {
+    const while1Index = d2lPartial.indexOf(D2L_PARTIAL_WHILE1);
+
+    if (while1Index !== 0) {
+        throw new Error("Failed to parse Lit partial: while(1) not found");
+    }
+
+    const json = d2lPartial.substring(D2L_PARTIAL_WHILE1.length);
+
+    return JSON.parse(json);
+}
+
+export interface IModuleContent {
+    id: string;
+    name?: string;
+    type?: string;
+    url: string;
+}
+
+export interface IModuleDetails {
+    id: string;
+    name?: string;
+    content: IModuleContent[];
+}
+
+const MODULE_CONTENT_URL =
+    "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/ModuleDetailsPartial?mId={{MODULE_ID}}&_d2l_prc&writeHistoryEntry=1";
+// const MODULE_CONTENT_URL =
+//     "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc";
+
+export async function getModuleContent(
+    courseId: string,
+    moduleId: string
+): Promise<IModuleDetails> {
+    const d2lPartial = await fetch(
+        MODULE_CONTENT_URL.replace("{{COURSE_ID}}", courseId).replace("{{MODULE_ID}}", moduleId)
+    ).then((res) => res.text());
+
+    const d2lPartialParsed = parseD2LPartial(d2lPartial);
+
+    if (!d2lPartialParsed?.Payload?.Html) {
+        throw new Error("Failed to extract module content: Payload.Html not found");
+    }
+
+    const doc = htmlToDocument(d2lPartialParsed.Payload.Html);
+
+    console.log(doc.body.innerHTML);
+
+    const moduleName = doc.querySelector("h1.d2l-page-title")?.textContent;
+
+    // Find all list items that contain the relevant information
+    const listItems = doc.querySelectorAll("li.d2l-datalist-item");
+
+    // Extract data from each list item
+    const content = Array.from(listItems)
+        .map((item) => {
+            const linkElement: HTMLAnchorElement | null = item.querySelector("[id^=d2l_content_]");
+            const typeElement = item.querySelector(".d2l-textblock.d2l-body-small");
+            const id = linkElement?.id.replace("d2l_content_", "").split("_").at(1);
+
+            if (linkElement && typeElement && id) {
+                return {
+                    name: linkElement.textContent || undefined,
+                    type: typeElement.textContent || undefined,
+                    url: linkElement.href,
+                    id: id,
+                };
+            }
+            return null;
+        })
+        .filter((item) => item !== null);
+
+    return {
+        id: moduleId,
+        name: moduleName || undefined,
+        content,
+    };
 }
