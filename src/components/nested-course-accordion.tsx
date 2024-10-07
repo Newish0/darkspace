@@ -7,7 +7,7 @@ import {
 import { createPersistentStore } from "@/lib/persistentStore";
 import { IModule } from "@/services/BS/scraper";
 import { A } from "@solidjs/router";
-import { For, Match, Switch, createSignal } from "solid-js";
+import { For, Match, Show, Switch, createSignal } from "solid-js";
 
 const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
     // const [openItems, setOpenItems] = createSignal<string[]>([]);
@@ -30,19 +30,33 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
     const renderModule = (module: IModule) => (
         <Switch>
             <Match when={module.children && module.children.length}>
-                <AccordionItem value={module.moduleId} class="border-none">
+                <AccordionItem value={module.moduleId} class="border-none px-2">
                     <AccordionTrigger onClick={() => toggleItem(module.moduleId)}>
                         {module.name}
                     </AccordionTrigger>
                     <AccordionContent class="pl-4">
+                        <Show when={module.description?.html || module.description?.text}>
+                            <A
+                                href={`/courses/${props.courseId}/m/${module.moduleId}?description=1`}
+                                class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}
+                                activeClass="bg-muted"
+                            >
+                                Module Description
+                            </A>
+                        </Show>
+
                         <ModuleAccordion modules={module.children!} courseId={props.courseId} />
                     </AccordionContent>
                 </AccordionItem>
             </Match>
             <Match when={!module.children || !module.children.length}>
-                <div class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}>
-                    <A href={`/courses/${props.courseId}/m/${module.moduleId}`}>{module.name}</A>
-                </div>
+                <A
+                    href={`/courses/${props.courseId}/m/${module.moduleId}`}
+                    class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}
+                    activeClass="bg-muted"
+                >
+                    {module.name}
+                </A>
             </Match>
         </Switch>
     );
@@ -55,7 +69,7 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
 };
 
 export const NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES =
-    "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline";
+    "flex flex-1 items-center justify-between py-2 px-2 rounded-md font-medium transition-all hover:underline";
 
 export default function NestedCourseAccordion(props: { modules: IModule[]; courseId: string }) {
     return (

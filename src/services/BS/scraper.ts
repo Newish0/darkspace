@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { getUnstableCourseContent, UnstableModule } from "./api";
 
 const COURSE_MODULE_URL = "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/Home";
 
@@ -15,6 +16,10 @@ const MODULE_ITEM_SELECTOR = `[id^="${MODULE_ITEM_ID_PATTERN}"]`;
 export interface IModule {
     name: string;
     moduleId: string;
+    description?: {
+        text: string;
+        html: string;
+    };
     children?: IModule[];
 }
 
@@ -24,45 +29,77 @@ function htmlToDocument(unsafeHtml: string) {
     return parser.parseFromString(sanitizedHtml, "text/html");
 }
 
-export async function getCourseModules(courseId: string): Promise<IModule[]> {
-    const html = await fetch(COURSE_MODULE_URL.replace("{{COURSE_ID}}", courseId)).then((res) =>
-        res.text()
-    );
-    const doc = htmlToDocument(html);
-    const moduleTree = doc.querySelector(COURSE_MODULE_MODULE_TREE_SELECTOR);
+function extractModuleInfo(element: Element): IModule {
+    const idElement = element.querySelector(MODULE_ITEM_SELECTOR);
 
+    const module: IModule = {
+        name: idElement?.querySelector("div")?.textContent || "",
+        moduleId: idElement ? idElement.id.replace(MODULE_ITEM_ID_PATTERN, "") : "",
+    };
+
+    const childrenContainer = element.querySelector("ul");
+    if (childrenContainer) {
+        const childModules = Array.from(childrenContainer.children)
+            .filter((child) => child.tagName === "LI")
+            .map((child) => extractModuleInfo(child));
+
+        if (childModules.length > 0) {
+            module.children = childModules;
+        }
+    }
+
+    return module;
+}
+
+function getAdditionalModules(doc: Document): IModule[] {
     // Add Overview, Bookmarks, and Course Schedule modules
     const additionalModuleTree = doc.querySelector(COURSE_MODULE_PLUGIN_TREE_SELECTOR);
 
-    function extractModuleInfo(element: Element): IModule {
-        const idElement = element.querySelector(MODULE_ITEM_SELECTOR);
+    const additionalModules = Array.from(additionalModuleTree?.children ?? [])
+        .filter((child) => child.tagName === "LI")
+        .map((child) => extractModuleInfo(child));
 
-        const module: IModule = {
-            name: idElement?.querySelector("div")?.textContent || "",
-            moduleId: idElement ? idElement.id.replace(MODULE_ITEM_ID_PATTERN, "") : "",
-        };
+    return additionalModules;
+}
 
-        const childrenContainer = element.querySelector("ul");
-        if (childrenContainer) {
-            const childModules = Array.from(childrenContainer.children)
-                .filter((child) => child.tagName === "LI")
-                .map((child) => extractModuleInfo(child));
-
-            if (childModules.length > 0) {
-                module.children = childModules;
-            }
-        }
-
-        return module;
-    }
+function getRootModules(doc: Document): IModule[] {
+    const moduleTree = doc.querySelector(COURSE_MODULE_MODULE_TREE_SELECTOR);
 
     const rootModules = Array.from(moduleTree?.children ?? [])
         .filter((child) => child.tagName === "LI")
         .map((child) => extractModuleInfo(child));
 
-    const additionalModules = Array.from(additionalModuleTree?.children ?? [])
-        .filter((child) => child.tagName === "LI")
-        .map((child) => extractModuleInfo(child));
+    return rootModules;
+}
+
+export async function getCourseModules(courseId: string, useUnstable = true): Promise<IModule[]> {
+    const html = await fetch(COURSE_MODULE_URL.replace("{{COURSE_ID}}", courseId)).then((res) =>
+        res.text()
+    );
+    const doc = htmlToDocument(html);
+
+    const additionalModules = getAdditionalModules(doc);
+    let rootModules: IModule[] = [];
+
+    if (useUnstable) {
+        const unstableContent = await getUnstableCourseContent(courseId);
+
+        const unstableModuleToIModule = (um: UnstableModule): IModule => {
+            return {
+                name: um.Title,
+                description: {
+                    text: um.Description.Text,
+                    html: um.Description.Html,
+                },
+                moduleId: um.ModuleId.toString(),
+                children: um.Modules.map(unstableModuleToIModule),
+            };
+        };
+
+        rootModules = unstableContent.Modules.map(unstableModuleToIModule);
+    } else {
+        rootModules = getRootModules(doc);
+    }
 
     return [...additionalModules, ...rootModules];
 }
@@ -150,10 +187,10 @@ export interface IModuleDetails {
     content: IModuleContent[];
 }
 
-const MODULE_CONTENT_URL =
-    "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/ModuleDetailsPartial?mId={{MODULE_ID}}&_d2l_prc&writeHistoryEntry=1";
 // const MODULE_CONTENT_URL =
-//     "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc";
+//     "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/ModuleDetailsPartial?mId={{MODULE_ID}}&_d2l_prc&writeHistoryEntry=1";
+const MODULE_CONTENT_URL =
+    "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc";
 
 export async function getModuleContent(
     courseId: string,
@@ -196,6 +233,8 @@ export async function getModuleContent(
             return null;
         })
         .filter((item) => item !== null);
+
+    console.log(content.map((c) => c.type));
 
     return {
         id: moduleId,

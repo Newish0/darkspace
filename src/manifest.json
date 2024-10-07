@@ -31,7 +31,7 @@
       "exclude_matches": [
         "*://*/*foo*"
       ],
-      "run_at": "document_start"
+      "run_at": "document_end"
     }
   ]
 }

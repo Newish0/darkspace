@@ -42,9 +42,12 @@ export default function CourseHome({
                         <h2 class="text-2xl font-bold border-b px-4 py-2">Module List</h2>
 
                         <div class="h-full flex-shrink-1 overflow-auto p-4">
-                            <div class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}>
-                                <A href={`/courses/${courseId}/`}>Home</A>
-                            </div>
+                            <A
+                                class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}
+                                href={`/courses/${courseId}/`}
+                            >
+                                Home
+                            </A>
 
                             <Switch>
                                 <Match when={modulesQuery.isPending}>

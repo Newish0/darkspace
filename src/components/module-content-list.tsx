@@ -15,29 +15,31 @@ const ModuleContentList = (props: { items?: IModuleContent[] }) => {
                 {(item) => (
                     <Card class="flex flex-col">
                         <CardHeader>
-                            <CardTitle>{item.name || "Unnamed Item"}</CardTitle>
+                            <CardTitle class="break-words">{item.name || "Unnamed Item"}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p class="text-sm text-muted-foreground">
                                 Type: {item.type || "Unknown"}
                             </p>
                         </CardContent>
-                        <CardFooter class="flex justify-between mt-auto">
+                        <CardFooter class="flex justify-between mt-auto gap-1">
                             <Button
+                                class="w-full"
                                 variant="outline"
-                                size="sm"
-                                onClick={() => handleDownload(item.url, item.name || "download")}
-                            >
-                                <Download class="w-4 h-4 mr-2" />
-                                Download
-                            </Button>
-                            <Button
-                                variant="ghost"
                                 size="sm"
                                 onClick={() => window.open(item.url, "_blank")}
                             >
                                 <ExternalLink class="w-4 h-4 mr-2" />
                                 Open
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownload(item.url, item.name || "download")}
+                            >
+                                <Download class="w-4 h-4 mr-2" />
+                                Save
                             </Button>
                         </CardFooter>
                     </Card>

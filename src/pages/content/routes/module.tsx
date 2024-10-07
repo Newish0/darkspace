@@ -28,14 +28,12 @@ const Module = () => {
                     <p>Error: {moduleContentQuery.error?.message}</p>
                 </Match>
                 <Match when={moduleContentQuery.isSuccess}>
-                    <div>
-                        <h2 class="text-2xl font-bold border-b px-4 py-2">
-                            {moduleContentQuery.data?.name}
-                        </h2>
+                    <h2 class="text-2xl font-bold border-b px-4 py-2">
+                        {moduleContentQuery.data?.name}
+                    </h2>
 
-                        <div class="p-2">
-                            <ModuleContentList items={moduleContentQuery.data?.content} />
-                        </div>
+                    <div class="p-2 overflow-auto">
+                        <ModuleContentList items={moduleContentQuery.data?.content} />
                     </div>
                 </Match>
             </Switch>
