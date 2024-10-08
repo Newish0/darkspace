@@ -10,7 +10,7 @@ export default function Home() {
         queryFn: getEnrollments,
     }));
 
-    getEnrollments().then((c) => console.log(c));
+    // getEnrollments().then((c) => console.log(c));
 
     return (
         <PageWrapper title="Dashboard" allowBack={false}>

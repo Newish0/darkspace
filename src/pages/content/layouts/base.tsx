@@ -1,5 +1,5 @@
-import { RouteSectionProps } from "@solidjs/router";
-import { Component } from "solid-js";
+import { A, RouteSectionProps } from "@solidjs/router";
+import { Component, Match, Switch } from "solid-js";
 
 import { createSignal, For } from "solid-js";
 import { Button } from "@/components/ui/button";
@@ -12,18 +12,24 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, LayoutDashboard, ChevronDown, ChevronRight, Github } from "lucide-solid";
-
-const courses = [
-    { id: 1, name: "Introduction to SolidJS" },
-    { id: 2, name: "Advanced SolidJS Concepts" },
-    { id: 3, name: "Building UIs with Solid UI" },
-    { id: 4, name: "State Management in SolidJS" },
-];
+import { Menu, LayoutDashboard, ChevronDown, ChevronRight, Github, Library } from "lucide-solid";
+import { createQuery } from "@tanstack/solid-query";
+import { getEnrollments } from "@/services/BS/api";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const VERSION = import.meta.env.VERSION || "1.0.0";
 
 function NavContent() {
+    const enrollmentQuery = createQuery(() => ({
+        queryKey: ["enrollments"],
+        queryFn: getEnrollments,
+    }));
+
     const [isCoursesOpen, setIsCoursesOpen] = createSignal(true);
 
     const toggleCourses = () => setIsCoursesOpen(!isCoursesOpen());
@@ -35,12 +41,52 @@ function NavContent() {
             </div>
             <ScrollArea class="flex-1">
                 <nav class="flex flex-col gap-2 p-4">
-                    <a href="/" class="flex items-center gap-2 text-sm font-medium">
+                    <A
+                        href="/"
+                        class="flex items-center gap-2 text-sm font-medium p-2 rounded-md"
+                        // activeClass="bg-muted"
+                    >
                         <LayoutDashboard class="h-4 w-4" />
                         Dashboard
-                    </a>
+                    </A>
                     <div>
-                        <button
+                        <Accordion multiple={false} collapsible class="p-2">
+                            <AccordionItem value="enrollments" class="border-none">
+                                <AccordionTrigger class="py-0">
+                                    <div class="flex items-center gap-2">
+                                        <Library class="h-4 w-4" />
+                                        Courses
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <div class="space-y-2 my-2">
+                                        <Switch>
+                                            <Match when={enrollmentQuery.isPending}>
+                                                <p>Loading...</p>
+                                            </Match>
+                                            <Match when={enrollmentQuery.isError}>
+                                                <p>Error: {enrollmentQuery.error?.message}</p>
+                                            </Match>
+                                            <Match when={enrollmentQuery.isSuccess}>
+                                                <For each={enrollmentQuery.data}>
+                                                    {(course) => (
+                                                        <A
+                                                            href={`/courses/${course.id}`}
+                                                            class="block text-sm p-2 rounded-md truncate"
+                                                            activeClass="bg-muted"
+                                                        >
+                                                            {course.name}
+                                                        </A>
+                                                    )}
+                                                </For>
+                                            </Match>
+                                        </Switch>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+
+                        {/* <button
                             onClick={toggleCourses}
                             class="flex items-center justify-between w-full text-sm font-medium"
                         >
@@ -63,7 +109,7 @@ function NavContent() {
                                     )}
                                 </For>
                             </ul>
-                        )}
+                        )} */}
                     </div>
                 </nav>
             </ScrollArea>

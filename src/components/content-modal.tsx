@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 interface FullScreenModalProps {
     url: string;
-    contentType: "webpage" | "pdf";
+    contentType: "webpage" | "pdf"; // TODO: Allow not providing a content type and inferring it from the URL
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 }
@@ -21,6 +21,10 @@ const FullScreenModal = (props: FullScreenModalProps) => {
         setInternalOpen(open);
         props.onOpenChange?.(open);
     };
+
+    createEffect(() => {
+        console.log("Provided URL:", props.url);
+    });
 
     return (
         <Dialog open={internalOpen()} onOpenChange={handleOpenChange}>

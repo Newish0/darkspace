@@ -1,5 +1,6 @@
 import CourseHome from "@/components/course-home";
 import { useParams } from "@solidjs/router";
+import { Show } from "solid-js";
 
 const Course = () => {
     const params = useParams();
@@ -10,7 +11,11 @@ const Course = () => {
         return <div>Course ID not found</div>;
     }
 
-    return <CourseHome courseId={params.courseId} />;
+    return (
+        <Show when={params.courseId} keyed>
+            <CourseHome courseId={params.courseId} />
+        </Show>
+    );
 };
 
 export default Course;
