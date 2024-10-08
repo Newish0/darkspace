@@ -23,7 +23,7 @@ export interface IModule {
     children?: IModule[];
 }
 
-function htmlToDocument(unsafeHtml: string, sanitize = true) {
+function htmlToDocument(unsafeHtml: string, sanitize = false) {
     const parser = new DOMParser();
     const sanitizedHtml = sanitize ? DOMPurify.sanitize(unsafeHtml) : unsafeHtml;
     return parser.parseFromString(sanitizedHtml, "text/html");
