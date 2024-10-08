@@ -138,43 +138,43 @@
     display: none;
 }
 
-.md {
+.markdown {
     @apply text-primary leading-relaxed;
 }
-.md p {
-    @apply mb-4;
-}
-.md h1 {
-    @apply text-4xl font-bold mb-6 mt-8;
-}
-.md h2 {
-    @apply text-3xl font-semibold mb-4 mt-6;
-}
-.md h3 {
-    @apply text-2xl font-medium mb-3 mt-5;
-}
-.md ul,
-.md ol {
-    @apply mb-4 pl-8;
-}
-.md li {
+.markdown p {
     @apply mb-2;
 }
-.md ul {
+.markdown h1 {
+    @apply text-3xl font-bold mb-3 mt-4;
+}
+.markdown h2 {
+    @apply text-2xl font-semibold mb-2 mt-3;
+}
+.markdown h3 {
+    @apply text-xl font-medium mb-2 mt-3;
+}
+.markdown ul,
+.markdown ol {
+    @apply mb-2 pl-6;
+}
+.markdown li {
+    @apply mb-1;
+}
+.markdown ul {
     @apply list-disc;
 }
-.md ol {
+.markdown ol {
     @apply list-decimal;
 }
-.md a {
+.markdown a {
     @apply text-info-foreground hover:underline;
 }
-.md blockquote {
-    @apply border-l-4 border-info pl-4 italic my-4;
+.markdown blockquote {
+    @apply border-l-4 border-primary pl-3 italic my-2;
 }
-.md code {
-    @apply bg-accent rounded px-1 py-0.5 font-mono text-sm;
+.markdown code {
+    @apply bg-muted rounded px-1 py-0.5 font-mono text-sm;
 }
-.md pre {
-    @apply bg-accent rounded p-4 overflow-x-auto mb-4;
+.markdown pre {
+    @apply bg-muted rounded p-3 overflow-x-auto mb-2;
 }

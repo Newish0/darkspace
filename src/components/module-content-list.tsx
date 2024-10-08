@@ -1,4 +1,4 @@
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, ExternalLink } from "lucide-solid";
@@ -6,7 +6,14 @@ import { IModuleContent } from "@/services/BS/scraper";
 
 const ModuleContentList = (props: { items?: IModuleContent[] }) => {
     const handleDownload = (url: string, filename: string) => {
-        throw new Error("Not implemented");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+    };
+
+    const handleOpen = (url: string) => {
+        window.open(url, "_blank");
     };
 
     return (
@@ -27,20 +34,24 @@ const ModuleContentList = (props: { items?: IModuleContent[] }) => {
                                 class="w-full"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => window.open(item.url, "_blank")}
+                                onClick={() => handleOpen(item.url)}
                             >
                                 <ExternalLink class="w-4 h-4 mr-2" />
                                 Open
                             </Button>
 
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDownload(item.url, item.name || "download")}
-                            >
-                                <Download class="w-4 h-4 mr-2" />
-                                Save
-                            </Button>
+                            <Show when={item.downloadable}>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                        handleDownload(item.url, item.name || "download")
+                                    }
+                                >
+                                    <Download class="w-4 h-4 mr-2" />
+                                    Save
+                                </Button>
+                            </Show>
                         </CardFooter>
                     </Card>
                 )}

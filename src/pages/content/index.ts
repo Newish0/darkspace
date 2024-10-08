@@ -20,23 +20,29 @@ function removeBSResources() {
     }
 }
 
-removeBSResources();
+const EXCLUSION_RULES = [() => window.location.pathname.indexOf("/content/") == 0];
 
-const root = document.createElement("div");
-root.classList.add(
-    // "dark", // Dark mode
-    // "w-full",
-    // "h-full",
-    // "overflow-auto",
-    // "absolute",
-    // "top-0",
-    // "left-0",
-    // "z-[100]",
-    "bg-background",
-    "text-foreground"
-);
-root.id = "root";
-document.body.appendChild(root);
-// document.body.style.overflow = "hidden";
+if (EXCLUSION_RULES.some((rule) => rule())) {
+    /* Do nothing */
+} else {
+    removeBSResources();
 
-renderRoot(root);
+    const root = document.createElement("div");
+    root.classList.add(
+        // "dark", // Dark mode
+        // "w-full",
+        // "h-full",
+        // "overflow-auto",
+        // "absolute",
+        // "top-0",
+        // "left-0",
+        // "z-[100]",
+        "bg-background",
+        "text-foreground"
+    );
+    root.id = "root";
+    document.body.appendChild(root);
+    // document.body.style.overflow = "hidden";
+
+    renderRoot(root);
+}

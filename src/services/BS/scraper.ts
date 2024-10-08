@@ -177,7 +177,8 @@ function parseD2LPartial(d2lPartial: string) {
 export interface IModuleContent {
     id: string;
     name?: string;
-    type?: string;
+    type?: "File" | "Link" | string;
+    downloadable?: boolean;
     url: string;
 }
 
@@ -185,6 +186,10 @@ export interface IModuleDetails {
     id: string;
     name?: string;
     content: IModuleContent[];
+    description?: {
+        text?: string;
+        html?: string;
+    };
 }
 
 // const MODULE_CONTENT_URL =
@@ -192,7 +197,7 @@ export interface IModuleDetails {
 const MODULE_CONTENT_URL =
     "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc";
 
-export async function getModuleContent(
+async function getModuleContentFromD2LPartial(
     courseId: string,
     moduleId: string
 ): Promise<IModuleDetails> {
@@ -241,4 +246,53 @@ export async function getModuleContent(
         name: moduleName || undefined,
         content,
     };
+}
+
+export async function getModuleContent(
+    courseId: string,
+    moduleId: string,
+    useUnstable = true
+): Promise<IModuleDetails> {
+    if (useUnstable) {
+        const unstableContent = await getUnstableCourseContent(courseId);
+
+        const findModule = (m: UnstableModule) => m.ModuleId.toString() === moduleId;
+
+        const recursiveFindModule = (m: UnstableModule): UnstableModule | undefined => {
+            if (findModule(m)) {
+                return m;
+            } else {
+                return m.Modules.find(recursiveFindModule);
+            }
+        };
+
+        let um: UnstableModule | undefined = undefined;
+        for (const m of unstableContent.Modules) {
+            um = recursiveFindModule(m);
+            if (um) break;
+        }
+
+        if (!um) {
+            throw new Error("Module not found");
+        }
+
+        return {
+            name: um.Title || undefined,
+            id: um.ModuleId.toString(),
+            content:
+                um.Topics.map((t) => ({
+                    name: t.Title,
+                    type: t.TypeIdentifier, // OR t.Url.split(".").at(-1) || ""; // TODO: infer from extension
+                    url: t.Url,
+                    id: t.TopicId.toString(),
+                    downloadable: t.TypeIdentifier === "File", // TODO: handle other types
+                })) ?? [],
+            description: {
+                text: um.Description.Text,
+                html: um.Description.Html,
+            },
+        };
+    } else {
+        return getModuleContentFromD2LPartial(courseId, moduleId);
+    }
 }

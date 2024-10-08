@@ -121,7 +121,7 @@ function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }
                                 </div>
                             </div>
                             <Separator class="my-2" />
-                            <UnsafeHtml unsafeHtml={a.html} class="md overflow-auto" />
+                            <UnsafeHtml unsafeHtml={a.html} class="markdown overflow-auto" />
                         </div>
                     )}
                 </For>
