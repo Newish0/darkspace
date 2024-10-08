@@ -20,7 +20,10 @@ function removeBSResources() {
     }
 }
 
-const EXCLUSION_RULES = [() => window.location.pathname.indexOf("/content/") == 0];
+const EXCLUSION_RULES = [
+    () => window.location.pathname.indexOf("/content/") == 0, // Don't run in content pages
+    () => window.self !== window.top, // Don't run in an iframe
+];
 
 if (EXCLUSION_RULES.some((rule) => rule())) {
     /* Do nothing */

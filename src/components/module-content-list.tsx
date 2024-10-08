@@ -1,10 +1,21 @@
-import { For, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, ExternalLink } from "lucide-solid";
 import { IModuleTopic } from "@/services/BS/scraper";
+import ContentModal from "./content-modal";
 
 const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
+    const [modalData, setModalData] = createSignal<{
+        url: string;
+        contentType: "webpage" | "pdf";
+        open: boolean;
+    }>({
+        url: "",
+        contentType: "webpage",
+        open: false,
+    });
+
     const handleDownload = (url: string, filename: string) => {
         const a = document.createElement("a");
         a.href = url;
@@ -13,50 +24,63 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
     };
 
     const handleOpen = (url: string) => {
-        window.open(url, "_blank");
+        // window.open(url, "_blank");
+        const contentType = url.toLowerCase().includes(".pdf") ? "pdf" : "webpage";
+        setModalData({ url, contentType, open: true });
     };
 
     return (
-        <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-            <For each={props.items}>
-                {(item) => (
-                    <Card class="flex flex-col">
-                        <CardHeader>
-                            <CardTitle class="break-words">{item.name || "Unnamed Item"}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-sm text-muted-foreground">
-                                Type: {item.type || "Unknown"}
-                            </p>
-                        </CardContent>
-                        <CardFooter class="flex justify-between mt-auto gap-1">
-                            <Button
-                                class="w-full"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleOpen(item.url)}
-                            >
-                                <ExternalLink class="w-4 h-4 mr-2" />
-                                Open
-                            </Button>
-
-                            <Show when={item.downloadable}>
+        <>
+            <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                <For each={props.items}>
+                    {(item) => (
+                        <Card class="flex flex-col">
+                            <CardHeader>
+                                <CardTitle class="break-words">
+                                    {item.name || "Unnamed Item"}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p class="text-sm text-muted-foreground">
+                                    Type: {item.type || "Unknown"}
+                                </p>
+                            </CardContent>
+                            <CardFooter class="flex justify-between mt-auto gap-1">
                                 <Button
-                                    variant="ghost"
+                                    class="w-full"
+                                    variant="outline"
                                     size="sm"
-                                    onClick={() =>
-                                        handleDownload(item.url, item.name || "download")
-                                    }
+                                    onClick={() => handleOpen(item.url)}
                                 >
-                                    <Download class="w-4 h-4 mr-2" />
-                                    Save
+                                    <ExternalLink class="w-4 h-4 mr-2" />
+                                    Open
                                 </Button>
-                            </Show>
-                        </CardFooter>
-                    </Card>
-                )}
-            </For>
-        </div>
+
+                                <Show when={item.downloadable}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                            handleDownload(item.url, item.name || "download")
+                                        }
+                                    >
+                                        <Download class="w-4 h-4 mr-2" />
+                                        Save
+                                    </Button>
+                                </Show>
+                            </CardFooter>
+                        </Card>
+                    )}
+                </For>
+            </div>
+
+            <ContentModal
+                contentType={modalData().contentType}
+                url={modalData().url}
+                open={modalData().open}
+                onOpenChange={(open) => setModalData((data) => ({ ...data, open }))}
+            />
+        </>
     );
 };
 

@@ -177,7 +177,7 @@ function parseD2LPartial(d2lPartial: string) {
 export interface IModuleTopic {
     id: string;
     name?: string;
-    type?: "File" | "Link" | string;
+    type?: "File" | "Link" | "ContentService" | string;
     downloadable?: boolean;
     url: string;
 }
@@ -248,6 +248,8 @@ async function getModuleContentFromD2LPartial(
     };
 }
 
+const CONTENT_SVC_URL = "https://bright.uvic.ca/d2l/le/contentservice/topic/{{TOPIC_ID}}/launch";
+
 export async function getModuleContent(
     courseId: string,
     moduleId: string,
@@ -276,17 +278,29 @@ export async function getModuleContent(
             throw new Error("Module not found");
         }
 
+        console.log("[getModuleContent] Found module", um);
+
         return {
             name: um.Title || undefined,
             id: um.ModuleId.toString(),
             topics:
-                um.Topics.map((t) => ({
-                    name: t.Title,
-                    type: t.TypeIdentifier, // OR t.Url.split(".").at(-1) || ""; // TODO: infer from extension
-                    url: t.Url,
-                    id: t.TopicId.toString(),
-                    downloadable: t.TypeIdentifier === "File", // TODO: handle other types
-                })) ?? [],
+                um.Topics.map((t) => {
+                    let url = t.Url;
+
+                    if (t.IsContentServiceAudioOrVideo) {
+                        // url = t.ContentUrl;
+                        url = CONTENT_SVC_URL.replace("{{TOPIC_ID}}", t.TopicId.toString());
+                    }
+
+                    const topic = {
+                        name: t.Title,
+                        type: t.TypeIdentifier, // OR t.Url.split(".").at(-1) || ""; // TODO: infer from extension
+                        url,
+                        id: t.TopicId.toString(),
+                        downloadable: t.TypeIdentifier === "File", // TODO: handle other types
+                    };
+                    return topic;
+                }) ?? [],
             description: {
                 text: um.Description.Text,
                 html: um.Description.Html,
