@@ -23,9 +23,9 @@ export interface IModule {
     children?: IModule[];
 }
 
-function htmlToDocument(unsafeHtml: string) {
+function htmlToDocument(unsafeHtml: string, sanitize = true) {
     const parser = new DOMParser();
-    const sanitizedHtml = DOMPurify.sanitize(unsafeHtml);
+    const sanitizedHtml = sanitize ? DOMPurify.sanitize(unsafeHtml) : unsafeHtml;
     return parser.parseFromString(sanitizedHtml, "text/html");
 }
 
@@ -125,7 +125,7 @@ export async function getCourseAnnouncements(courseId: string): Promise<IAnnounc
     const htmlString = await fetch(COURSE_ANNOUNCEMENTS_URL.replace("{{CLASS_ID}}", courseId)).then(
         (res) => res.text()
     );
-    const doc = htmlToDocument(htmlString);
+    const doc = htmlToDocument(htmlString, false);
 
     /**
      * The following code assumes that the HTML structure of the page is as follows:
@@ -144,6 +144,8 @@ export async function getCourseAnnouncements(courseId: string): Promise<IAnnounc
      * </tr>
      */
     return Array.from(doc.querySelectorAll(COURSE_ANNOUNCEMENTS_SELECTOR)).map((eln) => {
+        console.log("Element:", eln);
+
         const html = eln.getAttribute("html");
         const currentRow = eln.closest("tr"); // closest <tr> parent that contains the current element
         const previousRow = currentRow?.previousElementSibling; // the previous <tr> tag

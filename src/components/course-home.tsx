@@ -31,7 +31,7 @@ export default function CourseHome({
 
     createEffect(() => {
         // console.log(modulesQuery.data);
-        // console.log(JSON.stringify(announcementsQuery.data, null, 2));
+        console.log(JSON.stringify(announcementsQuery.data, null, 2));
     });
 
     return (
