@@ -174,7 +174,7 @@ function parseD2LPartial(d2lPartial: string) {
     return JSON.parse(json);
 }
 
-export interface IModuleContent {
+export interface IModuleTopic {
     id: string;
     name?: string;
     type?: "File" | "Link" | string;
@@ -185,7 +185,7 @@ export interface IModuleContent {
 export interface IModuleDetails {
     id: string;
     name?: string;
-    content: IModuleContent[];
+    topics: IModuleTopic[];
     description?: {
         text?: string;
         html?: string;
@@ -221,7 +221,7 @@ async function getModuleContentFromD2LPartial(
     const listItems = doc.querySelectorAll("li.d2l-datalist-item");
 
     // Extract data from each list item
-    const content = Array.from(listItems)
+    const topics = Array.from(listItems)
         .map((item) => {
             const linkElement: HTMLAnchorElement | null = item.querySelector("[id^=d2l_content_]");
             const typeElement = item.querySelector(".d2l-textblock.d2l-body-small");
@@ -239,12 +239,12 @@ async function getModuleContentFromD2LPartial(
         })
         .filter((item) => item !== null);
 
-    console.log(content.map((c) => c.type));
+    console.log(topics.map((c) => c.type));
 
     return {
         id: moduleId,
         name: moduleName || undefined,
-        content,
+        topics,
     };
 }
 
@@ -279,7 +279,7 @@ export async function getModuleContent(
         return {
             name: um.Title || undefined,
             id: um.ModuleId.toString(),
-            content:
+            topics:
                 um.Topics.map((t) => ({
                     name: t.Title,
                     type: t.TypeIdentifier, // OR t.Url.split(".").at(-1) || ""; // TODO: infer from extension

@@ -2,9 +2,9 @@ import { For, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, ExternalLink } from "lucide-solid";
-import { IModuleContent } from "@/services/BS/scraper";
+import { IModuleTopic } from "@/services/BS/scraper";
 
-const ModuleContentList = (props: { items?: IModuleContent[] }) => {
+const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
     const handleDownload = (url: string, filename: string) => {
         const a = document.createElement("a");
         a.href = url;

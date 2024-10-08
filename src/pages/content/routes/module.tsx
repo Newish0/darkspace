@@ -23,6 +23,7 @@ const Module = () => {
     createEffect(() => {
         console.log("SHOWING MODULE ID", moduleContentQuery.data?.id);
         console.log("MODULE DESCRIPTION", moduleContentQuery.data?.description);
+        console.log("MODULE TOPICS", moduleContentQuery.data?.topics);
     });
 
     return (
@@ -67,7 +68,7 @@ const Module = () => {
                         </div>
 
                         <div class="">
-                            <ModuleContentList items={moduleContentQuery.data?.content} />
+                            <ModuleContentList items={moduleContentQuery.data?.topics} />
                         </div>
                     </div>
                 </Match>
