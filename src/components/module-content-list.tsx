@@ -1,9 +1,10 @@
 import { createSignal, For, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, ExternalLink } from "lucide-solid";
+import { CopyIcon, Download, ExternalLink } from "lucide-solid";
 import { IModuleTopic } from "@/services/BS/scraper";
 import ContentModal from "./content-modal";
+import { toast } from "solid-sonner"
 
 const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
     const [modalData, setModalData] = createSignal<{
@@ -27,6 +28,13 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
         // window.open(url, "_blank");
         const contentType = url.toLowerCase().includes(".pdf") ? "pdf" : "webpage";
         setModalData({ url, contentType, open: true });
+    };
+
+    const handleCopyLink = (url: string) => {
+        navigator.clipboard.writeText(url);
+
+        // TODO: Get <Toaster /> working so that we can show a toast
+        toast.success("Link copied to clipboard");
     };
 
     return (
@@ -56,7 +64,19 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
                                     Open
                                 </Button>
 
-                                <Show when={item.downloadable}>
+                                <Show
+                                    when={item.downloadable}
+                                    fallback={
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopyLink(item.url)}
+                                        >
+                                            <CopyIcon class="w-4 h-4 mr-2" />
+                                            Copy
+                                        </Button>
+                                    }
+                                >
                                     <Button
                                         variant="ghost"
                                         size="sm"
