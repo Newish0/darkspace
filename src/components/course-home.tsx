@@ -1,4 +1,9 @@
-import { getCourseAnnouncements, getCourseModules, IAnnouncement } from "@/services/BS/scraper";
+import {
+    getCourseAnnouncements,
+    getCourseModules,
+    getQuizzes,
+    IAnnouncement,
+} from "@/services/BS/scraper";
 
 import { createQuery } from "@tanstack/solid-query";
 import { createEffect, Switch, Match, Show, JSX, For } from "solid-js";
@@ -29,9 +34,13 @@ export default function CourseHome({
         queryFn: () => getCourseAnnouncements(courseId),
     }));
 
+    getQuizzes(courseId).then((quizzes) => {
+        console.log("Quizzes", JSON.stringify(quizzes, null, 2));
+    });
+
     createEffect(() => {
         // console.log(modulesQuery.data);
-        console.log(JSON.stringify(announcementsQuery.data, null, 2));
+        // console.log(JSON.stringify(announcementsQuery.data, null, 2));
     });
 
     return (

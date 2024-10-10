@@ -21,6 +21,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Toaster } from "solid-sonner";
 
 const VERSION = import.meta.env.VERSION || "1.0.0";
 
@@ -131,7 +132,7 @@ function NavContent() {
 
 const Layout: Component<RouteSectionProps<unknown>> = (props) => {
     return (
-        <div class="flex h-screen">
+        <div class="flex h-screen overflow-hidden">
             {/* Desktop view */}
             <aside class="flex-shrink-0 hidden lg:flex flex-col w-64 border-r">
                 <NavContent />

@@ -35,6 +35,9 @@ dependencies:
   solid-js:
     specifier: ^1.9.1
     version: 1.9.1
+  solid-sonner:
+    specifier: ^0.2.8
+    version: 0.2.8(solid-js@1.9.1)
   solidui-cli:
     specifier: ^0.7.0
     version: 0.7.0
@@ -3254,6 +3257,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /solid-sonner@0.2.8(solid-js@1.9.1):
+    resolution: {integrity: sha512-EQ2EIznvHHpAmkYh2CTu0AdCgmPJRJWLGFRWygE8j+vMEfvIV2wotHU5qgWzqzVTG1SODGsay2Lwq6ENWx/rPA==}
+    peerDependencies:
+      solid-js: ^1.6.0
+    dependencies:
+      solid-js: 1.9.1
+    dev: false
 
   /solidui-cli@0.7.0:
     resolution: {integrity: sha512-JV0VPp9quhp+3i7aoy/3ZG//yjOV/YqiHIrCxaJ7kRtiiVQ/o9LbgimRT7jWtXXYcIuRNUPNE1aHDt+5hkfOKA==}

@@ -144,8 +144,6 @@ export async function getCourseAnnouncements(courseId: string): Promise<IAnnounc
      * </tr>
      */
     return Array.from(doc.querySelectorAll(COURSE_ANNOUNCEMENTS_SELECTOR)).map((eln) => {
-        console.log("Element:", eln);
-
         const html = eln.getAttribute("html");
         const currentRow = eln.closest("tr"); // closest <tr> parent that contains the current element
         const previousRow = currentRow?.previousElementSibling; // the previous <tr> tag
@@ -215,8 +213,6 @@ async function getModuleContentFromD2LPartial(
 
     const doc = htmlToDocument(d2lPartialParsed.Payload.Html);
 
-    console.log(doc.body.innerHTML);
-
     const moduleName = doc.querySelector("h1.d2l-page-title")?.textContent;
 
     // Find all list items that contain the relevant information
@@ -240,8 +236,6 @@ async function getModuleContentFromD2LPartial(
             return null;
         })
         .filter((item) => item !== null);
-
-    console.log(topics.map((c) => c.type));
 
     return {
         id: moduleId,
@@ -311,4 +305,226 @@ export async function getModuleContent(
     } else {
         return getModuleContentFromD2LPartial(courseId, moduleId);
     }
+}
+
+interface IQuizSubmission {
+    quizId: string;
+    attemptNumber: number;
+    attemptId: string;
+    attemptUrl: string;
+    gradePercentage?: number;
+    totalPoints?: number;
+    points?: number;
+    lateNote?: string;
+}
+
+const QIAI_SELECTORS = {
+    FORM: "form",
+    ATTEMPT_TABLE: "table#z_c",
+    ATTEMPT_ROW: "table#z_c tr:not(.d_gh)",
+    ATTEMPT_LINK: "a.d2l-link",
+    LATE_NOTE: ".ds_a",
+    GRADE_CELL: "td.d_gn",
+    POINTS_LABEL: 'label[id^="z_"]',
+    TOTAL_POINTS_LABEL: 'label[id^="z_"]:nth-of-type(3)',
+    PERCENTAGE_LABEL: 'label[id^="z_"]:last-child',
+};
+
+const QIAI_REGEX = {
+    QUIZ_ID: /qi=(\d+)/,
+    ATTEMPT_ID: /ai=(\d+)/,
+};
+
+const URL_BASE = "https://bright.uvic.ca";
+
+function extractQuizSubmissions(html: string): IQuizSubmission[] {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const submissions: IQuizSubmission[] = [];
+
+    const form = doc.querySelector(QIAI_SELECTORS.FORM);
+    const quizId = form?.getAttribute("action")?.match(QIAI_REGEX.QUIZ_ID)?.[1] || "";
+
+    const rows = doc.querySelectorAll(QIAI_SELECTORS.ATTEMPT_ROW);
+
+    rows.forEach((row, index) => {
+        if (!(row instanceof HTMLTableRowElement)) return;
+        if (row.cells.length < 2) return;
+
+        const attemptLink = row.querySelector(QIAI_SELECTORS.ATTEMPT_LINK);
+        if (!attemptLink) return;
+
+        const attemptUrl = new URL(attemptLink.getAttribute("href") || "", URL_BASE).href;
+        const attemptId = attemptUrl.match(QIAI_REGEX.ATTEMPT_ID)?.[1] || "";
+        const attemptNumber = index + 1;
+
+        const lateNote =
+            row.querySelector(QIAI_SELECTORS.LATE_NOTE)?.textContent?.trim() || undefined;
+
+        const gradeCell = row.querySelector(QIAI_SELECTORS.GRADE_CELL);
+        const pointsLabel = gradeCell?.querySelector(QIAI_SELECTORS.POINTS_LABEL)?.textContent;
+        const totalPointsLabel = gradeCell?.querySelector(
+            QIAI_SELECTORS.TOTAL_POINTS_LABEL
+        )?.textContent;
+        const percentageLabel = gradeCell?.querySelector(
+            QIAI_SELECTORS.PERCENTAGE_LABEL
+        )?.textContent;
+
+        const points = pointsLabel ? parseFloat(pointsLabel) : undefined;
+        const totalPoints = totalPointsLabel ? parseFloat(totalPointsLabel) : undefined;
+        const gradePercentage = percentageLabel ? parseFloat(percentageLabel) : undefined;
+
+        submissions.push({
+            quizId,
+            attemptNumber,
+            attemptId,
+            attemptUrl,
+            gradePercentage,
+            totalPoints,
+            points,
+            lateNote,
+        });
+    });
+
+    return submissions;
+}
+
+export async function getQuizSubmissionsFromUrl(url: string): Promise<IQuizSubmission[]> {
+    const html = await fetch(url).then((res) => res.text());
+    return extractQuizSubmissions(html);
+}
+
+interface IQuizInfo {
+    name: string;
+    dueDate?: string;
+    startDate?: string;
+    endDate?: string;
+    url?: string;
+    id?: string;
+    attempts?: number;
+    attemptsAllowed?: number;
+    status?: "completed" | "in-progress" | "not-started";
+    submissionsUrl?: string;
+}
+
+// Constants to avoid magic strings
+const QI_SELECTORS = {
+    QUIZ_ROW: 'table[type="list"] tr:not(.d_gh):not([colspan])',
+    NAME_LINK: "a.d2l-link.d2l-link-inline",
+    DATE_SPAN: ".ds_b",
+    ATTEMPTS_CELL: "td.d_gn.d_gc",
+    FEEDBACK_CELL: "td.d_gn",
+    IN_PROGRESS_IMG: 'img[alt="You have an attempt in progress"]',
+};
+
+const QI_REGEX = {
+    QUIZ_ID: /GoToQuiz\((\d+)/,
+    COURSE_ID: /ou=(\d+)/,
+    DUE_DATE: /Due on (.*?)(?=$|\n)/,
+    AVAILABLE_DATE: /Available on (.*?) until (.*?)(?=$|\n)/,
+};
+
+const QI_URL_TEMPLATE = {
+    QUIZ_SUMMARY:
+        "https://bright.uvic.ca/d2l/lms/quizzing/user/quiz_summary.d2l?qi={{QUIZ_ID}}&ou={{COURSE_ID}}",
+    QUIZZES_LIST: "https://bright.uvic.ca/d2l/lms/quizzing/user/quizzes_list.d2l?ou={{COURSE_ID}}",
+};
+
+function extractQuizInfo(htmlString: string): IQuizInfo[] {
+    const document = htmlToDocument(htmlString);
+    const quizRows = document.querySelectorAll(QI_SELECTORS.QUIZ_ROW);
+
+    console.log("Found", quizRows.length, "quizzes");
+
+    return Array.from(quizRows).map((row) => {
+        const quizInfo: IQuizInfo = { name: "" };
+
+        extractNameAndUrl(row, quizInfo, document);
+        extractDates(row, quizInfo);
+        extractAttempts(row, quizInfo);
+        determineStatus(row, quizInfo);
+        extractQuizSubmissionsUrl(row, quizInfo);
+
+        return quizInfo;
+    });
+}
+
+function extractNameAndUrl(row: Element, quizInfo: IQuizInfo, document: Document): void {
+    const nameLink = row.querySelector(QI_SELECTORS.NAME_LINK);
+    if (nameLink) {
+        quizInfo.name = nameLink.textContent?.trim() || "";
+        const onclick = nameLink.getAttribute("onclick");
+        const idMatch = onclick?.match(QI_REGEX.QUIZ_ID);
+        if (idMatch) {
+            quizInfo.id = idMatch[1];
+            const courseId = document
+                .querySelector("form")
+                ?.getAttribute("action")
+                ?.match(QI_REGEX.COURSE_ID)?.[1];
+            quizInfo.url = QI_URL_TEMPLATE.QUIZ_SUMMARY.replace("{{QUIZ_ID}}", quizInfo.id).replace(
+                "{{COURSE_ID}}",
+                courseId || ""
+            );
+        }
+    }
+}
+
+function extractDates(row: Element, quizInfo: IQuizInfo): void {
+    const dateSpan = row.querySelector(QI_SELECTORS.DATE_SPAN);
+    if (dateSpan) {
+        const dateText = dateSpan.textContent || "";
+        const dueDateMatch = dateText.match(QI_REGEX.DUE_DATE);
+        if (dueDateMatch) {
+            quizInfo.dueDate = dueDateMatch[1].trim();
+        }
+        const availableMatch = dateText.match(QI_REGEX.AVAILABLE_DATE);
+        if (availableMatch) {
+            quizInfo.startDate = availableMatch[1].trim();
+            quizInfo.endDate = availableMatch[2].trim();
+        }
+    }
+}
+
+function extractAttempts(row: Element, quizInfo: IQuizInfo): void {
+    const attemptsCell = row.querySelector(QI_SELECTORS.ATTEMPTS_CELL);
+    if (attemptsCell) {
+        const attemptsText = attemptsCell.textContent || "";
+        const [attempts, attemptsAllowed] = attemptsText.split("/").map((s) => s.trim());
+        quizInfo.attempts = parseInt(attempts, 10);
+        quizInfo.attemptsAllowed =
+            attemptsAllowed.toLowerCase() === "unlimited"
+                ? Infinity
+                : parseInt(attemptsAllowed, 10);
+    }
+}
+
+function extractQuizSubmissionsUrl(row: Element, quizInfo: IQuizInfo): void {
+    const feedbackCell = row.querySelector(QI_SELECTORS.FEEDBACK_CELL);
+
+    if (feedbackCell) {
+        const url = feedbackCell.querySelector("a")?.getAttribute("href");
+        if (url) {
+            quizInfo.submissionsUrl = new URL(url, URL_BASE).href;
+        }
+    }
+}
+
+function determineStatus(row: Element, quizInfo: IQuizInfo): void {
+    const feedbackCell = row.querySelector(QI_SELECTORS.FEEDBACK_CELL);
+    if (feedbackCell) {
+        const feedbackText = feedbackCell.textContent || "";
+        if (feedbackText.toLowerCase().includes("feedback")) {
+            quizInfo.status = "completed";
+        } else if (row.querySelector(QI_SELECTORS.IN_PROGRESS_IMG)) {
+            quizInfo.status = "in-progress";
+        } else {
+            quizInfo.status = "not-started";
+        }
+    }
+}
+
+export async function getQuizzes(courseId: string): Promise<IQuizInfo[]> {
+    const url = QI_URL_TEMPLATE.QUIZZES_LIST.replace("{{COURSE_ID}}", courseId);
+    const html = await fetch(url).then((res) => res.text());
+    return extractQuizInfo(html);
 }
