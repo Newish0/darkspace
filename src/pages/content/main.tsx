@@ -5,7 +5,7 @@ import { render } from "solid-js/web";
 import { HashRouter } from "@solidjs/router";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
-import { lazy } from "solid-js";
+import { children, lazy } from "solid-js";
 import RootLayout from "./layouts/base";
 
 const queryClient = new QueryClient();
@@ -26,6 +26,19 @@ const routes = {
             path: "/courses/:courseId/m/:moduleId",
             component: lazy(() => import("./routes/module")),
         },
+
+        {
+            path: "/courses/:courseId/coursework",
+            component: lazy(() => import("./routes/course-coursework")),
+        },
+        // {
+        //     path: "/courses/:courseId/grades",
+        //     component: lazy(() => import("./routes/grades")),
+        // },
+        // {
+        //     path: "/courses/:courseId/others",
+        //     component: lazy(() => import("./routes/others")),
+        // },
     ],
 };
 

@@ -5,17 +5,18 @@ import {
     IAnnouncement,
 } from "@/services/BS/scraper";
 
+import { A } from "@solidjs/router";
 import { createQuery } from "@tanstack/solid-query";
-import { createEffect, Switch, Match, Show, JSX, For } from "solid-js";
+import { CalendarIcon } from "lucide-solid";
+import { createEffect, For, JSX, Match, Show, Switch } from "solid-js";
+import CourseTabs from "./course-tabs";
 import NestedCourseAccordion, {
     NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES,
 } from "./nested-course-accordion";
 import PageWrapper from "./ui/page-wrapper";
-import { ResizablePanel, ResizableHandle, Resizable } from "./ui/resizable";
-import UnsafeHtml from "./unsafe-html";
-import { CalendarIcon } from "lucide-solid";
+import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
-import { A } from "@solidjs/router";
+import UnsafeHtml from "./unsafe-html";
 
 export default function CourseHome({
     courseId,
@@ -44,7 +45,12 @@ export default function CourseHome({
     });
 
     return (
-        <PageWrapper title="Course" allowBack={true} hideOverflow={true}>
+        <PageWrapper
+            title="Course"
+            allowBack={true}
+            hideOverflow={true}
+            centerElement={<CourseTabs courseId={courseId} value="home" />}
+        >
             <Resizable class="h-full rounded-lg shadow-sm border">
                 <ResizablePanel initialSize={0.2} class="overflow-hidden">
                     <div class="flex flex-col h-full">

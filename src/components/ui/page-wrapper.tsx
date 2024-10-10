@@ -10,6 +10,8 @@ interface RouteSectionProps {
     allowBack?: boolean;
     children?: JSX.Element;
     hideOverflow?: boolean;
+    rightElement?: JSX.Element;
+    centerElement?: JSX.Element;
 }
 
 const PageWrapper: Component<RouteSectionProps> = (props) => {
@@ -19,14 +21,19 @@ const PageWrapper: Component<RouteSectionProps> = (props) => {
 
     return (
         <div class="relative flex flex-col h-full p-2">
-            <div class="flex items-center gap-4 flex-0">
-                <Show when={props.allowBack}>
-                    <Button onClick={goBack} variant="link" size="icon">
-                        <ArrowLeftIcon class="h-6 w-6" />
-                    </Button>
-                </Show>
+            <div class="grid grid-cols-3">
+                <div class="flex items-center gap-4 flex-0">
+                    <Show when={props.allowBack}>
+                        <Button onClick={goBack} variant="link" size="icon">
+                            <ArrowLeftIcon class="h-6 w-6" />
+                        </Button>
+                    </Show>
 
-                <h1 class="text-2xl font-semibold">{props.title}</h1>
+                    <h1 class="text-2xl font-semibold">{props.title}</h1>
+                </div>
+
+                <div>{props.centerElement}</div>
+                <div>{props.rightElement}</div>
             </div>
 
             <Separator class="my-2" />
