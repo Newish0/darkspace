@@ -35,10 +35,6 @@ export default function CourseHome({
         queryFn: () => getCourseAnnouncements(courseId),
     }));
 
-    getQuizzes(courseId).then((quizzes) => {
-        console.log("Quizzes", JSON.stringify(quizzes, null, 2));
-    });
-
     createEffect(() => {
         // console.log(modulesQuery.data);
         // console.log(JSON.stringify(announcementsQuery.data, null, 2));

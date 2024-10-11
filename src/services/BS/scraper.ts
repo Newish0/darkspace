@@ -307,7 +307,7 @@ export async function getModuleContent(
     }
 }
 
-interface IQuizSubmission {
+export interface IQuizSubmission {
     quizId: string;
     attemptNumber: number;
     attemptId: string;
@@ -394,7 +394,7 @@ export async function getQuizSubmissionsFromUrl(url: string): Promise<IQuizSubmi
     return extractQuizSubmissions(html);
 }
 
-interface IQuizInfo {
+export interface IQuizInfo {
     name: string;
     dueDate?: string;
     startDate?: string;

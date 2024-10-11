@@ -26,6 +26,9 @@ dependencies:
   clsx:
     specifier: ^2.1.1
     version: 2.1.1
+  date-fns:
+    specifier: ^4.1.0
+    version: 4.1.0
   dompurify:
     specifier: ^3.1.7
     version: 3.1.7
@@ -1635,6 +1638,10 @@ packages:
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.0.0
     dev: true
+
+  /date-fns@4.1.0:
+    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
+    dev: false
 
   /debounce@1.2.1:
     resolution: {integrity: sha512-XRRe6Glud4rd/ZGQfiV1ruXSfbvfJedlV9Y6zOlP+2K04vBYiJEte6stfFkCP03aMnY5tsipamumUjL14fofug==}
