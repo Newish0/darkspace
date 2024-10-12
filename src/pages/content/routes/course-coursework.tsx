@@ -8,7 +8,8 @@ import {
 } from "@/services/BS/scraper";
 import PageWrapper from "@/components/ui/page-wrapper";
 import CourseTabs from "@/components/course-tabs";
-import QuizItem from "@/components/ui/quiz-item";
+import QuizItem from "@/components/quiz-item";
+import { QuizItemSkeleton } from "@/components/quiz-item";
 
 const CourseCoursework = () => {
     const params = useParams<{ courseId: string }>();
@@ -22,7 +23,7 @@ const CourseCoursework = () => {
                 centerElement={<CourseTabs courseId={params.courseId} value="coursework" />}
             >
                 <p>Course ID: {params.courseId}</p>
-                <Suspense fallback={<div>Loading quizzes...</div>}>
+                <Suspense fallback={<QuizListSkeleton />}>
                     <QuizList quizzes={quizzes()} />
                 </Suspense>
             </PageWrapper>
@@ -31,10 +32,12 @@ const CourseCoursework = () => {
 };
 
 const QuizList = (props: { quizzes?: IQuizInfo[] }) => (
-    <For each={props.quizzes}>{(quiz) => <QuizInfoItem quiz={quiz} />}</For>
+    <div class="space-y-4">
+        <For each={props.quizzes}>{(quiz) => <QuizListItem quiz={quiz} />}</For>
+    </div>
 );
 
-const QuizInfoItem = (props: { quiz: IQuizInfo }) => {
+const QuizListItem = (props: { quiz: IQuizInfo }) => {
     const submissions = createAsync(() => {
         if (props.quiz.submissionsUrl) {
             return getQuizSubmissionsFromUrl(props.quiz.submissionsUrl);
@@ -43,10 +46,18 @@ const QuizInfoItem = (props: { quiz: IQuizInfo }) => {
     });
 
     return (
-        <Suspense fallback={<div>Loading quiz info...</div>}>
+        <Suspense fallback={<QuizItemSkeleton />}>
             <QuizItem quiz={props.quiz} submissions={submissions()} />
         </Suspense>
     );
 };
+
+const QuizListSkeleton = () => (
+    <div class="space-y-4">
+        <QuizItemSkeleton />
+        <QuizItemSkeleton />
+        <QuizItemSkeleton />
+    </div>
+);
 
 export default CourseCoursework;

@@ -1,5 +1,5 @@
 import { createSignal, Show, For } from "solid-js";
-import { format } from "date-fns";
+import { format, isPast } from "date-fns";
 import {
     ChevronDown,
     ChevronUp,
@@ -10,13 +10,15 @@ import {
     AlertCircle,
     HelpCircle,
     Play,
+    RotateCcw,
 } from "lucide-solid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { IQuizInfo, IQuizSubmission } from "@/services/BS/scraper";
-import { Separator } from "./separator";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface QuizItemProps {
     quiz: IQuizInfo;
@@ -46,26 +48,48 @@ const QuizItem = (props: QuizItemProps) => {
             props.submissions[0]
         );
 
+    const isPastEndDate = () => {
+        if (!props.quiz.endDate) return false;
+        return isPast(new Date(props.quiz.endDate));
+    };
+
+    const getActionButton = () => {
+        if (isPastEndDate()) return null;
+
+        if (props.submissions && props.submissions.length > 0) {
+            if (props.quiz.status === "in-progress") {
+                return (
+                    <Button variant="default" size="sm">
+                        <Play class="mr-2 h-4 w-4" /> Continue
+                    </Button>
+                );
+            } else {
+                return (
+                    <Button variant="link" size="sm" class="text-muted-foreground">
+                        <RotateCcw class="mr-2 h-4 w-4" /> Retry
+                    </Button>
+                );
+            }
+        } else if (props.quiz.status !== "completed") {
+            return (
+                <Button variant="outline" size="sm" class="bg-primary text-primary-foreground">
+                    <Play class="mr-2 h-4 w-4" /> Start Quiz
+                </Button>
+            );
+        }
+
+        return null;
+    };
+
     return (
-        <Card class="mb-4 bg-card text-card-foreground">
+        <Card class="bg-card text-card-foreground">
             <CardHeader>
                 <div class="flex items-center justify-between">
                     <CardTitle class="text-xl font-bold">{props.quiz.name}</CardTitle>
-                    <Show
-                        when={
-                            (props.submissions && props.submissions.length > 0) ||
-                            props.quiz.status !== "not-started"
-                        }
-                        fallback={
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                class="bg-primary text-primary-foreground"
-                            >
-                                <Play class="mr-2 h-4 w-4" /> Start Quiz
-                            </Button>
-                        }
-                    >
+
+                    <div class="flex items-center gap-2">
+                        {getActionButton()}
+
                         <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen())}>
                             {isOpen() ? (
                                 <ChevronUp class="h-4 w-4" />
@@ -73,7 +97,7 @@ const QuizItem = (props: QuizItemProps) => {
                                 <ChevronDown class="h-4 w-4" />
                             )}
                         </Button>
-                    </Show>
+                    </div>
                 </div>
                 <CardDescription>
                     <div class="flex items-center space-x-2">
@@ -97,7 +121,7 @@ const QuizItem = (props: QuizItemProps) => {
                                     <p>
                                         {bestSubmission()?.points}/{bestSubmission()?.totalPoints}
                                     </p>
-                                    <Separator orientation="vertical" class="h-4" /> 
+                                    <Separator orientation="vertical" class="h-4" />
                                 </Show>
 
                                 <p>{bestSubmission()?.gradePercentage?.toFixed(2)}%</p>
@@ -222,5 +246,16 @@ const QuizItem = (props: QuizItemProps) => {
         </Card>
     );
 };
+
+export const QuizItemSkeleton = () => (
+    <Skeleton radius={10}>
+        <Card class="bg-transparent text-transparent min-h-48">
+            <CardHeader>
+                <CardTitle class="text-xl font-bold">content</CardTitle>
+                <CardDescription></CardDescription>
+            </CardHeader>
+        </Card>
+    </Skeleton>
+);
 
 export default QuizItem;
