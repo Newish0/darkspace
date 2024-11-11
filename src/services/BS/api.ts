@@ -1,3 +1,4 @@
+import { extractUuid } from "@/lib/utils";
 import {
     ApiTokenError,
     EnrollmentUrlError,
@@ -60,6 +61,7 @@ export interface IClass {
     description: string;
     color: string;
     imgRefLink: string;
+    imgId: string;
     id: string;
 }
 
@@ -72,6 +74,8 @@ function rawClassToIClass(rawClass: any): IClass {
 
     const imgRefLink =
         rawClass.entities.find((entity: any) => entity.class.includes("course-image"))?.href || "";
+
+    const imgId = extractUuid(imgRefLink, { last: true }) || "";
 
     const link =
         rawClass.entities.find((entity: any) => entity.class.includes("relative-uri"))?.properties
@@ -89,6 +93,7 @@ function rawClassToIClass(rawClass: any): IClass {
         description,
         color,
         imgRefLink,
+        imgId,
         id,
     };
 }
@@ -134,65 +139,18 @@ export async function getEnrollments(): Promise<IClass[]> {
     }
 }
 
-// Define possible image classes
-type ImageClass = "tile" | "banner";
-type ImageDensity = "low-density" | "high-density";
-type ImageSize = "max" | "mid" | "min";
-type BannerWidth = "wide" | "narrow";
-
-function selectImageLink(
-    response: any,
-    imageClass: ImageClass,
-    density: ImageDensity,
-    size: ImageSize,
-    bannerWidth?: BannerWidth
-): string {
-    const link = response.links.find((link: any) => {
-        if (!link.class) return false;
-
-        const matchesClass = link.class.includes(imageClass);
-        const matchesDensity = link.class.includes(density);
-        const matchesSize = link.class.includes(size);
-
-        if (imageClass === "banner") {
-            return (
-                matchesClass && matchesDensity && matchesSize && link.class.includes(bannerWidth!)
-            );
-        } else {
-            return matchesClass && matchesDensity && matchesSize;
-        }
-    });
-
-    if (!link) {
-        throw new ImageFetchError("No matching image link found");
-    }
-
-    return link.href;
-}
-
-// TODO: Refactor to use new API:
-// https://bright.uvic.ca/d2l/api/lp/1.9/courses/{COURSE_ID}/image?height=230&width=540&versionNumber={IMAGE_UUID}
-// NOTE: Image UUID is just the last portion of imgRefLink
-
-export async function getImgFromImgRefLink(
-    imgRefLink: string,
-    imageClass: ImageClass,
-    density: ImageDensity,
-    size: ImageSize,
-    bannerWidth?: BannerWidth
-): Promise<string> {
-    console.log("imgRefLink", imgRefLink);
-
-    try {
-        const response = await fetch(imgRefLink);
-
-        if (!response.ok) return "";
-
-        const data = await response.json();
-        return selectImageLink(data, imageClass, density, size, bannerWidth);
-    } catch (error) {
-        return "";
-    }
+/**
+ * Construct a URL to fetch the banner image for a course.
+ *
+ * @param courseId The course ID.
+ * @param imgId The image ID.
+ * @returns The URL to fetch the image.
+ */
+export function getBannerImageUrl(courseId: string, imgId: string): string {
+    const urlTemplate =
+        "https://bright.uvic.ca/d2l/api/lp/1.9/courses/{{COURSE_ID}}/image?height=230&width=540&versionNumber={{IMAGE_UUID}}";
+    const url = urlTemplate.replace("{{COURSE_ID}}", courseId).replace("{{IMAGE_UUID}}", imgId);
+    return url;
 }
 
 /*

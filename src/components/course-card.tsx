@@ -4,15 +4,13 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { cn } from "@/lib/utils";
 import { BookOpenIcon, CalendarIcon } from "lucide-solid";
 
-import { getImgFromImgRefLink, IClass } from "@/services/BS/api";
+import { getBannerImageUrl, IClass } from "@/services/BS/api";
 import { createResource, Show } from "solid-js";
 import UnsafeHtml from "./unsafe-html";
 import { A } from "@solidjs/router";
 
 export default function CourseCard({ course }: { course: IClass }) {
-    const [bannerImg] = createResource(() =>
-        getImgFromImgRefLink(course.imgRefLink, "banner", "low-density", "mid", "narrow")
-    );
+    const [bannerImg] = createResource(() => getBannerImageUrl(course.id, course.imgId));
 
     const formatDate = (date: string | null) => {
         if (!date) return "N/A";
