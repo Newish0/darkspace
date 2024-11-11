@@ -1,4 +1,4 @@
-import { extractUuid } from "@/lib/utils";
+import { extractUuid } from "@/utils/string";
 import {
     ApiTokenError,
     EnrollmentUrlError,
