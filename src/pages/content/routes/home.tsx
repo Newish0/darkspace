@@ -1,31 +1,23 @@
 import CourseCard from "@/components/course-card";
 import PageWrapper from "@/components/ui/page-wrapper";
 import { getEnrollments } from "@/services/BS/api";
-import { createQuery } from "@tanstack/solid-query";
-import { For, Match, Switch } from "solid-js";
+import { createAsync } from "@solidjs/router";
+import { createEffect, For, Match, Suspense, Switch } from "solid-js";
 
 export default function Home() {
-    const query = createQuery(() => ({
-        queryKey: ["enrollments"],
-        queryFn: getEnrollments,
-    }));
-
+    const enrollments = createAsync(() => getEnrollments());
     // getEnrollments().then((c) => console.log(c));
+
+    createEffect(() => {
+        console.log("HOME: enrollments", enrollments());
+    });
 
     return (
         <PageWrapper title="Dashboard" allowBack={false}>
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                <Switch>
-                    <Match when={query.isPending}>
-                        <p>Loading...</p>
-                    </Match>
-                    <Match when={query.isError}>
-                        <p>Error: {query.error?.message}</p>
-                    </Match>
-                    <Match when={query.isSuccess}>
-                        <For each={query.data}>{(c) => <CourseCard course={c} />}</For>
-                    </Match>
-                </Switch>
+                <Suspense fallback={<div>Loading...</div>}>
+                    <For each={enrollments()}>{(c) => <CourseCard course={c} />}</For>
+                </Suspense>
             </div>
         </PageWrapper>
     );

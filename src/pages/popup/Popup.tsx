@@ -9,6 +9,8 @@ export default function () {
             <Separator />
 
             <p>Brightspace reimagined; an alternative frontend</p>
+
+            <Button>Test</Button>
         </div>
     );
 }

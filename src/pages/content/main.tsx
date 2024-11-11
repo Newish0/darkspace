@@ -4,11 +4,8 @@ import { render } from "solid-js/web";
 
 import { HashRouter } from "@solidjs/router";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import { children, lazy } from "solid-js";
 import RootLayout from "./layouts/base";
-
-const queryClient = new QueryClient();
 
 const routes = {
     path: "/",
@@ -43,13 +40,9 @@ const routes = {
 };
 
 const App = () => {
-    return (
-        <QueryClientProvider client={queryClient}>
-            <HashRouter>{routes}</HashRouter>
-        </QueryClientProvider>
-    );
+    return <HashRouter>{routes}</HashRouter>;
 };
 
 export function renderRoot(root: HTMLElement) {
-    render(App, root);
+    const dispose = render(App, root);
 }

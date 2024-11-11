@@ -1,5 +1,5 @@
-import { A, RouteSectionProps } from "@solidjs/router";
-import { Component, Match, Switch } from "solid-js";
+import { A, createAsync, RouteSectionProps } from "@solidjs/router";
+import { Component, Match, Suspense, Switch } from "solid-js";
 
 import { createSignal, For } from "solid-js";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { Menu, LayoutDashboard, ChevronDown, ChevronRight, Github, Library } from "lucide-solid";
-import { createQuery } from "@tanstack/solid-query";
 import { getEnrollments } from "@/services/BS/api";
 import {
     Accordion,
@@ -26,10 +25,7 @@ import { Toaster } from "solid-sonner";
 const VERSION = import.meta.env.VERSION || "1.0.0";
 
 function NavContent() {
-    const enrollmentQuery = createQuery(() => ({
-        queryKey: ["enrollments"],
-        queryFn: getEnrollments,
-    }));
+    const enrollment = createAsync(() => getEnrollments());
 
     const [isCoursesOpen, setIsCoursesOpen] = createSignal(true);
 
@@ -61,27 +57,19 @@ function NavContent() {
                                 </AccordionTrigger>
                                 <AccordionContent>
                                     <div class="space-y-2 my-2">
-                                        <Switch>
-                                            <Match when={enrollmentQuery.isPending}>
-                                                <p>Loading...</p>
-                                            </Match>
-                                            <Match when={enrollmentQuery.isError}>
-                                                <p>Error: {enrollmentQuery.error?.message}</p>
-                                            </Match>
-                                            <Match when={enrollmentQuery.isSuccess}>
-                                                <For each={enrollmentQuery.data}>
-                                                    {(course) => (
-                                                        <A
-                                                            href={`/courses/${course.id}`}
-                                                            class="block text-sm p-2 rounded-md truncate"
-                                                            activeClass="bg-muted"
-                                                        >
-                                                            {course.name}
-                                                        </A>
-                                                    )}
-                                                </For>
-                                            </Match>
-                                        </Switch>
+                                        <Suspense fallback={<p>Loading...</p>}>
+                                            <For each={enrollment()}>
+                                                {(course) => (
+                                                    <A
+                                                        href={`/courses/${course.id}`}
+                                                        class="block text-sm p-2 rounded-md truncate"
+                                                        activeClass="bg-muted"
+                                                    >
+                                                        {course.name}
+                                                    </A>
+                                                )}
+                                            </For>
+                                        </Suspense>
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>

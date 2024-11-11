@@ -4,11 +4,10 @@ import {
     getQuizzes,
     IAnnouncement,
 } from "@/services/BS/scraper";
-
+import { createAsync } from "@solidjs/router";
 import { A } from "@solidjs/router";
-import { createQuery } from "@tanstack/solid-query";
 import { CalendarIcon } from "lucide-solid";
-import { createEffect, For, JSX, Match, Show, Switch } from "solid-js";
+import { createEffect, For, JSX, Match, Show, Suspense, Switch } from "solid-js";
 import CourseTabs from "./course-tabs";
 import NestedCourseAccordion, {
     NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES,
@@ -25,20 +24,14 @@ export default function CourseHome({
     courseId: string;
     children?: JSX.Element;
 }) {
-    const modulesQuery = createQuery(() => ({
-        queryKey: ["course-modules", courseId],
-        queryFn: () => getCourseModules(courseId),
-    }));
+    const courseModules = createAsync(() => getCourseModules(courseId));
 
-    const announcementsQuery = createQuery(() => ({
-        queryKey: ["course-announcements", courseId],
-        queryFn: () => getCourseAnnouncements(courseId),
-    }));
+    const courseAnnouncements = createAsync(() => getCourseAnnouncements(courseId));
 
-    createEffect(() => {
-        // console.log(modulesQuery.data);
-        // console.log(JSON.stringify(announcementsQuery.data, null, 2));
-    });
+    // createEffect(() => {
+    //     // console.log(modulesQuery.data);
+    //     // console.log(JSON.stringify(announcementsQuery.data, null, 2));
+    // });
 
     return (
         <PageWrapper
@@ -60,22 +53,14 @@ export default function CourseHome({
                                 Home
                             </A>
 
-                            <Switch>
-                                <Match when={modulesQuery.isPending}>
-                                    <p>Loading...</p>
-                                </Match>
-                                <Match when={modulesQuery.isError}>
-                                    <p>Error: {modulesQuery.error?.message}</p>
-                                </Match>
-                                <Match when={modulesQuery.isSuccess}>
-                                    <Show when={modulesQuery.data !== undefined}>
-                                        <NestedCourseAccordion
-                                            modules={modulesQuery.data!}
-                                            courseId={courseId}
-                                        />
-                                    </Show>
-                                </Match>
-                            </Switch>
+                            <Suspense fallback={<p>Loading...</p>}>
+                                <Show when={courseModules()}>
+                                    <NestedCourseAccordion
+                                        modules={courseModules()!}
+                                        courseId={courseId}
+                                    />
+                                </Show>
+                            </Suspense>
                         </div>
                     </div>
                 </ResizablePanel>
@@ -85,21 +70,11 @@ export default function CourseHome({
                         <Show
                             when={children !== undefined}
                             fallback={
-                                <Switch>
-                                    <Match when={announcementsQuery.isPending}>
-                                        <p>Loading...</p>
-                                    </Match>
-                                    <Match when={announcementsQuery.isError}>
-                                        <p>Error: {announcementsQuery.error?.message}</p>
-                                    </Match>
-                                    <Match when={announcementsQuery.isSuccess}>
-                                        <Show when={announcementsQuery.data !== undefined}>
-                                            <AnnouncementList
-                                                announcements={announcementsQuery.data}
-                                            />
-                                        </Show>
-                                    </Match>
-                                </Switch>
+                                <Suspense fallback={<p>Loading...</p>}>
+                                    <Show when={courseAnnouncements()}>
+                                        <AnnouncementList announcements={courseAnnouncements()} />
+                                    </Show>
+                                </Suspense>
                             }
                         >
                             {children}

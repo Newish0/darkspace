@@ -36,6 +36,8 @@ const QuizItem = (props: QuizItemProps) => {
                 return <Clock class="h-5 w-5 text-warning-foreground" />;
             case "not-started":
                 return <AlertCircle class="h-5 w-5 text-error-foreground" />;
+            case "retry-in-progress":
+                return <Clock class="h-5 w-5 text-warning-foreground" />;
             default:
                 return <HelpCircle class="h-5 w-5 text-muted-foreground" />;
         }
@@ -57,7 +59,7 @@ const QuizItem = (props: QuizItemProps) => {
         if (isPastEndDate()) return null;
 
         if (props.submissions && props.submissions.length > 0) {
-            if (props.quiz.status === "in-progress") {
+            if (props.quiz.status === "in-progress" || props.quiz.status === "retry-in-progress") {
                 return (
                     <Button variant="default" size="sm">
                         <Play class="mr-2 h-4 w-4" /> Continue
@@ -102,7 +104,7 @@ const QuizItem = (props: QuizItemProps) => {
                 <CardDescription>
                     <div class="flex items-center space-x-2">
                         {getStatusIcon(props.quiz.status)}
-                        <span class="capitalize">{props.quiz.status || "Unknown"}</span>
+                        <span class="capitalize">{props.quiz.status?.replaceAll("-", " ") || "Unknown"}</span>
                     </div>
                 </CardDescription>
             </CardHeader>

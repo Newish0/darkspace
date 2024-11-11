@@ -403,7 +403,7 @@ export interface IQuizInfo {
     id?: string;
     attempts?: number;
     attemptsAllowed?: number;
-    status?: "completed" | "in-progress" | "not-started";
+    status?: "completed" | "in-progress" | "not-started" | "retry-in-progress";
     submissionsUrl?: string;
 }
 
@@ -511,10 +511,22 @@ function extractQuizSubmissionsUrl(row: Element, quizInfo: IQuizInfo): void {
 
 function determineStatus(row: Element, quizInfo: IQuizInfo): void {
     const feedbackCell = row.querySelector(QI_SELECTORS.FEEDBACK_CELL);
+    const attemptsCell = row.querySelector(QI_SELECTORS.ATTEMPTS_CELL);
+
+    // const inProgress = attemptsCell
+    //     ?.querySelector("img")
+    //     ?.getAttribute("alt")
+    //     ?.toLowerCase()
+    //     .includes("attempt in progress");
+
     if (feedbackCell) {
         const feedbackText = feedbackCell.textContent || "";
         if (feedbackText.toLowerCase().includes("feedback")) {
-            quizInfo.status = "completed";
+            if (row.querySelector(QI_SELECTORS.IN_PROGRESS_IMG)) {
+                quizInfo.status = "retry-in-progress";
+            } else {
+                quizInfo.status = "completed";
+            }
         } else if (row.querySelector(QI_SELECTORS.IN_PROGRESS_IMG)) {
             quizInfo.status = "in-progress";
         } else {

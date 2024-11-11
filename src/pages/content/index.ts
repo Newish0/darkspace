@@ -1,14 +1,28 @@
-import "@/styles/global.css";
 import { renderRoot } from "./main";
 
-function removeAllGivenTags(tagName: string) {
+/* Need to import css inline because we remove all styles from the page */
+import viteCss from "@/styles/global.css?inline";
+
+function removeAllGivenTags(tagName: string, except?: (eln: Element) => boolean) {
     const tags = document.querySelectorAll(tagName);
     for (const tag of tags) {
+        if (except && except(tag as HTMLElement)) continue;
         tag.remove();
     }
 }
 
 function removeBSResources() {
+    // document.documentElement.innerHTML = `
+    //     <!DOCTYPE html>
+    //     <html lang="en">
+    //         <head>
+    //             <meta charset="UTF-8">
+    //             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    //             <title>My Custom Page</title>
+    //         </head>
+    //         <body>
+    //         </body>
+    //     </html>`;
     removeAllGivenTags("iframe");
     removeAllGivenTags("style");
     removeAllGivenTags("link");
@@ -29,6 +43,11 @@ if (EXCLUSION_RULES.some((rule) => rule())) {
     /* Do nothing */
 } else {
     removeBSResources();
+
+    // Inject our styles
+    const style = document.createElement("style");
+    style.innerHTML = viteCss;
+    document.head.appendChild(style);
 
     const root = document.createElement("div");
     root.classList.add(

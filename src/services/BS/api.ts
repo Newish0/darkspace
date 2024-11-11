@@ -170,6 +170,10 @@ function selectImageLink(
     return link.href;
 }
 
+// TODO: Refactor to use new API:
+// https://bright.uvic.ca/d2l/api/lp/1.9/courses/{COURSE_ID}/image?height=230&width=540&versionNumber={IMAGE_UUID}
+// NOTE: Image UUID is just the last portion of imgRefLink
+
 export async function getImgFromImgRefLink(
     imgRefLink: string,
     imageClass: ImageClass,
@@ -177,16 +181,17 @@ export async function getImgFromImgRefLink(
     size: ImageSize,
     bannerWidth?: BannerWidth
 ): Promise<string> {
+    console.log("imgRefLink", imgRefLink);
+
     try {
         const response = await fetch(imgRefLink);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+
+        if (!response.ok) return "";
+
         const data = await response.json();
         return selectImageLink(data, imageClass, density, size, bannerWidth);
     } catch (error) {
-        console.error("Error fetching image link:", error);
-        throw new ImageFetchError("Failed to fetch image link");
+        return "";
     }
 }
 
