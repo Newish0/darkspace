@@ -1,17 +1,6 @@
+// ======= Types & Interfaces =======
 import DOMPurify from "dompurify";
 import { getUnstableCourseContent, UnstableModule } from "./api";
-
-const COURSE_MODULE_URL = "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/Home";
-
-// Course Modules
-const COURSE_MODULE_MODULE_TREE_SELECTOR = "#D2L_LE_Content_TreeBrowser";
-
-// Overview, Bookmarks, and Course Schedule
-const COURSE_MODULE_PLUGIN_TREE_SELECTOR = "#ContentPluginTree";
-
-const MODULE_ITEM_ID_PATTERN = "TreeItem";
-
-const MODULE_ITEM_SELECTOR = `[id^="${MODULE_ITEM_ID_PATTERN}"]`;
 
 export interface IModule {
     name: string;
@@ -23,18 +12,128 @@ export interface IModule {
     children?: IModule[];
 }
 
-function htmlToDocument(unsafeHtml: string, sanitize = false) {
+export interface IAnnouncement {
+    html: string;
+    title?: string;
+    dateTime?: string;
+}
+
+export interface IModuleTopic {
+    id: string;
+    name?: string;
+    type?: "File" | "Link" | "ContentService" | string;
+    downloadable?: boolean;
+    url: string;
+}
+
+export interface IModuleDetails {
+    id: string;
+    name?: string;
+    topics: IModuleTopic[];
+    description?: {
+        text?: string;
+        html?: string;
+    };
+}
+
+export interface IQuizSubmission {
+    quizId: string;
+    attemptNumber: number;
+    attemptId: string;
+    attemptUrl: string;
+    gradePercentage?: number;
+    totalPoints?: number;
+    points?: number;
+    lateNote?: string;
+}
+
+export interface IQuizInfo {
+    name: string;
+    dueDate?: string;
+    startDate?: string;
+    endDate?: string;
+    url?: string;
+    id?: string;
+    attempts?: number;
+    attemptsAllowed?: number;
+    status?: "completed" | "in-progress" | "not-started" | "retry-in-progress";
+    submissionsUrl?: string;
+}
+
+// ======= Constants =======
+const URL_CONFIG = {
+    BASE: "https://bright.uvic.ca",
+    COURSE_MODULE: "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/Home",
+    COURSE_ANNOUNCEMENTS: "https://bright.uvic.ca/d2l/lms/news/main.d2l?ou={{CLASS_ID}}",
+    MODULE_CONTENT:
+        "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc",
+    CONTENT_SERVICE: "https://bright.uvic.ca/d2l/le/contentservice/topic/{{TOPIC_ID}}/launch",
+    QUIZ_SUMMARY:
+        "https://bright.uvic.ca/d2l/lms/quizzing/user/quiz_summary.d2l?qi={{QUIZ_ID}}&ou={{COURSE_ID}}",
+    QUIZZES_LIST: "https://bright.uvic.ca/d2l/lms/quizzing/user/quizzes_list.d2l?ou={{COURSE_ID}}",
+};
+
+const SELECTORS = {
+    MODULE: {
+        TREE: "#D2L_LE_Content_TreeBrowser",
+        PLUGIN_TREE: "#ContentPluginTree",
+        ITEM_ID_PATTERN: "TreeItem",
+        ITEM: `[id^="TreeItem"]`,
+    },
+    ANNOUNCEMENTS: {
+        MAIN: "#RT_Body > d2l-html-block",
+    },
+    QUIZ: {
+        ROW: 'table[type="list"] tr:not(.d_gh):not([colspan])',
+        NAME_LINK: "a.d2l-link.d2l-link-inline",
+        DATE_SPAN: ".ds_b",
+        ATTEMPTS_CELL: "td.d_gn.d_gc",
+        FEEDBACK_CELL: "td.d_gn",
+        IN_PROGRESS_IMG: 'img[alt="You have an attempt in progress"]',
+    },
+    QUIZ_SUBMISSION: {
+        FORM: "form",
+        ATTEMPT_TABLE: "table#z_c",
+        ATTEMPT_ROW: "table#z_c tr:not(.d_gh)",
+        ATTEMPT_LINK: "a.d2l-link",
+        LATE_NOTE: ".ds_a",
+        GRADE_CELL: "td.d_gn",
+        POINTS_LABEL: 'label[id^="z_"]',
+        TOTAL_POINTS_LABEL: 'label[id^="z_"]:nth-of-type(3)',
+        PERCENTAGE_LABEL: 'label[id^="z_"]:last-child',
+    },
+};
+
+const REGEX_PATTERNS = {
+    QUIZ_ID: /qi=(\d+)/,
+    ATTEMPT_ID: /ai=(\d+)/,
+    COURSE_ID: /ou=(\d+)/,
+    DUE_DATE: /Due on (.*?)(?=$|\n)/,
+    AVAILABLE_DATE: /Available on (.*?) until (.*?)(?=$|\n)/,
+};
+
+const D2L_PARTIAL_WHILE1 = "while(1);";
+
+// ======= Utility Functions =======
+function htmlToDocument(unsafeHtml: string, sanitize = false): Document {
     const parser = new DOMParser();
     const sanitizedHtml = sanitize ? DOMPurify.sanitize(unsafeHtml) : unsafeHtml;
     return parser.parseFromString(sanitizedHtml, "text/html");
 }
 
+function parseD2LPartial(d2lPartial: string): any {
+    if (!d2lPartial.startsWith(D2L_PARTIAL_WHILE1)) {
+        throw new Error("Failed to parse Lit partial: while(1) not found");
+    }
+    return JSON.parse(d2lPartial.substring(D2L_PARTIAL_WHILE1.length));
+}
+
 function extractModuleInfo(element: Element): IModule {
-    const idElement = element.querySelector(MODULE_ITEM_SELECTOR);
+    const idElement = element.querySelector(SELECTORS.MODULE.ITEM);
 
     const module: IModule = {
         name: idElement?.querySelector("div")?.textContent || "",
-        moduleId: idElement ? idElement.id.replace(MODULE_ITEM_ID_PATTERN, "") : "",
+        moduleId: idElement ? idElement.id.replace(SELECTORS.MODULE.ITEM_ID_PATTERN, "") : "",
     };
 
     const childrenContainer = element.querySelector("ul");
@@ -53,7 +152,7 @@ function extractModuleInfo(element: Element): IModule {
 
 function getAdditionalModules(doc: Document): IModule[] {
     // Add Overview, Bookmarks, and Course Schedule modules
-    const additionalModuleTree = doc.querySelector(COURSE_MODULE_PLUGIN_TREE_SELECTOR);
+    const additionalModuleTree = doc.querySelector(SELECTORS.MODULE.PLUGIN_TREE);
 
     const additionalModules = Array.from(additionalModuleTree?.children ?? [])
         .filter((child) => child.tagName === "LI")
@@ -63,7 +162,7 @@ function getAdditionalModules(doc: Document): IModule[] {
 }
 
 function getRootModules(doc: Document): IModule[] {
-    const moduleTree = doc.querySelector(COURSE_MODULE_MODULE_TREE_SELECTOR);
+    const moduleTree = doc.querySelector(SELECTORS.MODULE.TREE);
 
     const rootModules = Array.from(moduleTree?.children ?? [])
         .filter((child) => child.tagName === "LI")
@@ -73,8 +172,8 @@ function getRootModules(doc: Document): IModule[] {
 }
 
 export async function getCourseModules(courseId: string, useUnstable = true): Promise<IModule[]> {
-    const html = await fetch(COURSE_MODULE_URL.replace("{{COURSE_ID}}", courseId)).then((res) =>
-        res.text()
+    const html = await fetch(URL_CONFIG.COURSE_MODULE.replace("{{COURSE_ID}}", courseId)).then(
+        (res) => res.text()
     );
     const doc = htmlToDocument(html);
 
@@ -104,10 +203,6 @@ export async function getCourseModules(courseId: string, useUnstable = true): Pr
     return [...additionalModules, ...rootModules];
 }
 
-const COURSE_ANNOUNCEMENTS_URL = "https://bright.uvic.ca/d2l/lms/news/main.d2l?ou={{CLASS_ID}}";
-
-const COURSE_ANNOUNCEMENTS_SELECTOR = "#RT_Body > d2l-html-block";
-
 export interface IAnnouncement {
     html: string;
     title?: string;
@@ -122,9 +217,9 @@ export interface IAnnouncement {
  *
  */
 export async function getCourseAnnouncements(courseId: string): Promise<IAnnouncement[]> {
-    const htmlString = await fetch(COURSE_ANNOUNCEMENTS_URL.replace("{{CLASS_ID}}", courseId)).then(
-        (res) => res.text()
-    );
+    const htmlString = await fetch(
+        URL_CONFIG.COURSE_ANNOUNCEMENTS.replace("{{CLASS_ID}}", courseId)
+    ).then((res) => res.text());
     const doc = htmlToDocument(htmlString, false);
 
     /**
@@ -143,7 +238,7 @@ export async function getCourseAnnouncements(courseId: string): Promise<IAnnounc
      *     </td>
      * </tr>
      */
-    return Array.from(doc.querySelectorAll(COURSE_ANNOUNCEMENTS_SELECTOR)).map((eln) => {
+    return Array.from(doc.querySelectorAll(SELECTORS.ANNOUNCEMENTS.MAIN)).map((eln) => {
         const html = eln.getAttribute("html");
         const currentRow = eln.closest("tr"); // closest <tr> parent that contains the current element
         const previousRow = currentRow?.previousElementSibling; // the previous <tr> tag
@@ -160,49 +255,15 @@ export async function getCourseAnnouncements(courseId: string): Promise<IAnnounc
     });
 }
 
-const D2L_PARTIAL_WHILE1 = "while(1);";
-
-function parseD2LPartial(d2lPartial: string) {
-    const while1Index = d2lPartial.indexOf(D2L_PARTIAL_WHILE1);
-
-    if (while1Index !== 0) {
-        throw new Error("Failed to parse Lit partial: while(1) not found");
-    }
-
-    const json = d2lPartial.substring(D2L_PARTIAL_WHILE1.length);
-
-    return JSON.parse(json);
-}
-
-export interface IModuleTopic {
-    id: string;
-    name?: string;
-    type?: "File" | "Link" | "ContentService" | string;
-    downloadable?: boolean;
-    url: string;
-}
-
-export interface IModuleDetails {
-    id: string;
-    name?: string;
-    topics: IModuleTopic[];
-    description?: {
-        text?: string;
-        html?: string;
-    };
-}
-
-// const MODULE_CONTENT_URL =
-//     "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/ModuleDetailsPartial?mId={{MODULE_ID}}&_d2l_prc&writeHistoryEntry=1";
-const MODULE_CONTENT_URL =
-    "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc";
-
 async function getModuleContentFromD2LPartial(
     courseId: string,
     moduleId: string
 ): Promise<IModuleDetails> {
     const d2lPartial = await fetch(
-        MODULE_CONTENT_URL.replace("{{COURSE_ID}}", courseId).replace("{{MODULE_ID}}", moduleId)
+        URL_CONFIG.MODULE_CONTENT.replace("{{COURSE_ID}}", courseId).replace(
+            "{{MODULE_ID}}",
+            moduleId
+        )
     ).then((res) => res.text());
 
     const d2lPartialParsed = parseD2LPartial(d2lPartial);
@@ -244,8 +305,6 @@ async function getModuleContentFromD2LPartial(
     };
 }
 
-const CONTENT_SVC_URL = "https://bright.uvic.ca/d2l/le/contentservice/topic/{{TOPIC_ID}}/launch";
-
 export async function getModuleContent(
     courseId: string,
     moduleId: string,
@@ -285,7 +344,10 @@ export async function getModuleContent(
 
                     if (t.IsContentServiceAudioOrVideo) {
                         // url = t.ContentUrl;
-                        url = CONTENT_SVC_URL.replace("{{TOPIC_ID}}", t.TopicId.toString());
+                        url = URL_CONFIG.CONTENT_SERVICE.replace(
+                            "{{TOPIC_ID}}",
+                            t.TopicId.toString()
+                        );
                     }
 
                     const topic = {
@@ -307,67 +369,40 @@ export async function getModuleContent(
     }
 }
 
-export interface IQuizSubmission {
-    quizId: string;
-    attemptNumber: number;
-    attemptId: string;
-    attemptUrl: string;
-    gradePercentage?: number;
-    totalPoints?: number;
-    points?: number;
-    lateNote?: string;
-}
-
-const QIAI_SELECTORS = {
-    FORM: "form",
-    ATTEMPT_TABLE: "table#z_c",
-    ATTEMPT_ROW: "table#z_c tr:not(.d_gh)",
-    ATTEMPT_LINK: "a.d2l-link",
-    LATE_NOTE: ".ds_a",
-    GRADE_CELL: "td.d_gn",
-    POINTS_LABEL: 'label[id^="z_"]',
-    TOTAL_POINTS_LABEL: 'label[id^="z_"]:nth-of-type(3)',
-    PERCENTAGE_LABEL: 'label[id^="z_"]:last-child',
-};
-
-const QIAI_REGEX = {
-    QUIZ_ID: /qi=(\d+)/,
-    ATTEMPT_ID: /ai=(\d+)/,
-};
-
-const URL_BASE = "https://bright.uvic.ca";
-
 function extractQuizSubmissions(html: string): IQuizSubmission[] {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     const submissions: IQuizSubmission[] = [];
 
-    const form = doc.querySelector(QIAI_SELECTORS.FORM);
-    const quizId = form?.getAttribute("action")?.match(QIAI_REGEX.QUIZ_ID)?.[1] || "";
+    const form = doc.querySelector(SELECTORS.QUIZ_SUBMISSION.FORM);
+    const quizId = form?.getAttribute("action")?.match(REGEX_PATTERNS.QUIZ_ID)?.[1] || "";
 
-    const rows = doc.querySelectorAll(QIAI_SELECTORS.ATTEMPT_ROW);
+    const rows = doc.querySelectorAll(SELECTORS.QUIZ_SUBMISSION.ATTEMPT_ROW);
 
     rows.forEach((row, index) => {
         if (!(row instanceof HTMLTableRowElement)) return;
         if (row.cells.length < 2) return;
 
-        const attemptLink = row.querySelector(QIAI_SELECTORS.ATTEMPT_LINK);
+        const attemptLink = row.querySelector(SELECTORS.QUIZ_SUBMISSION.ATTEMPT_LINK);
         if (!attemptLink) return;
 
-        const attemptUrl = new URL(attemptLink.getAttribute("href") || "", URL_BASE).href;
-        const attemptId = attemptUrl.match(QIAI_REGEX.ATTEMPT_ID)?.[1] || "";
+        const attemptUrl = new URL(attemptLink.getAttribute("href") || "", URL_CONFIG.BASE).href;
+        const attemptId = attemptUrl.match(REGEX_PATTERNS.ATTEMPT_ID)?.[1] || "";
         const attemptNumber = index + 1;
 
         const lateNote =
-            row.querySelector(QIAI_SELECTORS.LATE_NOTE)?.textContent?.trim() || undefined;
+            row.querySelector(SELECTORS.QUIZ_SUBMISSION.LATE_NOTE)?.textContent?.trim() ||
+            undefined;
 
-        const gradeCell = row.querySelector(QIAI_SELECTORS.GRADE_CELL);
-        const pointsLabel = gradeCell?.querySelector(QIAI_SELECTORS.POINTS_LABEL)?.textContent;
+        const gradeCell = row.querySelector(SELECTORS.QUIZ_SUBMISSION.GRADE_CELL);
+        const pointsLabel = gradeCell?.querySelector(
+            SELECTORS.QUIZ_SUBMISSION.POINTS_LABEL
+        )?.textContent;
         const totalPointsLabel = gradeCell?.querySelector(
-            QIAI_SELECTORS.TOTAL_POINTS_LABEL
+            SELECTORS.QUIZ_SUBMISSION.TOTAL_POINTS_LABEL
         )?.textContent;
         const percentageLabel = gradeCell?.querySelector(
-            QIAI_SELECTORS.PERCENTAGE_LABEL
+            SELECTORS.QUIZ_SUBMISSION.PERCENTAGE_LABEL
         )?.textContent;
 
         const points = pointsLabel ? parseFloat(pointsLabel) : undefined;
@@ -394,45 +429,9 @@ export async function getQuizSubmissionsFromUrl(url: string): Promise<IQuizSubmi
     return extractQuizSubmissions(html);
 }
 
-export interface IQuizInfo {
-    name: string;
-    dueDate?: string;
-    startDate?: string;
-    endDate?: string;
-    url?: string;
-    id?: string;
-    attempts?: number;
-    attemptsAllowed?: number;
-    status?: "completed" | "in-progress" | "not-started" | "retry-in-progress";
-    submissionsUrl?: string;
-}
-
-// Constants to avoid magic strings
-const QI_SELECTORS = {
-    QUIZ_ROW: 'table[type="list"] tr:not(.d_gh):not([colspan])',
-    NAME_LINK: "a.d2l-link.d2l-link-inline",
-    DATE_SPAN: ".ds_b",
-    ATTEMPTS_CELL: "td.d_gn.d_gc",
-    FEEDBACK_CELL: "td.d_gn",
-    IN_PROGRESS_IMG: 'img[alt="You have an attempt in progress"]',
-};
-
-const QI_REGEX = {
-    QUIZ_ID: /GoToQuiz\((\d+)/,
-    COURSE_ID: /ou=(\d+)/,
-    DUE_DATE: /Due on (.*?)(?=$|\n)/,
-    AVAILABLE_DATE: /Available on (.*?) until (.*?)(?=$|\n)/,
-};
-
-const QI_URL_TEMPLATE = {
-    QUIZ_SUMMARY:
-        "https://bright.uvic.ca/d2l/lms/quizzing/user/quiz_summary.d2l?qi={{QUIZ_ID}}&ou={{COURSE_ID}}",
-    QUIZZES_LIST: "https://bright.uvic.ca/d2l/lms/quizzing/user/quizzes_list.d2l?ou={{COURSE_ID}}",
-};
-
 function extractQuizInfo(htmlString: string): IQuizInfo[] {
     const document = htmlToDocument(htmlString);
-    const quizRows = document.querySelectorAll(QI_SELECTORS.QUIZ_ROW);
+    const quizRows = document.querySelectorAll(SELECTORS.QUIZ.ROW);
 
     console.log("Found", quizRows.length, "quizzes");
 
@@ -450,18 +449,18 @@ function extractQuizInfo(htmlString: string): IQuizInfo[] {
 }
 
 function extractNameAndUrl(row: Element, quizInfo: IQuizInfo, document: Document): void {
-    const nameLink = row.querySelector(QI_SELECTORS.NAME_LINK);
+    const nameLink = row.querySelector(SELECTORS.QUIZ.NAME_LINK);
     if (nameLink) {
         quizInfo.name = nameLink.textContent?.trim() || "";
         const onclick = nameLink.getAttribute("onclick");
-        const idMatch = onclick?.match(QI_REGEX.QUIZ_ID);
+        const idMatch = onclick?.match(REGEX_PATTERNS.QUIZ_ID);
         if (idMatch) {
             quizInfo.id = idMatch[1];
             const courseId = document
                 .querySelector("form")
                 ?.getAttribute("action")
-                ?.match(QI_REGEX.COURSE_ID)?.[1];
-            quizInfo.url = QI_URL_TEMPLATE.QUIZ_SUMMARY.replace("{{QUIZ_ID}}", quizInfo.id).replace(
+                ?.match(REGEX_PATTERNS.COURSE_ID)?.[1];
+            quizInfo.url = URL_CONFIG.QUIZ_SUMMARY.replace("{{QUIZ_ID}}", quizInfo.id).replace(
                 "{{COURSE_ID}}",
                 courseId || ""
             );
@@ -470,14 +469,14 @@ function extractNameAndUrl(row: Element, quizInfo: IQuizInfo, document: Document
 }
 
 function extractDates(row: Element, quizInfo: IQuizInfo): void {
-    const dateSpan = row.querySelector(QI_SELECTORS.DATE_SPAN);
+    const dateSpan = row.querySelector(SELECTORS.QUIZ.DATE_SPAN);
     if (dateSpan) {
         const dateText = dateSpan.textContent || "";
-        const dueDateMatch = dateText.match(QI_REGEX.DUE_DATE);
+        const dueDateMatch = dateText.match(REGEX_PATTERNS.DUE_DATE);
         if (dueDateMatch) {
             quizInfo.dueDate = dueDateMatch[1].trim();
         }
-        const availableMatch = dateText.match(QI_REGEX.AVAILABLE_DATE);
+        const availableMatch = dateText.match(REGEX_PATTERNS.AVAILABLE_DATE);
         if (availableMatch) {
             quizInfo.startDate = availableMatch[1].trim();
             quizInfo.endDate = availableMatch[2].trim();
@@ -486,7 +485,7 @@ function extractDates(row: Element, quizInfo: IQuizInfo): void {
 }
 
 function extractAttempts(row: Element, quizInfo: IQuizInfo): void {
-    const attemptsCell = row.querySelector(QI_SELECTORS.ATTEMPTS_CELL);
+    const attemptsCell = row.querySelector(SELECTORS.QUIZ.ATTEMPTS_CELL);
     if (attemptsCell) {
         const attemptsText = attemptsCell.textContent || "";
         const [attempts, attemptsAllowed] = attemptsText.split("/").map((s) => s.trim());
@@ -499,19 +498,19 @@ function extractAttempts(row: Element, quizInfo: IQuizInfo): void {
 }
 
 function extractQuizSubmissionsUrl(row: Element, quizInfo: IQuizInfo): void {
-    const feedbackCell = row.querySelector(QI_SELECTORS.FEEDBACK_CELL);
+    const feedbackCell = row.querySelector(SELECTORS.QUIZ.FEEDBACK_CELL);
 
     if (feedbackCell) {
         const url = feedbackCell.querySelector("a")?.getAttribute("href");
         if (url) {
-            quizInfo.submissionsUrl = new URL(url, URL_BASE).href;
+            quizInfo.submissionsUrl = new URL(url, URL_CONFIG.BASE).href;
         }
     }
 }
 
 function determineStatus(row: Element, quizInfo: IQuizInfo): void {
-    const feedbackCell = row.querySelector(QI_SELECTORS.FEEDBACK_CELL);
-    const attemptsCell = row.querySelector(QI_SELECTORS.ATTEMPTS_CELL);
+    const feedbackCell = row.querySelector(SELECTORS.QUIZ.FEEDBACK_CELL);
+    const attemptsCell = row.querySelector(SELECTORS.QUIZ.ATTEMPTS_CELL);
 
     // const inProgress = attemptsCell
     //     ?.querySelector("img")
@@ -522,12 +521,12 @@ function determineStatus(row: Element, quizInfo: IQuizInfo): void {
     if (feedbackCell) {
         const feedbackText = feedbackCell.textContent || "";
         if (feedbackText.toLowerCase().includes("feedback")) {
-            if (row.querySelector(QI_SELECTORS.IN_PROGRESS_IMG)) {
+            if (row.querySelector(SELECTORS.QUIZ.IN_PROGRESS_IMG)) {
                 quizInfo.status = "retry-in-progress";
             } else {
                 quizInfo.status = "completed";
             }
-        } else if (row.querySelector(QI_SELECTORS.IN_PROGRESS_IMG)) {
+        } else if (row.querySelector(SELECTORS.QUIZ.IN_PROGRESS_IMG)) {
             quizInfo.status = "in-progress";
         } else {
             quizInfo.status = "not-started";
@@ -536,7 +535,7 @@ function determineStatus(row: Element, quizInfo: IQuizInfo): void {
 }
 
 export async function getQuizzes(courseId: string): Promise<IQuizInfo[]> {
-    const url = QI_URL_TEMPLATE.QUIZZES_LIST.replace("{{COURSE_ID}}", courseId);
+    const url = URL_CONFIG.QUIZZES_LIST.replace("{{COURSE_ID}}", courseId);
     const html = await fetch(url).then((res) => res.text());
     return extractQuizInfo(html);
 }
