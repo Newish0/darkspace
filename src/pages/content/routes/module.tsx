@@ -24,7 +24,7 @@ const Module = () => {
     const moduleContent = createAsyncCached(
         () => getModuleContent(params.courseId, params.moduleId),
         {
-            keys: ["moduleContent", params.courseId, params.moduleId],
+            keys: () => ["moduleContent", params.courseId, params.moduleId],
         }
     );
 

@@ -8,7 +8,7 @@ import { query } from "@solidjs/router/dist/data/query";
 import { createEffect, For, Match, Suspense, Switch } from "solid-js";
 
 export default function Home() {
-    const enrollments = createAsyncCached(() => getEnrollments(), { keys: ["enrollments"] });
+    const enrollments = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
 
     createEffect(() => {
         console.log("HOME: enrollments", enrollments());

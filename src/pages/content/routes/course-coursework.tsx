@@ -16,7 +16,7 @@ import { createAsyncCached } from "@/hooks/async-cached";
 const CourseCoursework = () => {
     const params = useParams<{ courseId: string }>();
     const quizzes = createAsyncCached(() => getQuizzes(params.courseId), {
-        keys: ["quizzes", params.courseId],
+        keys: () => ["quizzes", params.courseId],
     });
 
     return (

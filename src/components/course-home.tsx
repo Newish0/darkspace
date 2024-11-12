@@ -27,11 +27,11 @@ export default function CourseHome({
     children?: JSX.Element;
 }) {
     const courseModules = createAsyncCached(() => getCourseModules(courseId), {
-        keys: ["course-modules", courseId],
+        keys: () => ["course-modules", courseId],
     });
 
     const courseAnnouncements = createAsyncCached(() => getCourseAnnouncements(courseId), {
-        keys: ["announcements", courseId],
+        keys: () => ["announcements", courseId],
     });
 
     // createEffect(() => {

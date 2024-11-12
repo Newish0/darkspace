@@ -40,7 +40,7 @@ function getKey(keys: string[]) {
 
 type CreateAsyncCachedOptions = {
     name?: string;
-    keys: string[];
+    keys: () => string[];
     deferStream?: boolean;
 };
 
@@ -51,17 +51,26 @@ type CreateAsyncCachedOptions = {
  * @returns The cached async function
  */
 export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncCachedOptions) {
-    const key = getKey(options.keys);
+    const key = () => getKey(options.keys());
+
+    const [currentKey, setCurrentKey] = createSignal(key());
 
     // Workaround to force recreation of `createAsync`
     const [useCache, setUseCache] = createSignal(true);
     const [cachedData, setCachedData] = createSignal<T | undefined>(undefined);
 
+    createEffect(() => {
+        if (key() !== currentKey()) {
+            setCurrentKey(key());
+            setUseCache(true);
+        }
+    });
+
     const data = createAsync(
         async () => {
             // Workaround to force recreation of `createAsync`
             if (useCache()) {
-                const cachedValue = await getFromCache<T>(key);
+                const cachedValue = await getFromCache<T>(key());
                 if (cachedValue) {
                     setCachedData(() => cachedValue);
 
@@ -73,7 +82,7 @@ export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncC
 
             // Call the function and cache the result
             const result = await fn();
-            await setInCache(key, result);
+            await setInCache(key(), result);
             return result;
         },
         {
