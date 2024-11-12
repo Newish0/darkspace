@@ -1,5 +1,5 @@
 import { A, createAsync, RouteSectionProps } from "@solidjs/router";
-import { Component, ErrorBoundary, Match, Suspense, Switch } from "solid-js";
+import { Component, ErrorBoundary, Match, Show, Suspense, Switch } from "solid-js";
 
 import { createSignal, For } from "solid-js";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,15 @@ const VERSION = import.meta.env.VERSION || "1.0.0";
 function NavContent() {
     const enrollment = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
 
-    const [isCoursesOpen, setIsCoursesOpen] = createSignal(true);
+    const [showAllCourses, setShowAllCourses] = createSignal(false);
 
-    const toggleCourses = () => setIsCoursesOpen(!isCoursesOpen());
+    const filteredEnrollments = () => {
+        if (showAllCourses()) {
+            return enrollment();
+        } else {
+            return enrollment()?.slice(0, 10);
+        }
+    };
 
     return (
         <div class="flex flex-col h-full">
@@ -61,10 +67,10 @@ function NavContent() {
                                 <AccordionContent>
                                     <div class="space-y-2 my-2">
                                         <ControlledSuspense
-                                            hasContent={!!enrollment()}
+                                            hasContent={!!filteredEnrollments()}
                                             fallback={<p>Loading...</p>}
                                         >
-                                            <For each={enrollment()}>
+                                            <For each={filteredEnrollments()}>
                                                 {(course) => (
                                                     <A
                                                         href={`/courses/${course.id}`}
@@ -75,36 +81,22 @@ function NavContent() {
                                                     </A>
                                                 )}
                                             </For>
+
+                                            <Show when={!showAllCourses()}>
+                                                <Button
+                                                    onClick={() => setShowAllCourses(true)}
+                                                    variant="link"
+                                                    size="sm"
+                                                    class="text-muted-foreground text-center w-full"
+                                                >
+                                                    Show all {enrollment()?.length} courses
+                                                </Button>
+                                            </Show>
                                         </ControlledSuspense>
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
-
-                        {/* <button
-                            onClick={toggleCourses}
-                            class="flex items-center justify-between w-full text-sm font-medium"
-                        >
-                            Courses
-                            {isCoursesOpen() ? (
-                                <ChevronDown class="h-4 w-4" />
-                            ) : (
-                                <ChevronRight class="h-4 w-4" />
-                            )}
-                        </button>
-                        {isCoursesOpen() && (
-                            <ul class="mt-2 ml-4 space-y-1">
-                                <For each={courses}>
-                                    {(course) => (
-                                        <li>
-                                            <a href={`/courses/${course.id}`} class="text-sm">
-                                                {course.name}
-                                            </a>
-                                        </li>
-                                    )}
-                                </For>
-                            </ul>
-                        )} */}
                     </div>
                 </nav>
             </ScrollArea>
@@ -128,7 +120,7 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
     return (
         <div class="flex h-screen overflow-hidden">
             {/* Desktop view */}
-            <aside class="flex-shrink-0 hidden lg:flex flex-col w-64 border-r">
+            <aside class="flex-shrink-0 flex-grow-0 hidden lg:flex flex-col w-56 border-r">
                 <NavContent />
             </aside>
 

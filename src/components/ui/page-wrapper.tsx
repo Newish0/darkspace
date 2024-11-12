@@ -32,8 +32,12 @@ const PageWrapper: Component<RouteSectionProps> = (props) => {
                     <h1 class="text-2xl font-semibold">{props.title}</h1>
                 </div>
 
-                <div>{props.centerElement}</div>
+                <div class="hidden md:block">{props.centerElement}</div>
                 <div>{props.rightElement}</div>
+            </div>
+
+            <div class="flex justify-center my-2 md:hidden">
+                <div>{props.centerElement}</div>
             </div>
 
             <Separator class="my-2" />

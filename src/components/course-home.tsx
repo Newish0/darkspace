@@ -106,7 +106,7 @@ function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }
             <div class="h-full flex-shrink-1 overflow-auto p-4 space-y-4">
                 <For each={announcements}>
                     {(a) => (
-                        <div class="rounded-lg border p-2">
+                        <div class="rounded-lg border p-4">
                             <div class="flex flex-wrap justify-between items-center">
                                 <h3 class="text-xl font-medium">{a.title}</h3>
                                 <div class="flex items-center text-sm text-muted-foreground">

@@ -26,7 +26,6 @@ const CourseCoursework = () => {
                 allowBack={true}
                 centerElement={<CourseTabs courseId={params.courseId} value="coursework" />}
             >
-                <p>Course ID: {params.courseId}</p>
                 <ControlledSuspense hasContent={!!quizzes()} fallback={<QuizListSkeleton />}>
                     <QuizList quizzes={quizzes()} />
                 </ControlledSuspense>
