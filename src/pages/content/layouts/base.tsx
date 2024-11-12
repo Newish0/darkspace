@@ -43,7 +43,7 @@ function NavContent() {
     return (
         <div class="flex flex-col h-full">
             <div class="p-4">
-                <h2 class="text-lg font-semibold">Logo</h2>
+                <h2 class="text-lg font-semibold p-2">Darkspace</h2>
             </div>
             <ScrollArea class="flex-1">
                 <nav class="flex flex-col gap-2 p-4">

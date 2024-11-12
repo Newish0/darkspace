@@ -23,27 +23,18 @@ function removeBSResources() {
             <body>
             </body>
         </html>`;
-    // removeAllGivenTags("iframe");
-    // removeAllGivenTags("style");
-    // removeAllGivenTags("link");
-    // removeAllGivenTags("script");
+    // // removeAllGivenTags("iframe");
+    // // removeAllGivenTags("style");
+    // // removeAllGivenTags("link");
+    // // removeAllGivenTags("script");
 
     // Hide everything that was on the page
-    for (const eln of document.body.children) {
+    for (const eln of document.body?.children) {
         if (eln instanceof HTMLElement) eln.style.display = "none";
     }
 }
 
-const EXCLUSION_RULES = [
-    () => window.location.pathname.indexOf("/content/") == 0, // Don't run in content pages
-    () => window.self !== window.top, // Don't run in an iframe
-];
-
-if (EXCLUSION_RULES.some((rule) => rule())) {
-    /* Do nothing */
-} else {
-    removeBSResources();
-
+function init() {
     // Inject our styles
     const style = document.createElement("style");
     style.innerHTML = viteCss;
@@ -67,4 +58,16 @@ if (EXCLUSION_RULES.some((rule) => rule())) {
     // document.body.style.overflow = "hidden";
 
     renderRoot(root);
+}
+
+const EXCLUSION_RULES = [
+    () => window.location.pathname.indexOf("/content/") == 0, // Don't run in content pages
+    () => window.self !== window.top, // Don't run in an iframe
+];
+
+if (EXCLUSION_RULES.some((rule) => rule())) {
+    /* Do nothing */
+} else {
+    removeBSResources();
+    init();
 }

@@ -27,21 +27,22 @@ const CourseCoursework = () => {
 
     createEffect(() => {
         console.log("assignments", assignments());
+        console.log("quizzes", quizzes());
     });
 
     const courseWorkItems = () => {
         const items = [
             assignments()?.map((assignment) => ({
-                dueDate: assignment.dueDate,
+                dueDate: new Date(assignment.dueDate ?? ""),
                 eln: <AssignmentItem assignment={assignment} />,
             })),
             quizzes()?.map((quiz) => ({
-                dueDate: quiz.dueDate,
+                dueDate: new Date(quiz.dueDate ?? ""),
                 eln: <QuizListItem quiz={quiz} />,
             })),
         ].flat();
 
-        return items.toSorted((a, b) => `${b?.dueDate}`.localeCompare(`${a?.dueDate}`));
+        return items.toSorted((a, b) => (a?.dueDate.getTime() ?? 0) - (b?.dueDate.getTime() ?? 0));
     };
 
     return (
@@ -51,12 +52,12 @@ const CourseCoursework = () => {
                 allowBack={true}
                 centerElement={<CourseTabs courseId={params.courseId} value="coursework" />}
             >
-                <div class="space-y-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <ControlledSuspense
                         hasContent={!!quizzes() && !!assignments()}
                         fallback={<QuizListSkeleton />}
                     >
-                        <For each={courseWorkItems()}>{(item) => item?.eln}</For>
+                        <For each={courseWorkItems()}>{(item, index) => item?.eln}</For>
                     </ControlledSuspense>
                 </div>
             </PageWrapper>

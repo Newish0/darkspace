@@ -1,3 +1,5 @@
+import { cache } from "@solidjs/router";
+
 /*
  * Using Unstable Content API
  * WARNING: Type inferred by ChatGPT; may be incorrect
@@ -79,8 +81,8 @@ export type CourseContent = {
 const UNSTABLE_COURSE_CONTENT_URL =
     "https://bright.uvic.ca/d2l/api/le/unstable/{{COURSE_ID}}/content/toc?loadDescription=true";
 
-export async function getUnstableCourseContent(courseId: string): Promise<CourseContent> {
+export const getUnstableCourseContent = cache(async (courseId: string): Promise<CourseContent> => {
     const response = await fetch(UNSTABLE_COURSE_CONTENT_URL.replace("{{COURSE_ID}}", courseId));
     const data = await response.json();
     return data;
-}
+}, "unstableCourseContentByCourseId");
