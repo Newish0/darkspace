@@ -1,5 +1,5 @@
 import { A, createAsync, RouteSectionProps } from "@solidjs/router";
-import { Component, Match, Suspense, Switch } from "solid-js";
+import { Component, ErrorBoundary, Match, Suspense, Switch } from "solid-js";
 
 import { createSignal, For } from "solid-js";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Toaster } from "solid-sonner";
+import ErrorMessageAlert from "@/components/ui/error-message-alert";
 
 const VERSION = import.meta.env.VERSION || "1.0.0";
 
@@ -149,7 +150,14 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
                 </div>
 
                 {/* Main content area */}
-                <main class="flex-1 h-full overflow-auto">{props.children}</main>
+                <main class="flex-1 h-full overflow-auto">
+                    {/* Global catch all error boundary. More granular error boundaries should be used inside but this is a good default. */}
+                    <ErrorBoundary
+                        fallback={<div class="p-4"><ErrorMessageAlert onRetry={() => window.location.reload()} /></div>}
+                    >
+                        {props.children}
+                    </ErrorBoundary>
+                </main>
             </div>
         </div>
     );

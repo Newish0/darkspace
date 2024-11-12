@@ -1,4 +1,13 @@
-import { Component, createEffect, For, Match, Show, Suspense, Switch } from "solid-js";
+import {
+    Component,
+    createEffect,
+    ErrorBoundary,
+    For,
+    Match,
+    Show,
+    Suspense,
+    Switch,
+} from "solid-js";
 import Course from "./course";
 import { createAsync, RouteSectionProps, useParams } from "@solidjs/router";
 import CourseHome from "@/components/course-home";
