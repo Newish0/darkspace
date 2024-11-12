@@ -1,6 +1,6 @@
 // ======= Types & Interfaces =======
 import DOMPurify from "dompurify";
-import { getUnstableCourseContent, UnstableModule } from "./api";
+import { getUnstableCourseContent, UnstableModule } from "./api/unstable-module";
 
 export interface IModule {
     name: string;
@@ -430,15 +430,15 @@ export async function getQuizSubmissionsFromUrl(url: string): Promise<IQuizSubmi
 }
 
 function extractQuizInfo(htmlString: string): IQuizInfo[] {
-    const document = htmlToDocument(htmlString);
-    const quizRows = document.querySelectorAll(SELECTORS.QUIZ.ROW);
+    const doc = htmlToDocument(htmlString);
+    const quizRows = doc.querySelectorAll(SELECTORS.QUIZ.ROW);
 
     console.log("Found", quizRows.length, "quizzes");
 
     return Array.from(quizRows).map((row) => {
         const quizInfo: IQuizInfo = { name: "" };
 
-        extractNameAndUrl(row, quizInfo, document);
+        extractNameAndUrl(row, quizInfo, doc);
         extractDates(row, quizInfo);
         extractAttempts(row, quizInfo);
         determineStatus(row, quizInfo);

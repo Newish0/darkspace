@@ -13,7 +13,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { Menu, LayoutDashboard, ChevronDown, ChevronRight, Github, Library } from "lucide-solid";
-import { getEnrollments } from "@/services/BS/api";
+import { getEnrollments } from "@/services/BS/api/enrollment";
 import {
     Accordion,
     AccordionContent,

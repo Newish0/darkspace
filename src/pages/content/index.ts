@@ -12,20 +12,20 @@ function removeAllGivenTags(tagName: string, except?: (eln: Element) => boolean)
 }
 
 function removeBSResources() {
-    // document.documentElement.innerHTML = `
-    //     <!DOCTYPE html>
-    //     <html lang="en">
-    //         <head>
-    //             <meta charset="UTF-8">
-    //             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    //             <title>My Custom Page</title>
-    //         </head>
-    //         <body>
-    //         </body>
-    //     </html>`;
-    removeAllGivenTags("iframe");
-    removeAllGivenTags("style");
-    removeAllGivenTags("link");
+    document.documentElement.innerHTML = `
+        <!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>My Custom Page</title>
+            </head>
+            <body>
+            </body>
+        </html>`;
+    // removeAllGivenTags("iframe");
+    // removeAllGivenTags("style");
+    // removeAllGivenTags("link");
     // removeAllGivenTags("script");
 
     // Hide everything that was on the page

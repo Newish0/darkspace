@@ -1,6 +1,6 @@
 import CourseCard from "@/components/course-card";
 import PageWrapper from "@/components/ui/page-wrapper";
-import { getEnrollments } from "@/services/BS/api";
+import { getEnrollments } from "@/services/BS/api/enrollment";
 import { createAsync } from "@solidjs/router";
 import { createEffect, For, Match, Suspense, Switch } from "solid-js";
 

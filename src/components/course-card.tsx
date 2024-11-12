@@ -4,10 +4,11 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { cn } from "@/lib/utils";
 import { BookOpenIcon, CalendarIcon } from "lucide-solid";
 
-import { getBannerImageUrl, IClass } from "@/services/BS/api";
+import { getBannerImageUrl } from "@/services/BS/api/image";
 import { createResource, Show } from "solid-js";
 import UnsafeHtml from "./unsafe-html";
 import { A } from "@solidjs/router";
+import { IClass } from "@/services/BS/api/enrollment";
 
 export default function CourseCard({ course }: { course: IClass }) {
     const [bannerImg] = createResource(() => getBannerImageUrl(course.id, course.imgId));
