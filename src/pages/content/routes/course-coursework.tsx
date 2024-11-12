@@ -1,4 +1,4 @@
-import { For, Show, Suspense } from "solid-js";
+import { createEffect, For, Show, Suspense } from "solid-js";
 import { useParams, createAsync } from "@solidjs/router";
 import {
     getQuizzes,
@@ -12,12 +12,37 @@ import QuizItem from "@/components/quiz-item";
 import { QuizItemSkeleton } from "@/components/quiz-item";
 import ControlledSuspense from "@/components/controlled-suspense";
 import { createAsyncCached } from "@/hooks/async-cached";
+import { getAssignments } from "@/services/BS/scraper/assignment";
+import AssignmentItem from "@/components/assignment-item";
 
 const CourseCoursework = () => {
     const params = useParams<{ courseId: string }>();
     const quizzes = createAsyncCached(() => getQuizzes(params.courseId), {
         keys: () => ["quizzes", params.courseId],
     });
+
+    const assignments = createAsyncCached(() => getAssignments(params.courseId), {
+        keys: () => ["assignments", params.courseId],
+    });
+
+    createEffect(() => {
+        console.log("assignments", assignments());
+    });
+
+    const courseWorkItems = () => {
+        const items = [
+            assignments()?.map((assignment) => ({
+                dueDate: assignment.dueDate,
+                eln: <AssignmentItem assignment={assignment} />,
+            })),
+            quizzes()?.map((quiz) => ({
+                dueDate: quiz.dueDate,
+                eln: <QuizListItem quiz={quiz} />,
+            })),
+        ].flat();
+
+        return items.toSorted((a, b) => `${b?.dueDate}`.localeCompare(`${a?.dueDate}`));
+    };
 
     return (
         <Show when={params.courseId} fallback={<div>Course ID not found</div>}>
@@ -26,19 +51,18 @@ const CourseCoursework = () => {
                 allowBack={true}
                 centerElement={<CourseTabs courseId={params.courseId} value="coursework" />}
             >
-                <ControlledSuspense hasContent={!!quizzes()} fallback={<QuizListSkeleton />}>
-                    <QuizList quizzes={quizzes()} />
-                </ControlledSuspense>
+                <div class="space-y-4">
+                    <ControlledSuspense
+                        hasContent={!!quizzes() && !!assignments()}
+                        fallback={<QuizListSkeleton />}
+                    >
+                        <For each={courseWorkItems()}>{(item) => item?.eln}</For>
+                    </ControlledSuspense>
+                </div>
             </PageWrapper>
         </Show>
     );
 };
-
-const QuizList = (props: { quizzes?: IQuizInfo[] }) => (
-    <div class="space-y-4">
-        <For each={props.quizzes}>{(quiz) => <QuizListItem quiz={quiz} />}</For>
-    </div>
-);
 
 const QuizListItem = (props: { quiz: IQuizInfo }) => {
     const submissions = createAsync(() => {

@@ -539,3 +539,19 @@ export async function getQuizzes(courseId: string): Promise<IQuizInfo[]> {
     const html = await fetch(url).then((res) => res.text());
     return extractQuizInfo(html);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
