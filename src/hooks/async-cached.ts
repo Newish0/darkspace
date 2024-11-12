@@ -42,6 +42,7 @@ type CreateAsyncCachedOptions = {
     name?: string;
     keys: () => string[];
     deferStream?: boolean;
+    staleTime?: number; // TODO: implement
 };
 
 /**

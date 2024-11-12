@@ -44,7 +44,7 @@ const Module = () => {
     return (
         <CourseHome courseId={params.courseId}>
             <ControlledSuspense hasContent={!!moduleContent()} fallback={<div>Loading...</div>}>
-                <h2 class="text-2xl font-bold border-b px-4 py-2 flex justify-between items-center">
+                <h2 class="text-xl font-bold border-b px-4 py-2 flex justify-between items-center">
                     {moduleContent()?.name}
 
                     {/* <Show when={moduleContent()?.content.length}>

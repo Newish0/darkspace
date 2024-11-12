@@ -47,7 +47,7 @@ const QuizListItem = (props: { quiz: IQuizInfo }) => {
             return getQuizSubmissionsFromUrl(props.quiz.submissionsUrl);
         }
         return Promise.resolve([] as IQuizSubmission[]);
-    });
+    }); // don't cache
 
     return (
         <ControlledSuspense hasContent={!!submissions()} fallback={<QuizItemSkeleton />}>

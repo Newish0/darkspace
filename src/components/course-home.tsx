@@ -1,13 +1,9 @@
-import {
-    getCourseAnnouncements,
-    getCourseModules,
-    getQuizzes,
-    IAnnouncement,
-} from "@/services/BS/scraper";
-import { createAsync } from "@solidjs/router";
+import { createAsyncCached } from "@/hooks/async-cached";
+import { getCourseAnnouncements, getCourseModules, IAnnouncement } from "@/services/BS/scraper";
 import { A } from "@solidjs/router";
 import { CalendarIcon } from "lucide-solid";
-import { createEffect, For, JSX, Match, Show, Suspense, Switch } from "solid-js";
+import { For, JSX, Show } from "solid-js";
+import ControlledSuspense from "./controlled-suspense";
 import CourseTabs from "./course-tabs";
 import NestedCourseAccordion, {
     NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES,
@@ -16,8 +12,6 @@ import PageWrapper from "./ui/page-wrapper";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
-import { createAsyncCached } from "@/hooks/async-cached";
-import ControlledSuspense from "./controlled-suspense";
 
 export default function CourseHome({
     courseId,
@@ -49,7 +43,7 @@ export default function CourseHome({
             <Resizable class="h-full rounded-lg shadow-sm border">
                 <ResizablePanel initialSize={0.2} class="overflow-hidden">
                     <div class="flex flex-col h-full">
-                        <h2 class="text-2xl font-bold border-b px-4 py-2">Module List</h2>
+                        <h2 class="text-xl font-bold border-b px-4 py-2">Module List</h2>
 
                         <div class="h-full flex-shrink-1 overflow-auto p-4">
                             <A
@@ -64,10 +58,12 @@ export default function CourseHome({
                                 fallback={<p>Loading...</p>}
                             >
                                 <Show when={courseModules()}>
-                                    <NestedCourseAccordion
-                                        modules={courseModules()!}
-                                        courseId={courseId}
-                                    />
+                                    {(courseModules) => (
+                                        <NestedCourseAccordion
+                                            modules={courseModules()}
+                                            courseId={courseId}
+                                        />
+                                    )}
                                 </Show>
                             </ControlledSuspense>
                         </div>
@@ -105,7 +101,7 @@ export default function CourseHome({
 function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }) {
     return (
         <>
-            <h2 class="text-2xl font-bold border-b px-4 py-2">Announcements</h2>
+            <h2 class="text-xl font-bold border-b px-4 py-2">Announcements</h2>
 
             <div class="h-full flex-shrink-1 overflow-auto p-4 space-y-4">
                 <For each={announcements}>

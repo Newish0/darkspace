@@ -23,11 +23,12 @@ import {
 import { Toaster } from "solid-sonner";
 import ErrorMessageAlert from "@/components/ui/error-message-alert";
 import ControlledSuspense from "@/components/controlled-suspense";
+import { createAsyncCached } from "@/hooks/async-cached";
 
 const VERSION = import.meta.env.VERSION || "1.0.0";
 
 function NavContent() {
-    const enrollment = createAsync(() => getEnrollments());
+    const enrollment = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
 
     const [isCoursesOpen, setIsCoursesOpen] = createSignal(true);
 
