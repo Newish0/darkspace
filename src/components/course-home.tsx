@@ -16,6 +16,8 @@ import PageWrapper from "./ui/page-wrapper";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
+import { createAsyncCached } from "@/hooks/async-cached";
+import ControlledSuspense from "./controlled-suspense";
 
 export default function CourseHome({
     courseId,
@@ -24,9 +26,13 @@ export default function CourseHome({
     courseId: string;
     children?: JSX.Element;
 }) {
-    const courseModules = createAsync(() => getCourseModules(courseId));
+    const courseModules = createAsyncCached(() => getCourseModules(courseId), {
+        keys: ["course-modules", courseId],
+    });
 
-    const courseAnnouncements = createAsync(() => getCourseAnnouncements(courseId));
+    const courseAnnouncements = createAsyncCached(() => getCourseAnnouncements(courseId), {
+        keys: ["announcements", courseId],
+    });
 
     // createEffect(() => {
     //     // console.log(modulesQuery.data);
@@ -53,14 +59,17 @@ export default function CourseHome({
                                 Home
                             </A>
 
-                            <Suspense fallback={<p>Loading...</p>}>
+                            <ControlledSuspense
+                                hasContent={!!courseModules()}
+                                fallback={<p>Loading...</p>}
+                            >
                                 <Show when={courseModules()}>
                                     <NestedCourseAccordion
                                         modules={courseModules()!}
                                         courseId={courseId}
                                     />
                                 </Show>
-                            </Suspense>
+                            </ControlledSuspense>
                         </div>
                     </div>
                 </ResizablePanel>
@@ -70,11 +79,14 @@ export default function CourseHome({
                         <Show
                             when={children !== undefined}
                             fallback={
-                                <Suspense fallback={<p>Loading...</p>}>
+                                <ControlledSuspense
+                                    hasContent={!!courseAnnouncements()}
+                                    fallback={<p>Loading...</p>}
+                                >
                                     <Show when={courseAnnouncements()}>
                                         <AnnouncementList announcements={courseAnnouncements()} />
                                     </Show>
-                                </Suspense>
+                                </ControlledSuspense>
                             }
                         >
                             {children}

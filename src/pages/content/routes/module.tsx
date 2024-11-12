@@ -15,15 +15,25 @@ import { getModuleContent } from "@/services/BS/scraper";
 import ModuleContentList from "@/components/module-content-list";
 import UnsafeHtml from "@/components/unsafe-html";
 import { Badge } from "@/components/ui/badge";
+import { createAsyncCached } from "@/hooks/async-cached";
+import ControlledSuspense from "@/components/controlled-suspense";
 
 const Module = () => {
     const params = useParams();
 
-    const moduleContent = createAsync(() => getModuleContent(params.courseId, params.moduleId));
+    const moduleContent = createAsyncCached(
+        () => getModuleContent(params.courseId, params.moduleId),
+        {
+            keys: ["moduleContent", params.courseId, params.moduleId],
+        }
+    );
 
     if (!params.courseId) {
         return <div>Course ID not found</div>;
     }
+    createEffect(() => {
+        console.log("MODULE ID", params.moduleId);
+    });
 
     createEffect(() => {
         console.log("SHOWING MODULE ID", moduleContent()?.id);
@@ -33,7 +43,7 @@ const Module = () => {
 
     return (
         <CourseHome courseId={params.courseId}>
-            <Suspense fallback={<div>Loading...</div>}>
+            <ControlledSuspense hasContent={!!moduleContent()} fallback={<div>Loading...</div>}>
                 <h2 class="text-2xl font-bold border-b px-4 py-2 flex justify-between items-center">
                     {moduleContent()?.name}
 
@@ -69,7 +79,7 @@ const Module = () => {
                         <ModuleContentList items={moduleContent()?.topics} />
                     </div>
                 </div>
-            </Suspense>
+            </ControlledSuspense>
         </CourseHome>
     );
 };

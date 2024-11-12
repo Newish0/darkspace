@@ -10,10 +10,14 @@ import PageWrapper from "@/components/ui/page-wrapper";
 import CourseTabs from "@/components/course-tabs";
 import QuizItem from "@/components/quiz-item";
 import { QuizItemSkeleton } from "@/components/quiz-item";
+import ControlledSuspense from "@/components/controlled-suspense";
+import { createAsyncCached } from "@/hooks/async-cached";
 
 const CourseCoursework = () => {
     const params = useParams<{ courseId: string }>();
-    const quizzes = createAsync(() => getQuizzes(params.courseId));
+    const quizzes = createAsyncCached(() => getQuizzes(params.courseId), {
+        keys: ["quizzes", params.courseId],
+    });
 
     return (
         <Show when={params.courseId} fallback={<div>Course ID not found</div>}>
@@ -23,9 +27,9 @@ const CourseCoursework = () => {
                 centerElement={<CourseTabs courseId={params.courseId} value="coursework" />}
             >
                 <p>Course ID: {params.courseId}</p>
-                <Suspense fallback={<QuizListSkeleton />}>
+                <ControlledSuspense hasContent={!!quizzes()} fallback={<QuizListSkeleton />}>
                     <QuizList quizzes={quizzes()} />
-                </Suspense>
+                </ControlledSuspense>
             </PageWrapper>
         </Show>
     );
@@ -46,9 +50,9 @@ const QuizListItem = (props: { quiz: IQuizInfo }) => {
     });
 
     return (
-        <Suspense fallback={<QuizItemSkeleton />}>
+        <ControlledSuspense hasContent={!!submissions()} fallback={<QuizItemSkeleton />}>
             <QuizItem quiz={props.quiz} submissions={submissions()} />
-        </Suspense>
+        </ControlledSuspense>
     );
 };
 

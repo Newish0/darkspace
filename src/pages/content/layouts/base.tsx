@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/accordion";
 import { Toaster } from "solid-sonner";
 import ErrorMessageAlert from "@/components/ui/error-message-alert";
+import ControlledSuspense from "@/components/controlled-suspense";
 
 const VERSION = import.meta.env.VERSION || "1.0.0";
 
@@ -58,7 +59,10 @@ function NavContent() {
                                 </AccordionTrigger>
                                 <AccordionContent>
                                     <div class="space-y-2 my-2">
-                                        <Suspense fallback={<p>Loading...</p>}>
+                                        <ControlledSuspense
+                                            hasContent={!!enrollment()}
+                                            fallback={<p>Loading...</p>}
+                                        >
                                             <For each={enrollment()}>
                                                 {(course) => (
                                                     <A
@@ -70,7 +74,7 @@ function NavContent() {
                                                     </A>
                                                 )}
                                             </For>
-                                        </Suspense>
+                                        </ControlledSuspense>
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
@@ -153,7 +157,11 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
                 <main class="flex-1 h-full overflow-auto">
                     {/* Global catch all error boundary. More granular error boundaries should be used inside but this is a good default. */}
                     <ErrorBoundary
-                        fallback={<div class="p-4"><ErrorMessageAlert onRetry={() => window.location.reload()} /></div>}
+                        fallback={
+                            <div class="p-4">
+                                <ErrorMessageAlert onRetry={() => window.location.reload()} />
+                            </div>
+                        }
                     >
                         {props.children}
                     </ErrorBoundary>

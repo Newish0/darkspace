@@ -1,4 +1,5 @@
 import CourseCard from "@/components/course-card";
+import ControlledSuspense from "@/components/controlled-suspense";
 import PageWrapper from "@/components/ui/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getEnrollments } from "@/services/BS/api/enrollment";
@@ -16,15 +17,9 @@ export default function Home() {
     return (
         <PageWrapper title="Dashboard" allowBack={false}>
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                <Suspense
-                    fallback={
-                        <>
-                            <For each={enrollments()}>{(c) => <CourseCard course={c} />}</For>
-                        </>
-                    }
-                >
+                <ControlledSuspense hasContent={!!enrollments()} fallback={<p>Loading...</p>}>
                     <For each={enrollments()}>{(c) => <CourseCard course={c} />}</For>
-                </Suspense>
+                </ControlledSuspense>
             </div>
         </PageWrapper>
     );

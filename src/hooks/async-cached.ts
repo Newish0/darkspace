@@ -55,7 +55,7 @@ export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncC
 
     // Workaround to force recreation of `createAsync`
     const [useCache, setUseCache] = createSignal(true);
-    const [cachedData, setCachedData] = createSignal<T | null>(null);
+    const [cachedData, setCachedData] = createSignal<T | undefined>(undefined);
 
     const data = createAsync(
         async () => {
