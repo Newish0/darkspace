@@ -7,12 +7,9 @@ const Course = () => {
 
     console.log("Course", params.courseId);
 
-    if (!params.courseId) {
-        return <div>Course ID not found</div>;
-    }
 
     return (
-        <Show when={params.courseId} keyed>
+        <Show when={params.courseId} keyed fallback={<div>Course ID not found</div>}>
             <CourseHome courseId={params.courseId} />
         </Show>
     );

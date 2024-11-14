@@ -27,3 +27,22 @@ export function getQuizSummaryUrl(quizId: string, courseId: string) {
     const url = QUIZ_SUMMARY_URL.replace("{{QUIZ_ID}}", quizId).replace("{{COURSE_ID}}", courseId);
     return url;
 }
+
+const RUBRIC_URL =
+    "https://bright.uvic.ca/d2l/lms/grades/my_grades/activities_dialog.d2l?ou={{COURSE_ID}}&objectId={{OBJECT_ID}}&userId={{USER_ID}}&rubricId={{RUBRIC_ID}}";
+
+/**
+ * Reverse engineered from `ViewActivities()` function in D2L's my_grades.js
+ * Specifically: https://bright.uvic.ca/d2l/lms/grades/static/include/my_grades.js?v=20.24.10.20758
+ * @param courseId
+ * @param userId
+ * @param rubricId
+ * @returns
+ */
+export function getRubricUrl(courseId: string, objectId: string, userId: string, rubricId: string) {
+    const url = RUBRIC_URL.replace("{{COURSE_ID}}", courseId)
+        .replace("{{OBJECT_ID}}", objectId)
+        .replace("{{USER_ID}}", userId)
+        .replace("{{RUBRIC_ID}}", rubricId);
+    return url;
+}

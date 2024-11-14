@@ -26,10 +26,10 @@ const routes = {
             path: "/courses/:courseId/coursework",
             component: lazy(() => import("./routes/course-coursework")),
         },
-        // {
-        //     path: "/courses/:courseId/grades",
-        //     component: lazy(() => import("./routes/grades")),
-        // },
+        {
+            path: "/courses/:courseId/grades",
+            component: lazy(() => import("./routes/grades")),
+        },
         // {
         //     path: "/courses/:courseId/others",
         //     component: lazy(() => import("./routes/others")),
