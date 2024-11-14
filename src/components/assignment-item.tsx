@@ -1,4 +1,4 @@
-import { Component, createSignal, Switch, Match, Show, For } from "solid-js";
+import { Component, createSignal, Switch, Match, Show, For, JSX } from "solid-js";
 import { format, isPast } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,62 +19,199 @@ import {
 } from "lucide-solid";
 import { IAssignment } from "@/services/BS/scraper/assignment";
 import { Badge } from "./ui/badge";
+import { getAssignmentFeedbackUrl, getAssignmentSubmitUrl } from "@/services/BS/utils";
+
+import ContentModal from "./content-modal";
 
 interface AssignmentItemProps {
     assignment: IAssignment;
+    courseId: string;
 }
 
-const AssignmentItem: Component<AssignmentItemProps> = (props) => {
-    const [isOpen, setIsOpen] = createSignal(false);
+// Status Icons Component
+const StatusIcon: Component<{ status?: IAssignment["status"] }> = (props) => (
+    <Switch fallback={<HelpCircle class="h-5 w-5 text-muted-foreground" />}>
+        <Match when={props.status === "submitted"}>
+            <CheckCircle class="h-5 w-5 text-success-foreground" />
+        </Match>
+        <Match when={props.status === "not-submitted"}>
+            <AlertCircle class="h-5 w-5 text-error-foreground" />
+        </Match>
+        <Match when={props.status === "returned"}>
+            <Clock class="h-5 w-5 text-warning-foreground" />
+        </Match>
+    </Switch>
+);
 
-    const getStatusIcon = (status?: IAssignment["status"]) => (
-        <Switch fallback={<HelpCircle class="h-5 w-5 text-muted-foreground" />}>
-            <Match when={status === "submitted"}>
-                <CheckCircle class="h-5 w-5 text-success" />
-            </Match>
-            <Match when={status === "not-submitted"}>
-                <AlertCircle class="h-5 w-5 text-error" />
-            </Match>
-            <Match when={status === "returned"}>
-                <Clock class="h-5 w-5 text-warning" />
-            </Match>
-        </Switch>
-    );
+// Action Button Component
+const ActionButton: Component<{
+    status?: IAssignment["status"];
+    isPastEndDate: boolean;
+    assignmentId?: string;
+    groupId?: string;
+    courseId: string;
+}> = (props) => {
+    const [modalUrl, setModalUrl] = createSignal<string>("");
 
-    const isPastDueDate = () => {
-        if (!props.assignment.dueDate) return false;
-        return isPast(new Date(props.assignment.dueDate));
+    const handleOpenAssignment = () => {
+        if (!props.assignmentId) return;
+        const url = getAssignmentSubmitUrl(props.courseId, props.assignmentId, props.groupId);
+        setModalUrl(url);
     };
 
-    const ActionButton: Component = () => (
-        <Show when={!isPastDueDate()}>
+    const handleOpenAssignmentFeedback = () => {
+        if (!props.assignmentId) return;
+        const url = getAssignmentFeedbackUrl(props.courseId, props.assignmentId, props.groupId);
+        console.log("url", url);
+        setModalUrl(url);
+    };
+
+    return (
+        <>
             <Switch>
-                <Match when={props.assignment.status === "submitted"}>
-                    <Button variant="link" size="sm" class="text-muted-foreground">
+                <Match when={props.status === "submitted" && !props.isPastEndDate}>
+                    <Button
+                        variant="link"
+                        size="sm"
+                        class="text-muted-foreground w-max"
+                        disabled={!props.assignmentId}
+                        onClick={handleOpenAssignment}
+                    >
                         <RotateCcw class="mr-2 h-4 w-4" /> Resubmit
                     </Button>
                 </Match>
-                <Match when={props.assignment.status === "not-submitted"}>
-                    <Button variant="outline" size="sm" class="bg-primary text-primary-foreground">
+                <Match when={props.status === "not-submitted" && !props.isPastEndDate}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="bg-primary text-primary-foreground w-max"
+                        disabled={!props.assignmentId}
+                        onClick={handleOpenAssignment}
+                    >
                         <Play class="mr-2 h-4 w-4" /> Start Assignment
                     </Button>
                 </Match>
-                <Match when={props.assignment.status === "returned"}>
-                    <Button variant="default" size="sm">
-                        <Play class="mr-2 h-4 w-4" /> View Feedback
+                <Match when={props.status === "returned"}>
+                    <Button
+                        variant="default"
+                        size="sm"
+                        class="w-max"
+                        disabled={!props.assignmentId}
+                        onClick={handleOpenAssignmentFeedback}
+                    >
+                        <Link2 class="mr-2 h-4 w-4" /> View Feedback
                     </Button>
                 </Match>
             </Switch>
-        </Show>
+            <ContentModal
+                url={modalUrl()}
+                contentType="webpage"
+                open={!!modalUrl()}
+                onOpenChange={() => setModalUrl("")}
+            />
+        </>
     );
+};
+
+// Grade Section Component
+const GradeSection: Component<{ assignment: IAssignment }> = (props) => (
+    <Show when={props.assignment.gradePercentage !== undefined}>
+        <CardContent>
+            <div class="mb-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold mb-2">Grade</h3>
+                    <div class="flex items-center space-x-2">
+                        <Show
+                            when={
+                                props.assignment.points !== undefined &&
+                                props.assignment.totalPoints !== undefined
+                            }
+                        >
+                            <p>
+                                {props.assignment.points}/{props.assignment.totalPoints}
+                            </p>
+                            <Separator orientation="vertical" class="h-4" />
+                        </Show>
+                        <p>{props.assignment.gradePercentage!.toFixed(2)}%</p>
+                    </div>
+                </div>
+                <Progress value={props.assignment.gradePercentage} class="mb-2" />
+            </div>
+        </CardContent>
+    </Show>
+);
+
+// Assignment Details Component
+const AssignmentDetails: Component<{ assignment: IAssignment }> = (props) => (
+    <div>
+        <h3 class="font-semibold mb-2">Assignment Details</h3>
+        <ul class="space-y-2">
+            <For
+                each={[
+                    { date: props.assignment.startDate, label: "Start" },
+                    { date: props.assignment.endDate, label: "End" },
+                    { date: props.assignment.dueDate, label: "Due" },
+                ]}
+            >
+                {(item) => (
+                    <Show when={item.date}>
+                        <li class="flex items-center">
+                            <Calendar class="mr-2 h-4 w-4" />
+                            {item.label}: {format(new Date(item.date!), "PPP")}
+                        </li>
+                    </Show>
+                )}
+            </For>
+            <Show when={props.assignment.group}>
+                <li class="flex items-center">
+                    <Clock class="mr-2 h-4 w-4" />
+                    Group: {props.assignment.group}
+                </li>
+            </Show>
+        </ul>
+    </div>
+);
+
+// Additional Information Component
+const AdditionalInfo: Component<{ assignment: IAssignment }> = (props) => (
+    <div>
+        <h3 class="font-medium mb-2">Additional Information</h3>
+        <Show when={props.assignment.accessNote} fallback={<p>None</p>}>
+            <p class="text-sm text-muted-foreground">{props.assignment.accessNote}</p>
+        </Show>
+        <Show when={props.assignment.tags && props.assignment.tags.length > 0}>
+            <div class="mt-2">
+                <p class="font-medium">Tags:</p>
+                <div class="flex flex-wrap gap-2 mt-1">
+                    <For each={props.assignment.tags}>{(tag) => <Badge>{tag}</Badge>}</For>
+                </div>
+            </div>
+        </Show>
+    </div>
+);
+
+// Main Component
+const AssignmentItem: Component<AssignmentItemProps> = (props) => {
+    const [isOpen, setIsOpen] = createSignal(false);
+
+    const isPastEndDate = () => {
+        if (!props.assignment.endDate) return false;
+        return isPast(new Date(props.assignment.endDate));
+    };
 
     return (
         <Card class="bg-card text-card-foreground">
             <CardHeader>
                 <div class="flex items-center justify-between">
                     <CardTitle class="text-xl font-bold">{props.assignment.name}</CardTitle>
-                    <div class="flex items-center gap-2">
-                        <ActionButton />
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <ActionButton
+                            assignmentId={props.assignment.id}
+                            groupId={props.assignment.groupId}
+                            courseId={props.courseId}
+                            status={props.assignment.status}
+                            isPastEndDate={isPastEndDate()}
+                        />
                         <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen())}>
                             <Show when={isOpen()} fallback={<ChevronDown class="h-4 w-4" />}>
                                 <ChevronUp class="h-4 w-4" />
@@ -84,7 +221,7 @@ const AssignmentItem: Component<AssignmentItemProps> = (props) => {
                 </div>
                 <CardDescription>
                     <div class="flex items-center space-x-2">
-                        {getStatusIcon(props.assignment.status)}
+                        <StatusIcon status={props.assignment.status} />
                         <span class="capitalize">
                             {props.assignment.status?.replaceAll("-", " ") || "Unknown"}
                         </span>
@@ -92,102 +229,14 @@ const AssignmentItem: Component<AssignmentItemProps> = (props) => {
                 </CardDescription>
             </CardHeader>
 
-            <Show when={props.assignment.gradePercentage !== undefined}>
-                <CardContent>
-                    <div class="mb-4">
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-semibold mb-2">Grade</h3>
-                            <div class="flex items-center space-x-2">
-                                <Show
-                                    when={
-                                        props.assignment.points !== undefined &&
-                                        props.assignment.totalPoints !== undefined
-                                    }
-                                >
-                                    <p>
-                                        {props.assignment.points}/{props.assignment.totalPoints}
-                                    </p>
-                                    <Separator orientation="vertical" class="h-4" />
-                                </Show>
-                                <p>{props.assignment.gradePercentage!.toFixed(2)}%</p>
-                            </div>
-                        </div>
-                        <Progress value={props.assignment.gradePercentage} class="mb-2" />
-                    </div>
-                </CardContent>
-            </Show>
+            <GradeSection assignment={props.assignment} />
 
             <Collapsible open={isOpen()} onOpenChange={setIsOpen}>
                 <CollapsibleContent>
                     <CardContent>
                         <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <h3 class="font-semibold mb-2">Assignment Details</h3>
-                                <ul class="space-y-2">
-                                    <Show when={props.assignment.startDate}>
-                                        <li class="flex items-center">
-                                            <Calendar class="mr-2 h-4 w-4" />
-                                            Start:{" "}
-                                            {format(new Date(props.assignment.startDate!), "PPP")}
-                                        </li>
-                                    </Show>
-                                    <Show when={props.assignment.endDate}>
-                                        <li class="flex items-center">
-                                            <Calendar class="mr-2 h-4 w-4" />
-                                            End:{" "}
-                                            {format(new Date(props.assignment.endDate!), "PPP")}
-                                        </li>
-                                    </Show>
-                                    <Show when={props.assignment.dueDate}>
-                                        <li class="flex items-center">
-                                            <Calendar class="mr-2 h-4 w-4" />
-                                            Due:{" "}
-                                            {format(new Date(props.assignment.dueDate!), "PPP")}
-                                        </li>
-                                    </Show>
-                                    <Show when={props.assignment.group}>
-                                        <li class="flex items-center">
-                                            <Clock class="mr-2 h-4 w-4" />
-                                            Group: {props.assignment.group}
-                                        </li>
-                                    </Show>
-                                    <Show when={props.assignment.feedbackUrl}>
-                                        <li>
-                                            <a
-                                                href={props.assignment.feedbackUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="flex items-center"
-                                            >
-                                                <Link2 class="mr-2 h-4 w-4" />
-                                                <span class="text-info-foreground hover:underline">
-                                                    Feedback
-                                                </span>
-                                            </a>
-                                        </li>
-                                    </Show>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 class="font-medium mb-2">Additional Information</h3>
-                                <Show when={props.assignment.accessNote} fallback={<p>None</p>}>
-                                    <p class="text-sm text-muted-foreground">
-                                        {props.assignment.accessNote}
-                                    </p>
-                                </Show>
-                                <Show
-                                    when={props.assignment.tags && props.assignment.tags.length > 0}
-                                >
-                                    <div class="mt-2">
-                                        <p class="font-medium">Tags:</p>
-                                        <div class="flex flex-wrap gap-2 mt-1">
-                                            <For each={props.assignment.tags}>
-                                                {(tag) => <Badge>{tag}</Badge>}
-                                            </For>
-                                        </div>
-                                    </div>
-                                </Show>
-                            </div>
+                            <AssignmentDetails assignment={props.assignment} />
+                            <AdditionalInfo assignment={props.assignment} />
                         </div>
                     </CardContent>
                 </CollapsibleContent>

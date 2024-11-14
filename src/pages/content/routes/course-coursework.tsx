@@ -34,7 +34,7 @@ const CourseCoursework = () => {
         const items = [
             assignments()?.map((assignment) => ({
                 dueDate: new Date(assignment.dueDate ?? ""),
-                eln: <AssignmentItem assignment={assignment} />,
+                eln: <AssignmentItem assignment={assignment} courseId={params.courseId} />,
             })),
             quizzes()?.map((quiz) => ({
                 dueDate: new Date(quiz.dueDate ?? ""),

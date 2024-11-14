@@ -124,7 +124,7 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
                 <NavContent />
             </aside>
 
-            <div class="flex-1 flex flex-col">
+            <div class="flex-grow-1 w-full overflow-auto flex flex-col">
                 {/* Top bar */}
                 <div class="flex items-center justify-between p-x pt-4">
                     {/* Mobile view */}
