@@ -1,4 +1,4 @@
-import { createSignal, Show, For } from "solid-js";
+import { Component, createSignal, Show, For, Switch, Match } from "solid-js";
 import { format, isPast } from "date-fns";
 import {
     ChevronDown,
@@ -14,233 +14,282 @@ import {
 } from "lucide-solid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
-import { IQuizInfo, IQuizSubmission } from "@/services/BS/scraper";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getQuizSubmissionsFromUrl, IQuizInfo, IQuizSubmission } from "@/services/BS/scraper";
+import { createAsync } from "@solidjs/router";
+import { createAsyncCached } from "@/hooks/async-cached";
+import { getQuizSummaryUrl } from "@/services/BS/utils";
+import ContentModal from "./content-modal";
 
 interface QuizItemProps {
     quiz: IQuizInfo;
-    submissions?: IQuizSubmission[];
+    courseId: string;
 }
 
-const QuizItem = (props: QuizItemProps) => {
+// Status Icon Component
+const StatusIcon: Component<{ status: IQuizInfo["status"] }> = (props) => (
+    <Switch fallback={<HelpCircle class="h-5 w-5 text-muted-foreground" />}>
+        <Match when={props.status === "completed"}>
+            <CheckCircle class="h-5 w-5 text-success-foreground" />
+        </Match>
+        <Match when={props.status === "in-progress" || props.status === "retry-in-progress"}>
+            <Clock class="h-5 w-5 text-warning-foreground" />
+        </Match>
+        <Match when={props.status === "not-started"}>
+            <AlertCircle class="h-5 w-5 text-error-foreground" />
+        </Match>
+    </Switch>
+);
+
+// Action Button Component
+const ActionButton: Component<{
+    status: IQuizInfo["status"];
+    hasSubmissions: boolean;
+    isPastEndDate: boolean;
+    quizId?: string;
+    courseId: string;
+}> = (props) => {
+    const [modalUrl, setModalUrl] = createSignal<string>("");
+
+    const handleOpenQuiz = () => {
+        if (!props.quizId) return;
+        const url = getQuizSummaryUrl(props.quizId, props.courseId);
+        setModalUrl(url);
+    };
+
+    return (
+        <>
+            <Show when={!props.isPastEndDate}>
+                <Switch>
+                    <Match when={props.status === "in-progress"}>
+                        <Button variant="default" size="sm" onClick={handleOpenQuiz}>
+                            <Play class="mr-2 h-4 w-4" /> Continue
+                        </Button>
+                    </Match>
+                    <Match when={props.status === "retry-in-progress"}>
+                        <Button variant="default" size="sm" onClick={handleOpenQuiz}>
+                            <Play class="mr-2 h-4 w-4" /> Continue Retry
+                        </Button>
+                    </Match>
+                    <Match when={props.hasSubmissions}>
+                        <Button
+                            variant="link"
+                            size="sm"
+                            class="text-muted-foreground"
+                            onClick={handleOpenQuiz}
+                        >
+                            <RotateCcw class="mr-2 h-4 w-4" /> Retry
+                        </Button>
+                    </Match>
+                    <Match when={props.status !== "completed"}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="bg-primary text-primary-foreground"
+                            onClick={handleOpenQuiz}
+                        >
+                            <Play class="mr-2 h-4 w-4" /> Start Quiz
+                        </Button>
+                    </Match>
+                </Switch>
+            </Show>
+
+            <ContentModal
+                url={modalUrl()}
+                contentType="webpage"
+                open={!!modalUrl()}
+                onOpenChange={() => setModalUrl("")}
+            />
+        </>
+    );
+};
+
+// Best Submission Component
+const BestSubmission: Component<{ submission: IQuizSubmission }> = (props) => (
+    <CardContent>
+        <div class="mb-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-semibold mb-2">Best Submission</h3>
+                <div class="flex items-center space-x-2">
+                    <Show
+                        when={
+                            props.submission.points !== undefined &&
+                            props.submission.totalPoints !== undefined
+                        }
+                    >
+                        <p>
+                            {props.submission.points}/{props.submission.totalPoints}
+                        </p>
+                        <Separator orientation="vertical" class="h-4" />
+                    </Show>
+                    <p>{props.submission.gradePercentage?.toFixed(2)}%</p>
+                </div>
+            </div>
+            <Progress value={props.submission.gradePercentage} class="mb-2" />
+        </div>
+    </CardContent>
+);
+
+// Quiz Details Component
+const QuizDetails: Component<{ quiz: IQuizInfo }> = (props) => (
+    <div>
+        <h3 class="font-semibold mb-2">Quiz Details</h3>
+        <ul class="space-y-2">
+            <For
+                each={[
+                    { date: props.quiz.startDate, label: "Start" },
+                    { date: props.quiz.endDate, label: "End" },
+                    { date: props.quiz.dueDate, label: "Due" },
+                ]}
+            >
+                {(item) => (
+                    <Show when={item.date}>
+                        <li class="flex items-center">
+                            <Calendar class="mr-2 h-4 w-4" />
+                            {item.label}: {format(new Date(item.date!), "PPP")}
+                        </li>
+                    </Show>
+                )}
+            </For>
+            <Show when={props.quiz.attemptsAllowed}>
+                <li class="flex items-center">
+                    <Clock class="mr-2 h-4 w-4" />
+                    Attempts: {props.quiz.attempts || 0} / {props.quiz.attemptsAllowed}
+                </li>
+            </Show>
+            <Show when={props.quiz.url}>
+                <li>
+                    <a
+                        href={props.quiz.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="flex items-center text-info-foreground hover:underline"
+                    >
+                        <Link2 class="mr-2 h-4 w-4" />
+                        Quiz Link
+                    </a>
+                </li>
+            </Show>
+        </ul>
+    </div>
+);
+
+// Submission List Component
+const SubmissionList: Component<{ submissions: IQuizSubmission[] }> = (props) => (
+    <div>
+        <h3 class="font-semibold mb-2">Submissions</h3>
+        <Show when={props.submissions.length > 0} fallback={<p>No submissions yet.</p>}>
+            <ul class="space-y-4">
+                <For each={props.submissions}>
+                    {(submission) => (
+                        <li class="border-t border-border pt-2">
+                            <p class="font-medium">Attempt {submission.attemptNumber}</p>
+                            <Show when={submission.gradePercentage !== undefined}>
+                                <Progress value={submission.gradePercentage} class="my-2" />
+                            </Show>
+                            <p>
+                                Grade:{" "}
+                                {submission.gradePercentage !== undefined
+                                    ? `${submission.gradePercentage.toFixed(2)}%`
+                                    : "Not graded"}
+                            </p>
+                            <Show
+                                when={
+                                    submission.points !== undefined &&
+                                    submission.totalPoints !== undefined
+                                }
+                            >
+                                <p>
+                                    Points: {submission.points} / {submission.totalPoints}
+                                </p>
+                            </Show>
+                            <Show when={submission.lateNote}>
+                                <p class="text-error-foreground text-sm">{submission.lateNote}</p>
+                            </Show>
+                            <a
+                                href={submission.attemptUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-info-foreground hover:underline text-sm"
+                            >
+                                View Attempt
+                            </a>
+                        </li>
+                    )}
+                </For>
+            </ul>
+        </Show>
+    </div>
+);
+
+// Main Quiz Item Component
+const QuizItem: Component<QuizItemProps> = (props) => {
     const [isOpen, setIsOpen] = createSignal(false);
 
-    const getStatusIcon = (status: IQuizInfo["status"]) => {
-        switch (status) {
-            case "completed":
-                return <CheckCircle class="h-5 w-5 text-success-foreground" />;
-            case "in-progress":
-                return <Clock class="h-5 w-5 text-warning-foreground" />;
-            case "not-started":
-                return <AlertCircle class="h-5 w-5 text-error-foreground" />;
-            case "retry-in-progress":
-                return <Clock class="h-5 w-5 text-warning-foreground" />;
-            default:
-                return <HelpCircle class="h-5 w-5 text-muted-foreground" />;
-        }
-    };
+    const submissions = createAsyncCached(
+        () => {
+            if (props.quiz.submissionsUrl) {
+                return getQuizSubmissionsFromUrl(props.quiz.submissionsUrl);
+            }
+            return Promise.resolve([] as IQuizSubmission[]);
+        },
+        { keys: () => [props.quiz.submissionsUrl ?? ""] }
+    );
 
-    const bestSubmission = () =>
-        props.submissions?.reduce(
+    const bestSubmission = () => {
+        const s = submissions();
+        if (!s?.length) return null;
+
+        return s.reduce(
             (best, current) =>
                 (current.gradePercentage || 0) > (best.gradePercentage || 0) ? current : best,
-            props.submissions[0]
+            s[0]
         );
-
-    const isPastEndDate = () => {
-        if (!props.quiz.endDate) return false;
-        return isPast(new Date(props.quiz.endDate));
     };
 
-    const getActionButton = () => {
-        if (isPastEndDate()) return null;
-
-        if (props.submissions && props.submissions.length > 0) {
-            if (props.quiz.status === "in-progress" || props.quiz.status === "retry-in-progress") {
-                return (
-                    <Button variant="default" size="sm">
-                        <Play class="mr-2 h-4 w-4" /> Continue
-                    </Button>
-                );
-            } else {
-                return (
-                    <Button variant="link" size="sm" class="text-muted-foreground">
-                        <RotateCcw class="mr-2 h-4 w-4" /> Retry
-                    </Button>
-                );
-            }
-        } else if (props.quiz.status !== "completed") {
-            return (
-                <Button variant="outline" size="sm" class="bg-primary text-primary-foreground">
-                    <Play class="mr-2 h-4 w-4" /> Start Quiz
-                </Button>
-            );
-        }
-
-        return null;
-    };
+    const isPastEndDate = () => (props.quiz.endDate ? isPast(new Date(props.quiz.endDate)) : false);
 
     return (
         <Card class="bg-card text-card-foreground">
             <CardHeader>
                 <div class="flex items-center justify-between">
                     <CardTitle class="text-xl font-bold">{props.quiz.name}</CardTitle>
-
                     <div class="flex items-center gap-2">
-                        {getActionButton()}
-
+                        <ActionButton
+                            status={props.quiz.status}
+                            hasSubmissions={Boolean(submissions()?.length)}
+                            isPastEndDate={isPastEndDate()}
+                            courseId={props.courseId}
+                            quizId={props.quiz.id}
+                        />
                         <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen())}>
-                            {isOpen() ? (
+                            <Show when={isOpen()} fallback={<ChevronDown class="h-4 w-4" />}>
                                 <ChevronUp class="h-4 w-4" />
-                            ) : (
-                                <ChevronDown class="h-4 w-4" />
-                            )}
+                            </Show>
                         </Button>
                     </div>
                 </div>
                 <CardDescription>
                     <div class="flex items-center space-x-2">
-                        {getStatusIcon(props.quiz.status)}
-                        <span class="capitalize">{props.quiz.status?.replaceAll("-", " ") || "Unknown"}</span>
+                        <StatusIcon status={props.quiz.status} />
+                        <span class="capitalize">{props.quiz.status?.replaceAll("-", " ")}</span>
                     </div>
                 </CardDescription>
             </CardHeader>
-            <Show when={bestSubmission()}>
-                <CardContent>
-                    <div class="mb-4">
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-semibold mb-2">Best Submission</h3>
-                            <div class="flex items-center space-x-2">
-                                <Show
-                                    when={
-                                        bestSubmission()?.points !== undefined &&
-                                        bestSubmission()?.totalPoints !== undefined
-                                    }
-                                >
-                                    <p>
-                                        {bestSubmission()?.points}/{bestSubmission()?.totalPoints}
-                                    </p>
-                                    <Separator orientation="vertical" class="h-4" />
-                                </Show>
 
-                                <p>{bestSubmission()?.gradePercentage?.toFixed(2)}%</p>
-                            </div>
-                        </div>
-                        <Progress value={bestSubmission()?.gradePercentage} class="mb-2" />
-                    </div>
-                </CardContent>
-            </Show>
+            <Show when={bestSubmission()}>{(bs) => <BestSubmission submission={bs()} />}</Show>
+
             <Collapsible open={isOpen()} onOpenChange={setIsOpen}>
                 <CollapsibleContent>
                     <CardContent>
                         <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <h3 class="font-semibold mb-2">Quiz Details</h3>
-                                <ul class="space-y-2">
-                                    <Show when={props.quiz.startDate}>
-                                        <li class="flex items-center">
-                                            <Calendar class="mr-2 h-4 w-4" />
-                                            Start: {format(new Date(props.quiz.startDate!), "PPP")}
-                                        </li>
-                                    </Show>
-                                    <Show when={props.quiz.endDate}>
-                                        <li class="flex items-center">
-                                            <Calendar class="mr-2 h-4 w-4" />
-                                            End: {format(new Date(props.quiz.endDate!), "PPP")}
-                                        </li>
-                                    </Show>
-                                    <Show when={props.quiz.dueDate}>
-                                        <li class="flex items-center">
-                                            <Calendar class="mr-2 h-4 w-4" />
-                                            Due: {format(new Date(props.quiz.dueDate!), "PPP")}
-                                        </li>
-                                    </Show>
-                                    <Show when={props.quiz.attemptsAllowed}>
-                                        <li class="flex items-center">
-                                            <Clock class="mr-2 h-4 w-4" />
-                                            Attempts: {props.quiz.attempts || 0} /{" "}
-                                            {props.quiz.attemptsAllowed}
-                                        </li>
-                                    </Show>
-                                    <Show when={props.quiz.url}>
-                                        <li>
-                                            <a
-                                                href={props.quiz.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="flex items-center text-info-foreground hover:underline"
-                                            >
-                                                <Link2 class="mr-2 h-4 w-4" />
-                                                Quiz Link
-                                            </a>
-                                        </li>
-                                    </Show>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 class="font-semibold mb-2">Submissions</h3>
-                                <Show
-                                    when={props.submissions && props.submissions.length > 0}
-                                    fallback={<p>No submissions yet.</p>}
-                                >
-                                    <ul class="space-y-4">
-                                        <For each={props.submissions}>
-                                            {(submission) => (
-                                                <li class="border-t border-border pt-2">
-                                                    <p class="font-medium">
-                                                        Attempt {submission.attemptNumber}
-                                                    </p>
-                                                    <Show
-                                                        when={
-                                                            submission.gradePercentage !== undefined
-                                                        }
-                                                    >
-                                                        <Progress
-                                                            value={submission.gradePercentage}
-                                                            class="my-2"
-                                                        />
-                                                    </Show>
-                                                    <p>
-                                                        Grade:{" "}
-                                                        {submission.gradePercentage !== undefined
-                                                            ? `${submission.gradePercentage.toFixed(
-                                                                  2
-                                                              )}%`
-                                                            : "Not graded"}
-                                                    </p>
-                                                    <Show
-                                                        when={
-                                                            submission.points !== undefined &&
-                                                            submission.totalPoints !== undefined
-                                                        }
-                                                    >
-                                                        <p>
-                                                            Points: {submission.points} /{" "}
-                                                            {submission.totalPoints}
-                                                        </p>
-                                                    </Show>
-                                                    <Show when={submission.lateNote}>
-                                                        <p class="text-error-foreground text-sm">
-                                                            {submission.lateNote}
-                                                        </p>
-                                                    </Show>
-                                                    <a
-                                                        href={submission.attemptUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        class="text-info-foreground hover:underline text-sm"
-                                                    >
-                                                        View Attempt
-                                                    </a>
-                                                </li>
-                                            )}
-                                        </For>
-                                    </ul>
-                                </Show>
-                            </div>
+                            <QuizDetails quiz={props.quiz} />
+                            <Show when={submissions()}>
+                                {(s) => <SubmissionList submissions={s()} />}
+                            </Show>
                         </div>
                     </CardContent>
                 </CollapsibleContent>
@@ -254,7 +303,7 @@ export const QuizItemSkeleton = () => (
         <Card class="bg-transparent text-transparent min-h-48">
             <CardHeader>
                 <CardTitle class="text-xl font-bold">content</CardTitle>
-                <CardDescription></CardDescription>
+                <CardDescription />
             </CardHeader>
         </Card>
     </Skeleton>

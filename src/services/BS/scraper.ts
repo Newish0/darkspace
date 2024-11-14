@@ -105,7 +105,8 @@ const SELECTORS = {
 };
 
 const REGEX_PATTERNS = {
-    QUIZ_ID: /qi=(\d+)/,
+    QUIZ_ID_FROM_ONCLICK: /(\d+)/,
+    QUIZ_ID_FROM_URL: /qi=(\d+)/,
     ATTEMPT_ID: /ai=(\d+)/,
     COURSE_ID: /ou=(\d+)/,
     DUE_DATE: /Due on (.*?)(?=$|\n)/,
@@ -375,7 +376,7 @@ function extractQuizSubmissions(html: string): IQuizSubmission[] {
     const submissions: IQuizSubmission[] = [];
 
     const form = doc.querySelector(SELECTORS.QUIZ_SUBMISSION.FORM);
-    const quizId = form?.getAttribute("action")?.match(REGEX_PATTERNS.QUIZ_ID)?.[1] || "";
+    const quizId = form?.getAttribute("action")?.match(REGEX_PATTERNS.QUIZ_ID_FROM_URL)?.[1] || "";
 
     const rows = doc.querySelectorAll(SELECTORS.QUIZ_SUBMISSION.ATTEMPT_ROW);
 
@@ -433,8 +434,6 @@ function extractQuizInfo(htmlString: string): IQuizInfo[] {
     const doc = htmlToDocument(htmlString);
     const quizRows = doc.querySelectorAll(SELECTORS.QUIZ.ROW);
 
-    console.log("Found", quizRows.length, "quizzes");
-
     return Array.from(quizRows).map((row) => {
         const quizInfo: IQuizInfo = { name: "" };
 
@@ -453,7 +452,7 @@ function extractNameAndUrl(row: Element, quizInfo: IQuizInfo, document: Document
     if (nameLink) {
         quizInfo.name = nameLink.textContent?.trim() || "";
         const onclick = nameLink.getAttribute("onclick");
-        const idMatch = onclick?.match(REGEX_PATTERNS.QUIZ_ID);
+        const idMatch = onclick?.match(REGEX_PATTERNS.QUIZ_ID_FROM_ONCLICK);
         if (idMatch) {
             quizInfo.id = idMatch[1];
             const courseId = document
@@ -539,19 +538,3 @@ export async function getQuizzes(courseId: string): Promise<IQuizInfo[]> {
     const html = await fetch(url).then((res) => res.text());
     return extractQuizInfo(html);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

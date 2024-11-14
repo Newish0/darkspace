@@ -38,7 +38,7 @@ const CourseCoursework = () => {
             })),
             quizzes()?.map((quiz) => ({
                 dueDate: new Date(quiz.dueDate ?? ""),
-                eln: <QuizListItem quiz={quiz} />,
+                eln: <QuizItem quiz={quiz} courseId={params.courseId} />,
             })),
         ].flat();
 
@@ -62,21 +62,6 @@ const CourseCoursework = () => {
                 </div>
             </PageWrapper>
         </Show>
-    );
-};
-
-const QuizListItem = (props: { quiz: IQuizInfo }) => {
-    const submissions = createAsync(() => {
-        if (props.quiz.submissionsUrl) {
-            return getQuizSubmissionsFromUrl(props.quiz.submissionsUrl);
-        }
-        return Promise.resolve([] as IQuizSubmission[]);
-    }); // don't cache
-
-    return (
-        <ControlledSuspense hasContent={!!submissions()} fallback={<QuizItemSkeleton />}>
-            <QuizItem quiz={props.quiz} submissions={submissions()} />
-        </ControlledSuspense>
     );
 };
 

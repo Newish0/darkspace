@@ -19,3 +19,11 @@ export function getAssignmentFeedbackUrl(courseId: string, assignmentId: string,
 
     return url;
 }
+
+const QUIZ_SUMMARY_URL =
+    "https://bright.uvic.ca/d2l/lms/quizzing/user/quiz_summary.d2l?qi={{QUIZ_ID}}&ou={{COURSE_ID}}";
+
+export function getQuizSummaryUrl(quizId: string, courseId: string) {
+    const url = QUIZ_SUMMARY_URL.replace("{{QUIZ_ID}}", quizId).replace("{{COURSE_ID}}", courseId);
+    return url;
+}
