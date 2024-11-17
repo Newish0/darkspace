@@ -7,11 +7,8 @@ export type IGradeScore = {
     isDropped?: boolean;
 };
 
-export type IGradeCategory = {
-    name: string;
-    score?: IGradeScore;
+export type IGradeCategory = IGradeItem & {
     items: IGradeItem[];
-    comments?: string;
 };
 
 export type IGradeItem = {
@@ -100,6 +97,8 @@ function extractGrades(html: string, courseId: string): IGradeData {
                 items: [],
                 score: extractScore(row),
             };
+            if (comments) currentCategory.comments = comments;
+            if (rubricUrl) currentCategory.rubricUrl = rubricUrl;
             gradeData.categories.push(currentCategory);
         } else if (currentCategory) {
             const item: IGradeItem = {

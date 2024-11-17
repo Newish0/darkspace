@@ -108,36 +108,45 @@ const GradeItem: Component<{ item: IGradeItem }> = (props) => {
 };
 
 const GradeCategory: Component<{ category: IGradeCategory }> = (props) => (
-    <AccordionItem value={props.category.name} class="border-b border-border last:border-b-0">
-        <AccordionTrigger class="hover:no-underline">
-            <div class="w-full space-y-4">
-                <h5 class="font-medium flex items-center">
-                    <Award class="w-5 h-5 mr-2 text-primary" />
-                    {props.category.name}
-                </h5>
-                <Show when={props.category.score}>
-                    <ScoreDisplay score={props.category.score!} />
-                </Show>
-            </div>
-        </AccordionTrigger>
-        <AccordionContent>
-            <div class="pl-7 space-y-2">
-                <Switch>
-                    <Match when={props.category.items.length > 0}>
-                        <For each={props.category.items}>{(item) => <GradeItem item={item} />}</For>
-                    </Match>
-                    <Match when={props.category.items.length === 0}>
-                        <p class="text-sm text-muted-foreground">No items in this category</p>
-                    </Match>
-                </Switch>
-                <Show when={props.category.comments}>
-                    <p class="text-sm text-muted-foreground mt-2 italic">
-                        Comments: {props.category.comments}
-                    </p>
-                </Show>
-            </div>
-        </AccordionContent>
-    </AccordionItem>
+    // Display category as if it is a grade item if there are no items in the category and not an category with no score.
+    // This is because some standalone grade items are displayed as categories on BS.
+    <Show
+        when={props.category.items.length || !props.category.score}
+        fallback={<GradeItem item={props.category} />}
+    >
+        <AccordionItem value={props.category.name} class="border-b border-border last:border-b-0">
+            <AccordionTrigger class="hover:no-underline">
+                <div class="w-full space-y-4">
+                    <h5 class="font-medium flex items-center">
+                        <Award class="w-5 h-5 mr-2 text-primary" />
+                        {props.category.name}
+                    </h5>
+                    <Show when={props.category.score}>
+                        <ScoreDisplay score={props.category.score!} />
+                    </Show>
+                </div>
+            </AccordionTrigger>
+            <AccordionContent>
+                <div class="pl-7 space-y-2">
+                    <Switch>
+                        <Match when={props.category.items.length > 0}>
+                            <For each={props.category.items}>
+                                {(item) => <GradeItem item={item} />}
+                            </For>
+                        </Match>
+                        <Match when={props.category.items.length === 0}>
+                            <p class="text-sm text-muted-foreground">No items in this category</p>
+                        </Match>
+                    </Switch>
+                    <Show when={props.category.comments}>
+                        <p class="text-sm text-muted-foreground mt-2 italic">
+                            Comments: {props.category.comments}
+                        </p>
+                    </Show>
+                </div>
+            </AccordionContent>
+        </AccordionItem>
+    </Show>
 );
 
 const GradeDisplay: Component<{ gradeData: IGradeData }> = (props) => {
