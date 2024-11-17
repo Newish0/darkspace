@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getQuizSubmissionsFromUrl, IQuizInfo, IQuizSubmission } from "@/services/BS/scraper";
 import { createAsync } from "@solidjs/router";
 import { createAsyncCached } from "@/hooks/async-cached";
-import { getQuizSummaryUrl } from "@/services/BS/utils";
+import { getQuizSummaryUrl } from "@/services/BS/url";
 import ContentModal from "./content-modal";
 
 interface QuizItemProps {

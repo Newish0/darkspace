@@ -1,4 +1,4 @@
-import { getRubricUrl } from "../utils";
+import { getRubricUrl } from "@/services/BS/url";
 
 export type IGradeScore = {
     points?: string; // e.g., "27 / 30"

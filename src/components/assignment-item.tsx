@@ -19,7 +19,7 @@ import {
 } from "lucide-solid";
 import { IAssignment } from "@/services/BS/scraper/assignment";
 import { Badge } from "./ui/badge";
-import { getAssignmentFeedbackUrl, getAssignmentSubmitUrl } from "@/services/BS/utils";
+import { getAssignmentFeedbackUrl, getAssignmentSubmitUrl } from "@/services/BS/url";
 
 import ContentModal from "./content-modal";
 

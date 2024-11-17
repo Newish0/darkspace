@@ -1,4 +1,4 @@
-import { cache } from "@solidjs/router";
+import { query } from "@solidjs/router";
 
 /*
  * Using Unstable Content API
@@ -81,7 +81,7 @@ export type CourseContent = {
 const UNSTABLE_COURSE_CONTENT_URL =
     "https://bright.uvic.ca/d2l/api/le/unstable/{{COURSE_ID}}/content/toc?loadDescription=true";
 
-export const getUnstableCourseContent = cache(async (courseId: string): Promise<CourseContent> => {
+export const getUnstableCourseContent = query(async (courseId: string): Promise<CourseContent> => {
     const response = await fetch(UNSTABLE_COURSE_CONTENT_URL.replace("{{COURSE_ID}}", courseId));
     const data = await response.json();
     return data;

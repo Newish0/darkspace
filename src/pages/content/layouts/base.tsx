@@ -12,7 +12,15 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, LayoutDashboard, ChevronDown, ChevronRight, Github, Library } from "lucide-solid";
+import {
+    Menu,
+    LayoutDashboard,
+    ChevronDown,
+    ChevronRight,
+    Github,
+    Library,
+    SearchIcon,
+} from "lucide-solid";
 import { getEnrollments } from "@/services/BS/api/enrollment";
 import {
     Accordion,
@@ -24,8 +32,35 @@ import { Toaster } from "solid-sonner";
 import ErrorMessageAlert from "@/components/ui/error-message-alert";
 import ControlledSuspense from "@/components/controlled-suspense";
 import { createAsyncCached } from "@/hooks/async-cached";
+import Notification from "@/components/notification";
+import { TextField, TextFieldInput, TextFieldLabel } from "@/components/ui/text-field";
+import Kbd from "@/components/ui/kbd";
 
 const VERSION = import.meta.env.VERSION || "1.0.0";
+
+const RightElement = () => (
+    <div class="flex justify-end items-center gap-2">
+        <TextField class="flex w-full max-w-56 focus:max-w-sm items-center relative">
+            <TextFieldInput
+                type="search"
+                id="search"
+                placeholder="Search"
+                class="pr-12"
+                size={24}
+            />
+            <TextFieldLabel for="search" class="absolute right-4">
+                <div class="flex gap-4 items-center">
+                    <div class="space-x-2">
+                        <Kbd>Ctrl</Kbd>
+                        <Kbd>P</Kbd>
+                    </div>
+                    <SearchIcon size={20} />
+                </div>
+            </TextFieldLabel>
+        </TextField>
+        <Notification />
+    </div>
+);
 
 function NavContent() {
     const enrollment = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
@@ -126,14 +161,14 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
 
             <div class="flex-grow-1 w-full overflow-auto flex flex-col">
                 {/* Top bar */}
-                <div class="flex items-center justify-between p-x pt-4">
+                <div class="grid items-center grid-cols-2 p-2">
                     {/* Mobile view */}
                     <Sheet>
                         <SheetTrigger
                             as={Button}
                             variant="outline"
                             size="icon"
-                            class="lg:hidden sticky top-4 left-4 z-40"
+                            class="lg:hidden sticky top-4 left-4 z-40 col-start-1"
                         >
                             <Menu class="h-4 w-4" />
                         </SheetTrigger>
@@ -144,6 +179,10 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
                             <NavContent />
                         </SheetContent>
                     </Sheet>
+
+                    <div class="col-start-2">
+                        <RightElement />
+                    </div>
                 </div>
 
                 {/* Main content area */}

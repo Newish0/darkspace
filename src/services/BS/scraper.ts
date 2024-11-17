@@ -1,6 +1,6 @@
 // ======= Types & Interfaces =======
-import DOMPurify from "dompurify";
 import { getUnstableCourseContent, UnstableModule } from "./api/unstable-module";
+import { htmlToDocument, parseD2LPartial } from "@/services/BS/util";
 
 export interface IModule {
     name: string;
@@ -112,22 +112,6 @@ const REGEX_PATTERNS = {
     DUE_DATE: /Due on (.*?)(?=$|\n)/,
     AVAILABLE_DATE: /Available on (.*?) until (.*?)(?=$|\n)/,
 };
-
-const D2L_PARTIAL_WHILE1 = "while(1);";
-
-// ======= Utility Functions =======
-function htmlToDocument(unsafeHtml: string, sanitize = false): Document {
-    const parser = new DOMParser();
-    const sanitizedHtml = sanitize ? DOMPurify.sanitize(unsafeHtml) : unsafeHtml;
-    return parser.parseFromString(sanitizedHtml, "text/html");
-}
-
-function parseD2LPartial(d2lPartial: string): any {
-    if (!d2lPartial.startsWith(D2L_PARTIAL_WHILE1)) {
-        throw new Error("Failed to parse Lit partial: while(1) not found");
-    }
-    return JSON.parse(d2lPartial.substring(D2L_PARTIAL_WHILE1.length));
-}
 
 function extractModuleInfo(element: Element): IModule {
     const idElement = element.querySelector(SELECTORS.MODULE.ITEM);

@@ -1,11 +1,9 @@
-import CourseCard from "@/components/course-card";
 import ControlledSuspense from "@/components/controlled-suspense";
+import CourseCard from "@/components/course-card";
 import PageWrapper from "@/components/ui/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getEnrollments } from "@/services/BS/api/enrollment";
-import { createAsync } from "@solidjs/router";
-import { query } from "@solidjs/router/dist/data/query";
-import { createEffect, For, Match, Suspense, Switch } from "solid-js";
+import { createEffect, For } from "solid-js";
 
 export default function Home() {
     const enrollments = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });

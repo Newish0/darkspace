@@ -4,8 +4,9 @@ import { children, Component, JSX, Show } from "solid-js";
 import { Button, buttonVariants } from "./button";
 import { A } from "@solidjs/router";
 import { cn } from "@/lib/utils";
+import Notification from "@/components/notification";
 
-interface RouteSectionProps {
+type RouteSectionProps = {
     title: string;
     allowBack?: boolean;
     children?: JSX.Element;
@@ -13,9 +14,13 @@ interface RouteSectionProps {
     rightElement?: JSX.Element;
     centerElement?: JSX.Element;
     sticky?: boolean;
-}
+};
 
-const PageWrapper: Component<RouteSectionProps> = ({ sticky = true, ...props }) => {
+const PageWrapper: Component<RouteSectionProps> = ({
+    sticky = true,
+
+    ...props
+}) => {
     const goBack = () => {
         window.history.back();
     };
