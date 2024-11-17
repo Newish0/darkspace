@@ -4,22 +4,38 @@
 // import { onCleanup, onMount } from "solid-js";
 
 import { D2LActivityFeedFetcher, INotification } from "@/services/BS/scraper/notification";
-import { createSignal, onCleanup } from "solid-js";
+import { createResource, createSignal, onCleanup } from "solid-js";
 
 const GLOBAL_ID = "6606";
 
 export function useGlobalNotification(category: number) {
     const fetcher = D2LActivityFeedFetcher.create(GLOBAL_ID, category);
-    const [notifications, setNotifications] = createSignal<INotification[]>([]);
     const [hasNew, setHasNew] = createSignal(false);
 
+    // Use resource instead of signal so we can use <Suspense />
+    let resolver: (value: INotification[]) => void;
+    const [_notifications, { mutate: _setNotifications }] = createResource(
+        // Defer actual fetching until notifications() access.
+        // This is because calling getInitialFeed() will cause
+        // backend to "mark all notifications as read".
+        () =>
+            new Promise<INotification[]>((r) => {
+                resolver = r;
+            })
+    );
+
     if (fetcher.getCurrentFeed().length) {
-        setNotifications(fetcher.getCurrentFeed());
-    } else {
-        fetcher.getInitialFeed().then((latestNotifications) => {
-            setNotifications(latestNotifications);
-        });
+        _setNotifications(fetcher.getCurrentFeed());
     }
+
+    // Actual accessor for notifications
+    const getNotifications = () => {
+        if (!_notifications()?.length) {
+            fetcher.getInitialFeed().then(resolver);
+        }
+
+        return _notifications();
+    };
 
     const unsubscribe = fetcher.subscribeToUpdates((hasNew) => {
         if (hasNew) setHasNew(hasNew);
@@ -31,7 +47,10 @@ export function useGlobalNotification(category: number) {
 
     const getOlder = () => {
         fetcher.getMoreFeed().then((newNotifications) => {
-            setNotifications((prevNotifications) => [...prevNotifications, ...newNotifications]);
+            _setNotifications((prevNotifications = []) => [
+                ...prevNotifications,
+                ...newNotifications,
+            ]);
         });
     };
 
@@ -40,7 +59,7 @@ export function useGlobalNotification(category: number) {
     };
 
     return {
-        notifications,
+        notifications: getNotifications,
         getOlder,
         hasNew,
         readAll,

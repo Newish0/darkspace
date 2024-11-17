@@ -1,4 +1,4 @@
-import { createSignal, For, Switch, Match, Show, createEffect } from "solid-js";
+import { createSignal, For, Switch, Match, Show, createEffect, Suspense } from "solid-js";
 import {
     Bell,
     Megaphone,
@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGlobalNotification } from "@/hooks/useGlobalNotification";
+import { Skeleton } from "./ui/skeleton";
 
 interface INotification {
     type: "announcement" | "content" | "grade" | "feedback" | "assignment" | "unknown";
@@ -78,6 +79,18 @@ const mockNotifications: INotification[] = [
     },
 ];
 
+const NotificationItemSkeleton = () => {
+    return (
+        <>
+            <Skeleton height={82} width={298} radius={0} class="m-1" />
+            <Skeleton height={82} width={298} radius={0} class="m-1" />
+            <Skeleton height={82} width={298} radius={0} class="m-1" />
+            <Skeleton height={82} width={298} radius={0} class="m-1" />
+            <Skeleton height={82} width={298} radius={0} class="m-1" />
+        </>
+    );
+};
+
 const Notification = () => {
     const {
         notifications,
@@ -133,30 +146,36 @@ const Notification = () => {
             <PopoverContent class="w-80 p-0">
                 <ScrollArea class="h-[400px]">
                     <div class="space-y-1">
-                        <For each={notifications()}>
-                            {(notification) => (
-                                <div class="p-4 border-b last:border-b-0">
-                                    <div class="flex items-start space-x-4">
-                                        <div class="mt-1">{getIcon(notification.type)}</div>
-                                        <div class="flex-1 space-y-1">
-                                            <p class="text-sm font-medium leading-none">
-                                                {notification.title}
-                                            </p>
-                                            <p class="text-xs text-muted-foreground">
-                                                {notification.course}
-                                            </p>
-                                            <p class="text-xs text-muted-foreground">
-                                                {new Date(notification.timestamp).toLocaleString()}
-                                            </p>
+                        <Suspense fallback={<NotificationItemSkeleton />}>
+                            <For each={notifications()}>
+                                {(notification) => (
+                                    <div class="p-4 border-b last:border-b-0">
+                                        <div class="flex items-start space-x-4">
+                                            <div class="mt-1">{getIcon(notification.type)}</div>
+                                            <div class="flex-1 space-y-1">
+                                                <p class="text-sm font-medium leading-none">
+                                                    {notification.title}
+                                                </p>
+                                                <p class="text-xs text-muted-foreground">
+                                                    {notification.course}
+                                                </p>
+                                                <p class="text-xs text-muted-foreground">
+                                                    {new Date(
+                                                        notification.timestamp
+                                                    ).toLocaleString()}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </For>
+                                )}
+                            </For>
+                        </Suspense>
                     </div>
-                    <Button variant="link" class="w-full m-4" onClick={loadMore}>
-                        Load More
-                    </Button>
+                    <div class="w-full flex justify-center">
+                        <Button variant="link" onClick={loadMore}>
+                            Load More
+                        </Button>
+                    </div>
                 </ScrollArea>
             </PopoverContent>
         </Popover>

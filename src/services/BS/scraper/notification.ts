@@ -183,6 +183,7 @@ export class D2LActivityFeedFetcher {
 
         this.alreadyPolling = true;
         setTimeout(pollingLoop, this.pollingInterval);
+        pollingLoop();
     }
 
     /**
