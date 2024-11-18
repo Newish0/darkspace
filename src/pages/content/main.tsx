@@ -1,6 +1,6 @@
 import { render } from "solid-js/web";
 
-import { HashRouter } from "@solidjs/router";
+import { HashRouter, RouteDefinition } from "@solidjs/router";
 
 import { children, lazy, onCleanup } from "solid-js";
 import RootLayout from "./layouts/base";
@@ -9,7 +9,7 @@ import { ColorModeProvider, ColorModeScript, createLocalStorageManager } from "@
 import { debounce } from "@/utils/debounce";
 import { getApiToken } from "@/services/BS/api/token";
 
-const routes = {
+const routes: RouteDefinition = {
     path: "/",
     component: RootLayout,
     children: [

@@ -1,16 +1,19 @@
-import { createEffect, createSignal, JSX } from "solid-js";
+import { createEffect, createSignal, JSX, Switch } from "solid-js";
 import { X } from "lucide-solid";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ResourceViewerDialog } from "./ui/resource-viewer-dialog";
+import { Match } from "solid-js";
 
-interface FullScreenModalProps {
+interface ContentModalProps {
     url: string;
+    title?: string;
     contentType: "webpage" | "pdf"; // TODO: Allow not providing a content type and inferring it from the URL
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 }
 
-const FullScreenModal = (props: FullScreenModalProps) => {
+const ContentModal = (props: ContentModalProps) => {
     const [internalOpen, setInternalOpen] = createSignal(props.open);
 
     createEffect(() => {
@@ -27,33 +30,21 @@ const FullScreenModal = (props: FullScreenModalProps) => {
     });
 
     return (
-        <Dialog open={internalOpen()} onOpenChange={handleOpenChange}>
-            {/* <DialogContent class="max-w-full max-h-full w-screen h-screen p-0"> */}
-            <DialogContent class="max-w-full max-h-full w-3/4 h-4/5 p-0">
-                <div class="relative w-full h-full">
-                    {props.contentType === "webpage" && (
-                        <iframe
-                            src={props.url}
-                            class="w-full h-full border-none"
-                            title="Full-screen content"
-                        />
-                    )}
-                    {props.contentType === "pdf" && (
-                        <embed src={props.url} type="application/pdf" class="w-full h-full" />
-                    )}
-                    {/* <Button
-                        variant="outline"
-                        size="icon"
-                        class="absolute top-4 right-4 rounded-full"
-                        onClick={() => handleOpenChange(false)}
-                    >
-                        <X class="h-4 w-4" />
-                        <span class="sr-only">Close</span>
-                    </Button> */}
-                </div>
-            </DialogContent>
-        </Dialog>
+        <ResourceViewerDialog
+            open={internalOpen()}
+            onOpenChange={handleOpenChange}
+            title={props.title}
+        >
+            <Switch>
+                <Match when={props.contentType === "webpage"}>
+                    <iframe src={props.url} class="w-full h-full border-none" title={props.title} />
+                </Match>
+                <Match when={props.contentType === "pdf"}>
+                    <embed src={props.url} type="application/pdf" class="w-full h-full" />
+                </Match>
+            </Switch>
+        </ResourceViewerDialog>
     );
 };
 
-export default FullScreenModal;
+export default ContentModal;

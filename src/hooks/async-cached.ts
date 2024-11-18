@@ -125,6 +125,23 @@ type CreateAsyncCachedOptions = {
 };
 
 /**
+ * An export/wrapper around `asyncCache.get<T>` to allow direct access to the cache
+ * without reactivity provided by `createAsyncCached()`
+ *
+ * Retrieves a cached value associated with the provided keys.
+ * @template T The type of the cached value.
+ * @param keys An array of strings representing the keys to identify the cached value.
+ * @returns A Promise that resolves to the cached value of type T or null if not found.
+ */
+export function getAsyncCached<T>(keys: string[]) {
+    // Generate a cache key by joining the array of keys
+    const cacheKey = getKey(keys);
+
+    // Retrieve the cached value using the generated cache key
+    return asyncCache.get<T>(cacheKey);
+}
+
+/**
  * Creates a cached async function in which the initial value is fetched from the cache asynchronously.
  * @param fn The function to cache
  * @param options Options to configure the cache

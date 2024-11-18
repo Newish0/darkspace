@@ -4,17 +4,19 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { CopyIcon, Download, ExternalLink } from "lucide-solid";
 import { IModuleTopic } from "@/services/BS/scraper";
 import ContentModal from "./content-modal";
-import { toast } from "solid-sonner"
+import { toast } from "solid-sonner";
 
 const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
     const [modalData, setModalData] = createSignal<{
         url: string;
         contentType: "webpage" | "pdf";
         open: boolean;
+        title?: string;
     }>({
         url: "",
         contentType: "webpage",
         open: false,
+        title: "",
     });
 
     const handleDownload = (url: string, filename: string) => {
@@ -24,10 +26,10 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
         a.click();
     };
 
-    const handleOpen = (url: string) => {
+    const handleOpen = (url: string, title?: string) => {
         // window.open(url, "_blank");
         const contentType = url.toLowerCase().includes(".pdf") ? "pdf" : "webpage";
-        setModalData({ url, contentType, open: true });
+        setModalData({ url, contentType, open: true, title });
     };
 
     const handleCopyLink = (url: string) => {
@@ -58,7 +60,7 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
                                     class="w-full"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleOpen(item.url)}
+                                    onClick={() => handleOpen(item.url, item.name)}
                                 >
                                     <ExternalLink class="w-4 h-4 mr-2" />
                                     Open
@@ -99,6 +101,7 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
                 url={modalData().url}
                 open={modalData().open}
                 onOpenChange={(open) => setModalData((data) => ({ ...data, open }))}
+                title={modalData().title}
             />
         </>
     );

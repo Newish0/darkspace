@@ -38,7 +38,7 @@ import Kbd from "@/components/ui/kbd";
 import ThemeToggle from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const VERSION = import.meta.env.VERSION || "1.0.0";
+const VERSION = __APP_ENV__.VERSION || "unknown";
 
 const RightElement = () => (
     <div class="flex justify-end items-center gap-2">
