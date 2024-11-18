@@ -1,4 +1,4 @@
-import { parseD2LPartial } from "../util";
+import { getSearchParam, parseD2LPartial } from "../util";
 
 // Interfaces for the parsed data
 export interface INotification {
@@ -369,7 +369,7 @@ function parseD2LNotifications(htmlString: string): INotification[] {
             type,
             title: titleText,
             course: extractCourseName(courseText),
-            link: link.getAttribute("href") || "",
+            link: remapD2LActivityFeedUrl(link.getAttribute("href") || "", type),
             timestamp: new Date(
                 parseInt(timestampAbbr.getAttribute("data-date") || "")
             ).toISOString(),
@@ -388,4 +388,44 @@ function parseD2LNotifications(htmlString: string): INotification[] {
     });
 
     return notifications;
+}
+
+/**
+ * Remap the D2L activity feed URL to a URL that is more consistent with this app's routing.
+ * @param href The URL to remap.
+ * @param type The type of notification this is for.
+ * @returns The remapped URL.
+ */
+function remapD2LActivityFeedUrl(href: string, type: INotification["type"]) {
+    const numGroupsRegex = /(\d+)/g;
+
+    // TODO: Add more granularity so we can jump to correct item on page
+    switch (type) {
+        case "announcement": {
+            // The URL is of the form /d2l/p/le/news/<courseId>
+            const courseId = href.replace("/d2l/p/le/news/", "").match(numGroupsRegex)?.[0];
+            return `/courses/${courseId}`;
+        }
+        case "content": {
+            // The URL is of the form /d2l/le/content/<courseId>
+            const courseId = href.replace("/d2l/le/content/", "").match(numGroupsRegex)?.[0];
+            return `/courses/${courseId}`;
+        }
+        case "grade": {
+            // The URL is of the form /d2l/p/le/grades/<courseId>
+            const courseId = href.replace("/d2l/p/le/grades/", "").match(numGroupsRegex)?.[0];
+            return `/courses/${courseId}/grades`;
+        }
+        case "feedback": {
+            // The URL is of the form /d2l/lms/dropbox/user/folder_user_view_feedback.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}
+            const courseId = getSearchParam(href, "ou");
+            return `/courses/${courseId}/coursework`;
+        }
+        case "assignment":
+            // The URL is of the form /d2l/lms/dropbox/dropbox.d2l?ou={{COURSE_ID}}&amp;db={{ASSIGNMENT_ID}}
+            const courseId = getSearchParam(href, "ou");
+            return `/courses/${courseId}/coursework`;
+        default:
+            return "";
+    }
 }

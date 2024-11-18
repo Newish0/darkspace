@@ -1,10 +1,12 @@
+import { BASE_URL } from "./url";
+
 let baseDocument: Document | null = null;
-export async function getBaseDocument(): Promise<Document> {
+export async function getBaseDocument(baseUrl = BASE_URL): Promise<Document> {
     if (baseDocument) {
         return baseDocument;
     }
 
-    const url = "https://bright.uvic.ca/";
+    const url = baseUrl;
     const res = await fetch(url);
 
     if (!res.ok) {
