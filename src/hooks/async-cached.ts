@@ -1,38 +1,117 @@
 import { createAsync } from "@solidjs/router";
 import { createEffect, createSignal } from "solid-js";
 
-const CACHE_NAME = "async-cache";
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+class AsyncCache {
+    private readonly DB_NAME = "async-cache";
+    private readonly STORE_NAME = "cache-store";
+    private readonly DB_VERSION = 1;
+    private readonly CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
-async function getFromCache<T>(key: string): Promise<T | null> {
-    const cache = await caches.open(CACHE_NAME);
-    const response = await cache.match(key);
+    private async openDB(): Promise<IDBDatabase> {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
 
-    if (!response) return null;
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
 
-    // Check if cache is expired
-    const cachedTime = response.headers.get("cached-time");
-    if (cachedTime) {
-        const age = Date.now() - parseInt(cachedTime);
-        if (age > CACHE_DURATION) {
-            await cache.delete(key);
+            request.onupgradeneeded = (event) => {
+                const db = (event.target as IDBOpenDBRequest).result;
+                if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+                    db.createObjectStore(this.STORE_NAME);
+                }
+            };
+        });
+    }
+
+    private async getStore(mode: IDBTransactionMode): Promise<IDBObjectStore> {
+        const db = await this.openDB();
+        const transaction = db.transaction(this.STORE_NAME, mode);
+        return transaction.objectStore(this.STORE_NAME);
+    }
+
+    async get<T>(key: string): Promise<T | null> {
+        try {
+            const store = await this.getStore("readonly");
+            return new Promise((resolve, reject) => {
+                const request = store.get(key);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    const data = request.result;
+
+                    if (!data) {
+                        resolve(null);
+                        return;
+                    }
+
+                    // Check if cache is expired
+                    const age = Date.now() - data.timestamp;
+                    if (age > this.CACHE_DURATION) {
+                        // Delete expired data
+                        this.delete(key).catch(console.error);
+                        resolve(null);
+                        return;
+                    }
+
+                    resolve(data.value);
+                };
+            });
+        } catch (error) {
+            console.error("Error getting from cache:", error);
             return null;
         }
     }
 
-    return response.json();
+    async set<T>(key: string, value: T): Promise<void> {
+        try {
+            const store = await this.getStore("readwrite");
+            return new Promise((resolve, reject) => {
+                const request = store.put(
+                    {
+                        value,
+                        timestamp: Date.now(),
+                    },
+                    key
+                );
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve();
+            });
+        } catch (error) {
+            console.error("Error setting cache:", error);
+        }
+    }
+
+    async delete(key: string): Promise<void> {
+        try {
+            const store = await this.getStore("readwrite");
+            return new Promise((resolve, reject) => {
+                const request = store.delete(key);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve();
+            });
+        } catch (error) {
+            console.error("Error deleting from cache:", error);
+        }
+    }
+
+    async clear(): Promise<void> {
+        try {
+            const store = await this.getStore("readwrite");
+            return new Promise((resolve, reject) => {
+                const request = store.clear();
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve();
+            });
+        } catch (error) {
+            console.error("Error clearing cache:", error);
+        }
+    }
 }
 
-async function setInCache<T>(key: string, data: T): Promise<void> {
-    const cache = await caches.open(CACHE_NAME);
-    const headers = new Headers({
-        "Content-Type": "application/json",
-        "cached-time": Date.now().toString(),
-    });
-
-    const response = new Response(JSON.stringify(data), { headers });
-    await cache.put(key, response);
-}
+const asyncCache = new AsyncCache();
 
 function getKey(keys: string[]) {
     return keys.join("/");
@@ -71,7 +150,7 @@ export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncC
         async () => {
             // Workaround to force recreation of `createAsync`
             if (useCache()) {
-                const cachedValue = await getFromCache<T>(key());
+                const cachedValue = await asyncCache.get<T>(key());
                 if (cachedValue) {
                     setCachedData(() => cachedValue);
 
@@ -83,7 +162,7 @@ export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncC
 
             // Call the function and cache the result
             const result = await fn();
-            await setInCache(key(), result);
+            await asyncCache.set(key(), result);
             return result;
         },
         {
