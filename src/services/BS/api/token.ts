@@ -1,3 +1,4 @@
+import { debounce } from "@/utils/debounce";
 import { getBaseDocument } from "../base-doc";
 import { ApiTokenError } from "../errors";
 
@@ -6,17 +7,20 @@ let tokenRequestPromise: Promise<string> | null = null;
 
 /**
  * Retrieves an API token, fetching it only if it's not cached or expired.
+ * @param ignoreCache - If true, ignore the cached token and always fetch a new one.
  * @returns {Promise<string>} The API access token.
  * @throws {ApiTokenError} If the token cannot be retrieved or parsed.
  */
-export async function getApiToken(): Promise<string> {
+export async function getApiToken(ignoreCache = false): Promise<string> {
     // If there's an ongoing request, return its promise
     if (tokenRequestPromise) {
         return tokenRequestPromise;
     }
 
-    const cachedToken = getCachedToken();
-    if (cachedToken) return cachedToken;
+    if (!ignoreCache) {
+        const cachedToken = getCachedToken();
+        if (cachedToken) return cachedToken;
+    }
 
     // Create new token request promise
     tokenRequestPromise = (async () => {
@@ -140,7 +144,8 @@ async function parseTokenResponse(
 function cacheToken(token: { access_token: string; expires_at: number }) {
     const tokenData = {
         ...token,
-        expires_at: Date.now() + token.expires_at * 1000, // Convert to milliseconds
+        expires_at: token.expires_at * 1000, // Convert to milliseconds
+        // expires_at: Date.now() + 60 * 1000,
     };
     localStorage.setItem("api_token", JSON.stringify(tokenData));
 }
@@ -161,4 +166,11 @@ function getCachedToken(): string | null {
     // Clear expired token
     localStorage.removeItem("api_token");
     return null;
+}
+
+/**
+ * Clears the cached API token.
+ */
+function clearCachedToken() {
+    localStorage.removeItem("api_token");
 }

@@ -2,10 +2,12 @@ import { render } from "solid-js/web";
 
 import { HashRouter } from "@solidjs/router";
 
-import { children, lazy } from "solid-js";
+import { children, lazy, onCleanup } from "solid-js";
 import RootLayout from "./layouts/base";
 
 import { ColorModeProvider, ColorModeScript, createLocalStorageManager } from "@kobalte/core";
+import { debounce } from "@/utils/debounce";
+import { getApiToken } from "@/services/BS/api/token";
 
 const routes = {
     path: "/",
@@ -41,6 +43,21 @@ const routes = {
 
 const App = () => {
     const storageManager = createLocalStorageManager("vite-ui-theme");
+
+    /**
+     * Listen for window focus events and refresh the API token when the window is
+     * focused. This is done to ensure that the token is refreshed and cached when
+     * the user switches back to the browser tab.
+     */
+    const handleFocus = debounce(() => {
+        getApiToken();
+    }, 150);
+
+    window.addEventListener("focus", handleFocus);
+
+    onCleanup(() => {
+        window.removeEventListener("focus", handleFocus);
+    });
 
     return (
         <>
