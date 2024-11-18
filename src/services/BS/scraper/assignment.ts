@@ -14,10 +14,11 @@ export interface IAssignment {
     status?: "submitted" | "not-submitted" | "returned";
     feedbackUrl?: string;
 }
+const ASSIGNMENT_LIST_PAGE_SIZE = 200;
+const ASSIGNMENT_LIST_PAGINATION_PARAM = `d2l_stateGroups=["grid","gridpagenum"]&d2l_statePageId=266&d2l_state_grid={"Name":"grid","Controls":[{"ControlId":{"ID":"grid_main"},"StateType":"","Key":"","Name":"gridFolders","State":{"PageSize":"${ASSIGNMENT_LIST_PAGE_SIZE}","SortField":"DropboxId","SortDir":0}}]}`;
 
 const URL_CONFIG = {
-    ASSIGNMENTS_LIST:
-        "https://bright.uvic.ca/d2l/lms/dropbox/user/folders_list.d2l?ou={{COURSE_ID}}",
+    ASSIGNMENTS_LIST: `https://bright.uvic.ca/d2l/lms/dropbox/user/folders_list.d2l?ou={{COURSE_ID}}&${ASSIGNMENT_LIST_PAGINATION_PARAM}`,
 };
 
 const SELECTORS = {
