@@ -5,6 +5,8 @@ import { HashRouter } from "@solidjs/router";
 import { children, lazy } from "solid-js";
 import RootLayout from "./layouts/base";
 
+import { ColorModeProvider, ColorModeScript, createLocalStorageManager } from "@kobalte/core";
+
 const routes = {
     path: "/",
     component: RootLayout,
@@ -38,7 +40,16 @@ const routes = {
 };
 
 const App = () => {
-    return <HashRouter>{routes}</HashRouter>;
+    const storageManager = createLocalStorageManager("vite-ui-theme");
+
+    return (
+        <>
+            <ColorModeScript storageType={storageManager.type} />
+            <ColorModeProvider storageManager={storageManager}>
+                <HashRouter>{routes}</HashRouter>
+            </ColorModeProvider>
+        </>
+    );
 };
 
 export function renderRoot(root: HTMLElement) {

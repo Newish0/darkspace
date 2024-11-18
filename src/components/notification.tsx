@@ -138,7 +138,7 @@ const Notification = () => {
 
     return (
         <Popover open={isOpen()} onOpenChange={(value) => setIsOpen(value)}>
-            <PopoverTrigger as={Button<"button">} variant="outline" size="icon" class="relative">
+            <PopoverTrigger as={Button<"button">} variant="ghost" size="sm" class="w-9 px-0">
                 <Bell class="h-4 w-4" />
                 <Show when={hasNewNotifications()}>
                     <div class="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-destructive"></div>

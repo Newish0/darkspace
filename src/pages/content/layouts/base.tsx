@@ -35,30 +35,25 @@ import { createAsyncCached } from "@/hooks/async-cached";
 import Notification from "@/components/notification";
 import { TextField, TextFieldInput, TextFieldLabel } from "@/components/ui/text-field";
 import Kbd from "@/components/ui/kbd";
+import ThemeToggle from "@/components/theme-toggle";
 
 const VERSION = import.meta.env.VERSION || "1.0.0";
 
 const RightElement = () => (
     <div class="flex justify-end items-center gap-2">
-        <TextField class="flex w-full max-w-56 focus:max-w-sm items-center relative">
-            <TextFieldInput
-                type="search"
-                id="search"
-                placeholder="Search"
-                class="pr-12"
-                size={24}
-            />
-            <TextFieldLabel for="search" class="absolute right-4">
-                <div class="flex gap-4 items-center">
-                    <div class="space-x-2">
-                        <Kbd>Ctrl</Kbd>
-                        <Kbd>P</Kbd>
-                    </div>
-                    <SearchIcon size={20} />
-                </div>
-            </TextFieldLabel>
-        </TextField>
+        <Button variant={"outline"} class="gap-8 text-muted-foreground hover:text-foreground">
+            <div class="flex items-center gap-2">
+                <SearchIcon size={16} />
+                <span>Search...</span>
+            </div>
+            <div class="space-x-2 h-min">
+                <Kbd>Ctrl</Kbd>
+                <Kbd>P</Kbd>
+            </div>
+        </Button>
+
         <Notification />
+        <ThemeToggle />
     </div>
 );
 
