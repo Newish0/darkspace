@@ -36,6 +36,7 @@ import Notification from "@/components/notification";
 import { TextField, TextFieldInput, TextFieldLabel } from "@/components/ui/text-field";
 import Kbd from "@/components/ui/kbd";
 import ThemeToggle from "@/components/theme-toggle";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const VERSION = import.meta.env.VERSION || "1.0.0";
 
@@ -54,6 +55,11 @@ const RightElement = () => (
 
         <Notification />
         <ThemeToggle />
+
+        <Avatar>
+            <AvatarImage src="" />
+            <AvatarFallback>ME</AvatarFallback>
+        </Avatar>
     </div>
 );
 

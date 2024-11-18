@@ -3,6 +3,11 @@ import { renderRoot } from "./main";
 /* Need to import css inline because we remove all styles from the page */
 import viteCss from "@/styles/global.css?inline";
 
+import favIcon from "@/../public/favicon.ico";
+import Browser from "webextension-polyfill";
+
+console.log("START", performance.now());
+
 function removeAllGivenTags(tagName: string, except?: (eln: Element) => boolean) {
     const tags = document.querySelectorAll(tagName);
     for (const tag of tags) {
@@ -12,6 +17,8 @@ function removeAllGivenTags(tagName: string, except?: (eln: Element) => boolean)
 }
 
 function removeBSResources() {
+    const favIconUrl = Browser.runtime.getURL(favIcon);
+
     document.documentElement.innerHTML = `
         <!DOCTYPE html>
         <html lang="en">
@@ -19,6 +26,7 @@ function removeBSResources() {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Darkspace</title>
+                <link rel="icon" type="image/x-icon" href="${favIconUrl}">
             </head>
             <body>
             </body>
@@ -70,4 +78,7 @@ if (EXCLUSION_RULES.some((rule) => rule())) {
 } else {
     removeBSResources();
     init();
+
+    console.log("END", performance.now());
 }
+
