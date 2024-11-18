@@ -48,22 +48,31 @@ const ActionButton: Component<{
     status?: IAssignment["status"];
     isPastEndDate: boolean;
     assignmentId?: string;
+    assignmentName?: string;
     groupId?: string;
     courseId: string;
 }> = (props) => {
-    const [modalUrl, setModalUrl] = createSignal<string>("");
+    const [modalData, setModalData] = createSignal<{
+        url: string;
+        title?: string;
+    }>({ url: "" });
 
     const handleOpenAssignment = () => {
         if (!props.assignmentId) return;
         const url = getAssignmentSubmitUrl(props.courseId, props.assignmentId, props.groupId);
-        setModalUrl(url);
+        setModalData({
+            url: url,
+            title: props.assignmentName || "Assignment",
+        });
     };
 
     const handleOpenAssignmentFeedback = () => {
         if (!props.assignmentId) return;
         const url = getAssignmentFeedbackUrl(props.courseId, props.assignmentId, props.groupId);
-        console.log("url", url);
-        setModalUrl(url);
+        setModalData({
+            url: url,
+            title: props.assignmentName || "Assignment Feedback",
+        });
     };
 
     return (
@@ -104,10 +113,11 @@ const ActionButton: Component<{
                 </Match>
             </Switch>
             <ContentModal
-                url={modalUrl()}
+                url={modalData().url}
+                title={modalData().title}
                 contentType="webpage"
-                open={!!modalUrl()}
-                onOpenChange={() => setModalUrl("")}
+                open={!!modalData().url}
+                onOpenChange={() => setModalData({ url: "", title: "" })}
             />
         </>
     );
@@ -207,6 +217,7 @@ const AssignmentItem: Component<AssignmentItemProps> = (props) => {
                     <div class="flex-shrink-0 flex items-center gap-2">
                         <ActionButton
                             assignmentId={props.assignment.id}
+                            assignmentName={props.assignment.name}
                             groupId={props.assignment.groupId}
                             courseId={props.courseId}
                             status={props.assignment.status}

@@ -43,6 +43,7 @@ type DialogContentProps<T extends ValidComponent = "div"> =
         class?: string | undefined;
         children?: JSX.Element;
         title?: JSX.Element;
+        leftActions?: JSX.Element;
     };
 
 const DialogContent = <T extends ValidComponent = "div">(
@@ -61,8 +62,8 @@ const DialogContent = <T extends ValidComponent = "div">(
                 {...rest}
             >
                 {/* Top bar */}
-                <div class="w-screen z-50 py-2 px-4 flex justify-between border-b h-min">
-                    <div></div>
+                <div class="w-screen z-50 py-2 px-4 flex justify-between items-center border-b h-min">
+                    <div>{props.leftActions}</div>
                     <div>{props.title}</div>
                     <DialogPrimitive.CloseButton class="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[expanded]:bg-accent data-[expanded]:text-muted-foreground">
                         <XIcon size={16} />
@@ -78,13 +79,14 @@ const DialogContent = <T extends ValidComponent = "div">(
 
 type ResourceViewerDialogProps = {
     title?: JSX.Element;
+    leftActions?: JSX.Element;
 } & ComponentProps<typeof Dialog>;
 
 const ResourceViewerDialog = (props: ResourceViewerDialogProps) => {
     const [local, others] = splitProps(props, ["title", "children"]);
     return (
         <Dialog {...others}>
-            <DialogContent title={local.title}>
+            <DialogContent title={local.title} leftActions={props.leftActions}>
                 {local.children}
             </DialogContent>
         </Dialog>

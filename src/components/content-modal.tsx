@@ -1,9 +1,7 @@
-import { createEffect, createSignal, JSX, Switch } from "solid-js";
-import { X } from "lucide-solid";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { ExternalLink, ExternalLinkIcon, FileTextIcon, PanelsTopLeftIcon } from "lucide-solid";
+import { createEffect, createSignal, Match, Switch } from "solid-js";
 import { ResourceViewerDialog } from "./ui/resource-viewer-dialog";
-import { Match } from "solid-js";
+import { Button, buttonVariants } from "./ui/button";
 
 interface ContentModalProps {
     url: string;
@@ -12,6 +10,31 @@ interface ContentModalProps {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 }
+
+const TitleElement = (props: { title?: string; type?: ContentModalProps["contentType"] }) => {
+    return (
+        <div class="flex items-center justify-between gap-2">
+            <Switch>
+                <Match when={props.type === "webpage"}>
+                    <PanelsTopLeftIcon size={16} />
+                </Match>
+                <Match when={props.type === "pdf"}>
+                    <FileTextIcon size={16} />
+                </Match>
+            </Switch>
+
+            <span>{props.title}</span>
+        </div>
+    );
+};
+
+const LeftActions = (props: { url: string }) => (
+    <>
+        <a href={props.url} target="_blank" class={buttonVariants({ variant: "ghost", size: "sm", class: "p-0" })}>
+            <ExternalLinkIcon size={16} />
+        </a>
+    </>
+);
 
 const ContentModal = (props: ContentModalProps) => {
     const [internalOpen, setInternalOpen] = createSignal(props.open);
@@ -33,7 +56,8 @@ const ContentModal = (props: ContentModalProps) => {
         <ResourceViewerDialog
             open={internalOpen()}
             onOpenChange={handleOpenChange}
-            title={props.title}
+            title={<TitleElement title={props.title} type={props.contentType} />}
+            leftActions={<LeftActions url={props.url} />}
         >
             <Switch>
                 <Match when={props.contentType === "webpage"}>

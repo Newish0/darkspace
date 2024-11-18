@@ -50,14 +50,21 @@ const ActionButton: Component<{
     hasSubmissions: boolean;
     isPastEndDate: boolean;
     quizId?: string;
+    quizName?: string;
     courseId: string;
 }> = (props) => {
-    const [modalUrl, setModalUrl] = createSignal<string>("");
+    const [modalData, setModalData] = createSignal<{
+        url: string;
+        title?: string;
+    }>({ url: "" });
 
     const handleOpenQuiz = () => {
         if (!props.quizId) return;
         const url = getQuizSummaryUrl(props.quizId, props.courseId);
-        setModalUrl(url);
+        setModalData({
+            url: url,
+            title: props.quizName || "Quiz Summary",
+        });
     };
 
     return (
@@ -98,10 +105,11 @@ const ActionButton: Component<{
             </Show>
 
             <ContentModal
-                url={modalUrl()}
+                url={modalData().url}
+                title={modalData().title}
                 contentType="webpage"
-                open={!!modalUrl()}
-                onOpenChange={() => setModalUrl("")}
+                open={!!modalData().url}
+                onOpenChange={() => setModalData({ url: "" })}
             />
         </>
     );
@@ -264,6 +272,7 @@ const QuizItem: Component<QuizItemProps> = (props) => {
                             isPastEndDate={isPastEndDate()}
                             courseId={props.courseId}
                             quizId={props.quiz.id}
+                            quizName={props.quiz.name}
                         />
                         <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen())}>
                             <Show when={isOpen()} fallback={<ChevronDown class="h-4 w-4" />}>
