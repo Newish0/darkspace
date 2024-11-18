@@ -20,6 +20,12 @@ const transformedManifest: ManifestV3Export = {
 export default defineConfig({
     plugins: [solidPlugin(), crx({ manifest: transformedManifest })],
 
+    define: {
+        __APP_ENV__: {
+            VERSION: `${pkg.version}`
+        },
+    },
+
     server: {
         port: 5173,
         strictPort: true,
