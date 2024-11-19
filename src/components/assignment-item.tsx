@@ -1,4 +1,4 @@
-import { Component, createSignal, Switch, Match, Show, For, JSX } from "solid-js";
+import { Component, createSignal, Switch, Match, Show, For, JSX, createEffect } from "solid-js";
 import { format, isPast } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,12 +16,19 @@ import {
     HelpCircle,
     Play,
     RotateCcw,
+    Check,
+    X,
 } from "lucide-solid";
 import { IAssignment } from "@/services/BS/scraper/assignment";
 import { Badge } from "./ui/badge";
 import { getAssignmentFeedbackUrl, getAssignmentSubmitUrl } from "@/services/BS/url";
 
 import ContentModal from "./content-modal";
+import { cn } from "@/lib/utils";
+import { createAsyncCached } from "@/hooks/async-cached";
+import { getAssignmentInfo } from "@/services/BS/scraper/assignment-info";
+import ControlledSuspense from "./controlled-suspense";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 
 interface AssignmentItemProps {
     assignment: IAssignment;
@@ -200,6 +207,83 @@ const AdditionalInfo: Component<{ assignment: IAssignment }> = (props) => (
     </div>
 );
 
+const AssignmentSubmissions: Component<{
+    assignment: IAssignment;
+    courseId: string;
+    class?: string;
+}> = (props) => {
+    const submissions = createAsyncCached(
+        () =>
+            getAssignmentInfo(props.courseId, props.assignment.id || "", props.assignment.groupId),
+        {
+            keys: () => [
+                "assignments",
+                props.courseId,
+                props.assignment.id || "",
+                props.assignment.groupId || "0",
+            ],
+        }
+    );
+
+    createEffect(() => {
+        console.log(submissions());
+    });
+
+    return (
+        <Show when={props.assignment.id} fallback={<p>None</p>}>
+            <ControlledSuspense hasContent={!!submissions()} fallback={<p>Loading...</p>}>
+                {
+                    <div class={cn("flex flex-col gap-2", props.class)}>
+                        <h3 class="font-medium mb-2">Submissions</h3>
+                        <div class="flex flex-col gap-2">
+                            <Table class="w-full overflow-hidden">
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Submission ID</TableHead>
+                                        <TableHead>Submission Date</TableHead>
+                                        <TableHead>Student Name</TableHead>
+                                        <TableHead>Files</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <For each={submissions()?.submissions}>
+                                        {(submission) => (
+                                            <TableRow>
+                                                <TableCell class="align-top">
+                                                    {submission.submissionId}
+                                                </TableCell>
+                                                <TableCell class="align-top">
+                                                    {submission.dateSubmitted}
+                                                </TableCell>
+                                                <TableCell class="align-top">
+                                                    {submission.submitter.name}
+                                                </TableCell>
+                                                <TableCell class="align-top">
+                                                    <For each={submission.files}>
+                                                        {(file) => (
+                                                            <a href={file.url} target="_blank">
+                                                                <Badge variant="secondary" round class="text-nowrap">
+                                                                    <Link2 class="h-4 w-4 mr-2" />
+                                                                    <p>{file.filename}</p>
+                                                                    <p>{file.filesize}</p>
+                                                                </Badge>
+                                                            </a>
+                                                        )}
+                                                    </For>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </For>
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                }
+            </ControlledSuspense>
+        </Show>
+    );
+};
+
 // Main Component
 const AssignmentItem: Component<AssignmentItemProps> = (props) => {
     const [isOpen, setIsOpen] = createSignal(false);
@@ -248,6 +332,11 @@ const AssignmentItem: Component<AssignmentItemProps> = (props) => {
                         <div class="grid gap-4 md:grid-cols-2">
                             <AssignmentDetails assignment={props.assignment} />
                             <AdditionalInfo assignment={props.assignment} />
+                            <AssignmentSubmissions
+                                assignment={props.assignment}
+                                courseId={props.courseId}
+                                class="md:col-span-2"
+                            />
                         </div>
                     </CardContent>
                 </CollapsibleContent>
