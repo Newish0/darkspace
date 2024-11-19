@@ -12,7 +12,7 @@ import { IGradeCategory, IGradeData, IGradeItem, IGradeScore } from "@/services/
 import { Award, BookOpen, AlertCircle } from "lucide-solid";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
-import ContentModal from "./content-modal";
+import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { Button } from "./ui/button";
 
 const ScoreDisplay: Component<{ score: IGradeScore }> = (props) => {
@@ -49,12 +49,6 @@ const ScoreDisplay: Component<{ score: IGradeScore }> = (props) => {
 };
 
 const GradeItem: Component<{ item: IGradeItem }> = (props) => {
-    const [isOpenRubric, setIsOpenRubric] = createSignal(false);
-
-    const handleOpenRubric = () => {
-        setIsOpenRubric(true);
-    };
-
     return (
         <div class="py-2 border-b border-border last:border-b-0 grid grid-cols-2 grid-rows-1 gap-4">
             <div class="w-full space-y-4">
@@ -89,15 +83,20 @@ const GradeItem: Component<{ item: IGradeItem }> = (props) => {
                     >
                         {(rubricUrl) => (
                             <>
-                                <Button onClick={handleOpenRubric} variant={"link"} size={"sm"}>
-                                    Open Rubric
-                                </Button>
-                                <ContentModal
-                                    contentType="webpage"
-                                    url={rubricUrl()}
-                                    open={isOpenRubric()}
-                                    onOpenChange={setIsOpenRubric}
-                                />
+                                <ContentModal>
+                                    <ContentModalTrigger
+                                        as={Button<"button">}
+                                        variant={"link"}
+                                        size={"sm"}
+                                    >
+                                        Open Rubric
+                                    </ContentModalTrigger>
+                                    <ContentModalContent
+                                        url={rubricUrl()}
+                                        contentType="webpage"
+                                        title={`${props.item.name} Rubric`}
+                                    />
+                                </ContentModal>
                             </>
                         )}
                     </Show>

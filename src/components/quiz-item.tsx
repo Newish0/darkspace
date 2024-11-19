@@ -1,4 +1,4 @@
-import { Component, createSignal, Show, For, Switch, Match } from "solid-js";
+import { Component, createSignal, Show, For, Switch, Match, JSX, ComponentProps } from "solid-js";
 import { format, isPast } from "date-fns";
 import {
     ChevronDown,
@@ -22,7 +22,7 @@ import { getQuizSubmissionsFromUrl, IQuizInfo, IQuizSubmission } from "@/service
 import { createAsync } from "@solidjs/router";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getQuizSummaryUrl } from "@/services/BS/url";
-import ContentModal from "./content-modal";
+import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 
 interface QuizItemProps {
     quiz: IQuizInfo;
@@ -53,64 +53,82 @@ const ActionButton: Component<{
     quizName?: string;
     courseId: string;
 }> = (props) => {
-    const [modalData, setModalData] = createSignal<{
-        url: string;
-        title?: string;
-    }>({ url: "" });
-
-    const handleOpenQuiz = () => {
-        if (!props.quizId) return;
-        const url = getQuizSummaryUrl(props.quizId, props.courseId);
-        setModalData({
-            url: url,
-            title: props.quizName || "Quiz Summary",
-        });
-    };
+    const QuizModal = ({
+        triggerContent,
+        variant,
+    }: {
+        triggerContent: JSX.Element;
+        variant: ComponentProps<typeof Button>["variant"];
+    }) => (
+        <ContentModal>
+            <ContentModalTrigger as={Button<"button">} variant={variant} size="sm">
+                {triggerContent}
+            </ContentModalTrigger>
+            <ContentModalContent
+                url={getQuizSummaryUrl(props.quizId!, props.courseId)}
+                title={props.quizName || "Quiz Summary"}
+                contentType="webpage"
+            />
+        </ContentModal>
+    );
 
     return (
         <>
             <Show when={!props.isPastEndDate}>
                 <Switch>
                     <Match when={props.status === "in-progress"}>
-                        <Button variant="default" size="sm" onClick={handleOpenQuiz}>
-                            <Play class="mr-2 h-4 w-4" /> Continue
-                        </Button>
+                        <QuizModal
+                            triggerContent={
+                                <>
+                                    <Play class="mr-2 h-4 w-4" /> Continue
+                                </>
+                            }
+                            variant="default"
+                        />
                     </Match>
                     <Match when={props.status === "retry-in-progress"}>
-                        <Button variant="default" size="sm" onClick={handleOpenQuiz}>
-                            <Play class="mr-2 h-4 w-4" /> Continue Retry
-                        </Button>
+                        <QuizModal
+                            triggerContent={
+                                <>
+                                    <Play class="mr-2 h-4 w-4" /> Continue Retry
+                                </>
+                            }
+                            variant="default"
+                        />
                     </Match>
-                    <Match when={props.hasSubmissions}>
-                        <Button
+                    <Match when={props.status === "completed"}>
+                        <QuizModal
+                            triggerContent={
+                                <>
+                                    <CheckCircle class="mr-2 h-4 w-4" /> Completed
+                                </>
+                            }
                             variant="link"
-                            size="sm"
-                            class="text-muted-foreground"
-                            onClick={handleOpenQuiz}
-                        >
-                            <RotateCcw class="mr-2 h-4 w-4" /> Retry
-                        </Button>
+                        />
+                    </Match>
+
+                    <Match when={props.hasSubmissions}>
+                        <QuizModal
+                            triggerContent={
+                                <>
+                                    <RotateCcw class="mr-2 h-4 w-4" /> Retry
+                                </>
+                            }
+                            variant="link"
+                        />
                     </Match>
                     <Match when={props.status !== "completed"}>
-                        <Button
+                        <QuizModal
+                            triggerContent={
+                                <>
+                                    <Play class="mr-2 h-4 w-4" /> Start Quiz
+                                </>
+                            }
                             variant="outline"
-                            size="sm"
-                            class="bg-primary text-primary-foreground"
-                            onClick={handleOpenQuiz}
-                        >
-                            <Play class="mr-2 h-4 w-4" /> Start Quiz
-                        </Button>
+                        />
                     </Match>
                 </Switch>
             </Show>
-
-            <ContentModal
-                url={modalData().url}
-                title={modalData().title}
-                contentType="webpage"
-                open={!!modalData().url}
-                onOpenChange={() => setModalData({ url: "" })}
-            />
         </>
     );
 };

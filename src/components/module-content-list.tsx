@@ -3,33 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyIcon, Download, ExternalLink } from "lucide-solid";
 import { IModuleTopic } from "@/services/BS/scraper";
-import ContentModal from "./content-modal";
+import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { toast } from "solid-sonner";
 
 const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
-    const [modalData, setModalData] = createSignal<{
-        url: string;
-        contentType: "webpage" | "pdf";
-        open: boolean;
-        title?: string;
-    }>({
-        url: "",
-        contentType: "webpage",
-        open: false,
-        title: "",
-    });
-
     const handleDownload = (url: string, filename: string) => {
         const a = document.createElement("a");
         a.href = url;
         a.download = filename;
         a.click();
-    };
-
-    const handleOpen = (url: string, title?: string) => {
-        // window.open(url, "_blank");
-        const contentType = url.toLowerCase().includes(".pdf") ? "pdf" : "webpage";
-        setModalData({ url, contentType, open: true, title });
     };
 
     const handleCopyLink = (url: string) => {
@@ -56,15 +38,25 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
                                 </p>
                             </CardContent>
                             <CardFooter class="flex justify-between mt-auto gap-1">
-                                <Button
-                                    class="w-full"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleOpen(item.url, item.name)}
-                                >
-                                    <ExternalLink class="w-4 h-4 mr-2" />
-                                    Open
-                                </Button>
+                                <ContentModal>
+                                    <ContentModalTrigger
+                                        as={Button<"button">}
+                                        variant="ghost"
+                                        size="sm"
+                                    >
+                                        <ExternalLink class="w-4 h-4 mr-2" />
+                                        Open
+                                    </ContentModalTrigger>
+                                    <ContentModalContent
+                                        url={item.url}
+                                        title={item.name}
+                                        contentType={
+                                            item.url.toLowerCase().includes(".pdf")
+                                                ? "pdf"
+                                                : "webpage"
+                                        }
+                                    />
+                                </ContentModal>
 
                                 <Show
                                     when={item.downloadable}
@@ -95,14 +87,6 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
                     )}
                 </For>
             </div>
-
-            <ContentModal
-                contentType={modalData().contentType}
-                url={modalData().url}
-                open={modalData().open}
-                onOpenChange={(open) => setModalData((data) => ({ ...data, open }))}
-                title={modalData().title}
-            />
         </>
     );
 };

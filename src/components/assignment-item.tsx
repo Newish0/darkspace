@@ -1,4 +1,14 @@
-import { Component, createSignal, Switch, Match, Show, For, JSX, createEffect } from "solid-js";
+import {
+    Component,
+    createSignal,
+    Switch,
+    Match,
+    Show,
+    For,
+    JSX,
+    createEffect,
+    ComponentProps,
+} from "solid-js";
 import { format, isPast } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +33,7 @@ import { IAssignment } from "@/services/BS/scraper/assignment";
 import { Badge } from "./ui/badge";
 import { getAssignmentFeedbackUrl, getAssignmentSubmitUrl } from "@/services/BS/url";
 
-import ContentModal from "./content-modal";
+import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { cn } from "@/lib/utils";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getAssignmentInfo } from "@/services/BS/scraper/assignment-info";
@@ -59,73 +69,81 @@ const ActionButton: Component<{
     groupId?: string;
     courseId: string;
 }> = (props) => {
-    const [modalData, setModalData] = createSignal<{
-        url: string;
-        title?: string;
-    }>({ url: "" });
-
-    const handleOpenAssignment = () => {
-        if (!props.assignmentId) return;
-        const url = getAssignmentSubmitUrl(props.courseId, props.assignmentId, props.groupId);
-        setModalData({
-            url: url,
-            title: props.assignmentName || "Assignment",
-        });
-    };
-
-    const handleOpenAssignmentFeedback = () => {
-        if (!props.assignmentId) return;
-        const url = getAssignmentFeedbackUrl(props.courseId, props.assignmentId, props.groupId);
-        setModalData({
-            url: url,
-            title: props.assignmentName || "Assignment Feedback",
-        });
-    };
+    const AssignmentModal = (props: {
+        triggerContent: JSX.Element;
+        url?: string;
+        title: string;
+        variant: ComponentProps<typeof Button>["variant"];
+    }) => (
+        <ContentModal>
+            <ContentModalTrigger as={Button<"button">} variant={props.variant} size="sm">
+                {props.triggerContent}
+            </ContentModalTrigger>
+            <ContentModalContent url={props.url} title={props.title} contentType="webpage" />
+        </ContentModal>
+    );
 
     return (
         <>
             <Switch>
                 <Match when={props.status === "submitted" && !props.isPastEndDate}>
-                    <Button
+                    <AssignmentModal
+                        triggerContent={
+                            <>
+                                <RotateCcw class="mr-2 h-4 w-4" /> Resubmit
+                            </>
+                        }
                         variant="link"
-                        size="sm"
-                        class="text-muted-foreground w-max"
-                        disabled={!props.assignmentId}
-                        onClick={handleOpenAssignment}
-                    >
-                        <RotateCcw class="mr-2 h-4 w-4" /> Resubmit
-                    </Button>
+                        url={
+                            props.assignmentId &&
+                            getAssignmentSubmitUrl(
+                                props.courseId,
+                                props.assignmentId,
+                                props.groupId
+                            )
+                        }
+                        title={props.assignmentName || "Assignment"}
+                    />
                 </Match>
                 <Match when={props.status === "not-submitted" && !props.isPastEndDate}>
-                    <Button
+                    <AssignmentModal
+                        triggerContent={
+                            <>
+                                <Play class="mr-2 h-4 w-4" /> Start Assignment
+                            </>
+                        }
                         variant="outline"
-                        size="sm"
-                        class="bg-primary text-primary-foreground w-max"
-                        disabled={!props.assignmentId}
-                        onClick={handleOpenAssignment}
-                    >
-                        <Play class="mr-2 h-4 w-4" /> Start Assignment
-                    </Button>
+                        url={
+                            props.assignmentId &&
+                            getAssignmentSubmitUrl(
+                                props.courseId,
+                                props.assignmentId,
+                                props.groupId
+                            )
+                        }
+                        title={props.assignmentName || "Assignment"}
+                    />
                 </Match>
                 <Match when={props.status === "returned"}>
-                    <Button
+                    <AssignmentModal
+                        triggerContent={
+                            <>
+                                <Link2 class="mr-2 h-4 w-4" /> View Feedback
+                            </>
+                        }
                         variant="default"
-                        size="sm"
-                        class="w-max"
-                        disabled={!props.assignmentId}
-                        onClick={handleOpenAssignmentFeedback}
-                    >
-                        <Link2 class="mr-2 h-4 w-4" /> View Feedback
-                    </Button>
+                        url={
+                            props.assignmentId &&
+                            getAssignmentFeedbackUrl(
+                                props.courseId,
+                                props.assignmentId,
+                                props.groupId
+                            )
+                        }
+                        title={(props.assignmentName || "Assignment") + " Feedback"}
+                    />
                 </Match>
             </Switch>
-            <ContentModal
-                url={modalData().url}
-                title={modalData().title}
-                contentType="webpage"
-                open={!!modalData().url}
-                onOpenChange={() => setModalData({ url: "", title: "" })}
-            />
         </>
     );
 };
@@ -262,7 +280,11 @@ const AssignmentSubmissions: Component<{
                                                     <For each={submission.files}>
                                                         {(file) => (
                                                             <a href={file.url} target="_blank">
-                                                                <Badge variant="secondary" round class="text-nowrap">
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    round
+                                                                    class="text-nowrap"
+                                                                >
                                                                     <Link2 class="h-4 w-4 mr-2" />
                                                                     <p>{file.filename}</p>
                                                                     <p>{file.filesize}</p>

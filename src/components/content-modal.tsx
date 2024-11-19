@@ -1,17 +1,16 @@
 import { ExternalLink, ExternalLinkIcon, FileTextIcon, PanelsTopLeftIcon } from "lucide-solid";
 import { createEffect, createSignal, Match, Switch } from "solid-js";
-import { ResourceViewerDialog } from "./ui/resource-viewer-dialog";
+import {
+    ResourceViewerDialog,
+    ResourceViewerDialogContent,
+    ResourceViewerDialogTrigger,
+} from "./ui/resource-viewer-dialog";
 import { Button, buttonVariants } from "./ui/button";
 
-interface ContentModalProps {
-    url: string;
+const TitleElement = (props: {
     title?: string;
-    contentType: "webpage" | "pdf"; // TODO: Allow not providing a content type and inferring it from the URL
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-}
-
-const TitleElement = (props: { title?: string; type?: ContentModalProps["contentType"] }) => {
+    type?: ContentModalContentProps["contentType"];
+}) => {
     return (
         <div class="flex items-center justify-between gap-2">
             <Switch>
@@ -28,34 +27,28 @@ const TitleElement = (props: { title?: string; type?: ContentModalProps["content
     );
 };
 
-const LeftActions = (props: { url: string }) => (
+const LeftActions = (props: { url?: string }) => (
     <>
-        <a href={props.url} target="_blank" class={buttonVariants({ variant: "ghost", size: "sm", class: "p-0" })}>
+        {/*  TODO: add disabled state on undefined url */}
+        <a
+            href={props.url}
+            target="_blank"
+            class={buttonVariants({ variant: "ghost", size: "sm", class: "p-0" })}
+        >
             <ExternalLinkIcon size={16} />
         </a>
     </>
 );
 
-const ContentModal = (props: ContentModalProps) => {
-    const [internalOpen, setInternalOpen] = createSignal(props.open);
+interface ContentModalContentProps {
+    url?: string;
+    title?: string;
+    contentType: "webpage" | "pdf"; // TODO: Allow not providing a content type and inferring it from the URL
+}
 
-    createEffect(() => {
-        setInternalOpen(props.open);
-    });
-
-    const handleOpenChange = (open: boolean) => {
-        setInternalOpen(open);
-        props.onOpenChange?.(open);
-    };
-
-    createEffect(() => {
-        console.log("Provided URL:", props.url);
-    });
-
+const ContentModalContent = (props: ContentModalContentProps) => {
     return (
-        <ResourceViewerDialog
-            open={internalOpen()}
-            onOpenChange={handleOpenChange}
+        <ResourceViewerDialogContent
             title={<TitleElement title={props.title} type={props.contentType} />}
             leftActions={<LeftActions url={props.url} />}
         >
@@ -67,8 +60,12 @@ const ContentModal = (props: ContentModalProps) => {
                     <embed src={props.url} type="application/pdf" class="w-full h-full" />
                 </Match>
             </Switch>
-        </ResourceViewerDialog>
+        </ResourceViewerDialogContent>
     );
 };
 
-export default ContentModal;
+export {
+    ResourceViewerDialog as ContentModal,
+    ContentModalContent,
+    ResourceViewerDialogTrigger as ContentModalTrigger,
+};

@@ -1,13 +1,14 @@
-import type { Component, ComponentProps, JSX, ValidComponent } from "solid-js";
+import type { Component, JSX, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 
 import * as DialogPrimitive from "@kobalte/core/dialog";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 
-import { cn } from "~/lib/utils";
 import { XIcon } from "lucide-solid";
+import { cn } from "~/lib/utils";
 
 const Dialog = DialogPrimitive.Root;
+const DialogTrigger = DialogPrimitive.Trigger;
 
 const DialogPortal: Component<DialogPrimitive.DialogPortalProps> = (props) => {
     const [, rest] = splitProps(props, ["children"]);
@@ -77,20 +78,9 @@ const DialogContent = <T extends ValidComponent = "div">(
     );
 };
 
-type ResourceViewerDialogProps = {
-    title?: JSX.Element;
-    leftActions?: JSX.Element;
-} & ComponentProps<typeof Dialog>;
-
-const ResourceViewerDialog = (props: ResourceViewerDialogProps) => {
-    const [local, others] = splitProps(props, ["title", "children"]);
-    return (
-        <Dialog {...others}>
-            <DialogContent title={local.title} leftActions={props.leftActions}>
-                {local.children}
-            </DialogContent>
-        </Dialog>
-    );
+export {
+    Dialog as ResourceViewerDialog,
+    DialogContent as ResourceViewerDialogContent,
+    DialogTrigger as ResourceViewerDialogTrigger
 };
 
-export { ResourceViewerDialog };
