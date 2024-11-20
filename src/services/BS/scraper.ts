@@ -520,5 +520,12 @@ function determineStatus(row: Element, quizInfo: IQuizInfo): void {
 export async function getQuizzes(courseId: string): Promise<IQuizInfo[]> {
     const url = URL_CONFIG.QUIZZES_LIST.replace("{{COURSE_ID}}", courseId);
     const html = await fetch(url).then((res) => res.text());
-    return extractQuizInfo(html);
+    const quizzes = extractQuizInfo(html);
+    // HACK: Filter out quizzes that don't have an ID because we can't do anything with them (Likely an error)
+    if (quizzes.some((q) => !q.id)) {
+        console.warn(
+            "[scraper.getQuizzes] Found quiz without an ID. Likely an error with scraping."
+        );
+    }
+    return quizzes.filter((q) => q.id);
 }

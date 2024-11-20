@@ -12,6 +12,7 @@ import PageWrapper from "./ui/page-wrapper";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
+import UpcomingDisplay from "./upcoming-display";
 
 export default function CourseHome({
     courseId,
@@ -91,7 +92,9 @@ export default function CourseHome({
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel initialSize={0.15} class="overflow-hidden">
-                    <div>Upcoming</div>
+                    <div class="flex flex-col h-full">
+                        <UpcomingDisplay courseId={courseId} />
+                    </div>
                 </ResizablePanel>
             </Resizable>
         </PageWrapper>

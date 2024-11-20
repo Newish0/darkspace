@@ -89,7 +89,8 @@ function parseAssignments(html: string): IAssignment[] {
             SELECTORS.SUBMISSION_HISTORY_LINK
         );
         const submitLink: HTMLAnchorElement | null = row.querySelector(SELECTORS.SUBMIT_FILES_LINK);
-        const anyLink = historyLink || submitLink;
+        const randLink = row.querySelector("a");
+        const anyLink = historyLink || submitLink || randLink;
 
         if (anyLink?.href) {
             const url = new URL(anyLink.href);

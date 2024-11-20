@@ -5,7 +5,7 @@ class AsyncCache {
     private readonly DB_NAME = "async-cache";
     private readonly STORE_NAME = "cache-store";
     private readonly DB_VERSION = 1;
-    private readonly CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+    private readonly CACHE_DURATION = 72 * 60 * 60 * 1000; // 72 hour in milliseconds
 
     private async openDB(): Promise<IDBDatabase> {
         return new Promise((resolve, reject) => {
