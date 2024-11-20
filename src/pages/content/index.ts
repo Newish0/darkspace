@@ -70,6 +70,7 @@ function init() {
 
 const EXCLUSION_RULES = [
     () => window.location.pathname.indexOf("/content/") == 0, // Don't run in content pages
+    () => window.location.pathname.indexOf("/d2l/lms/") == 0, // Don't run in course work (quizzes & assignments)
     () => window.self !== window.top, // Don't run in an iframe
 ];
 
