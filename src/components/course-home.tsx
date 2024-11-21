@@ -8,7 +8,7 @@ import CourseTabs from "./course-tabs";
 import NestedCourseAccordion, {
     NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES,
 } from "./nested-course-accordion";
-import PageWrapper from "./ui/page-wrapper";
+import PageWrapper from "@/components/page-wrapper";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";

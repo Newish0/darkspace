@@ -1,6 +1,6 @@
 import CourseTabs from "@/components/course-tabs";
 import GradeDisplay from "@/components/grade-display";
-import PageWrapper from "@/components/ui/page-wrapper";
+import PageWrapper from "@/components/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getGrades } from "@/services/BS/scraper/grade";
 import { useParams } from "@solidjs/router";

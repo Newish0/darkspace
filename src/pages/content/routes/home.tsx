@@ -1,6 +1,6 @@
 import ControlledSuspense from "@/components/controlled-suspense";
 import CourseCard from "@/components/course-card";
-import PageWrapper from "@/components/ui/page-wrapper";
+import PageWrapper from "@/components/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getEnrollments } from "@/services/BS/api/enrollment";
 import { createEffect, For } from "solid-js";

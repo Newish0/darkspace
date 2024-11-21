@@ -25,29 +25,6 @@ import { usePersistentNav } from "@/hooks/persistent-nav";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
 
-const RightElement = () => (
-    <div class="flex justify-end items-center gap-2">
-        <Button variant={"outline"} class="gap-8 text-muted-foreground hover:text-foreground">
-            <div class="flex items-center gap-2">
-                <SearchIcon size={16} />
-                <span>Search...</span>
-            </div>
-            <div class="space-x-2 h-min">
-                <Kbd>Ctrl</Kbd>
-                <Kbd>P</Kbd>
-            </div>
-        </Button>
-
-        <Notification />
-        <ThemeToggle />
-
-        <Avatar>
-            <AvatarImage src="" />
-            <AvatarFallback>ME</AvatarFallback>
-        </Avatar>
-    </div>
-);
-
 function NavContent() {
     const COURSE_LIST_VALUE = "enrollments";
     const enrollment = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
@@ -178,10 +155,6 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
                             <NavContent />
                         </SheetContent>
                     </Sheet>
-
-                    <div class="col-start-2">
-                        <RightElement />
-                    </div>
                 </div>
 
                 {/* Main content area */}
