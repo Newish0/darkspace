@@ -20,7 +20,6 @@ import { createAsyncCached } from "@/hooks/async-cached";
 import { getEnrollments } from "@/services/BS/api/enrollment";
 import { Github, LayoutDashboard, Library, Menu, SearchIcon } from "lucide-solid";
 import { createSignal, For } from "solid-js";
-import { createPersistentStore } from "@/hooks/persistentStore";
 import { usePersistentNav } from "@/hooks/persistent-nav";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
@@ -65,7 +64,7 @@ function NavContent() {
                             multiple={false}
                             collapsible
                             class="p-2"
-                            value={persistNav.isCourseListOpen ? [COURSE_LIST_VALUE] : undefined}
+                            value={persistNav().isCourseListOpen ? [COURSE_LIST_VALUE] : undefined}
                             onChange={handleCourseListChange}
                         >
                             <AccordionItem value={COURSE_LIST_VALUE} class="border-none">

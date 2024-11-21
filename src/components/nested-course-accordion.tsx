@@ -4,18 +4,17 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { createPersistentStore } from "@/hooks/persistentStore";
 import { IModule } from "@/services/BS/scraper";
+import { makePersisted } from "@solid-primitives/storage";
 import { A } from "@solidjs/router";
 import { For, Match, Show, Switch, createSignal } from "solid-js";
 
 const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
     // const [openItems, setOpenItems] = createSignal<string[]>([]);
 
-    const [openItems, setOpenItems] = createPersistentStore<string[]>(
-        [],
-        `course-${props.courseId}-modules-open-items`
-    );
+    const [openItems, setOpenItems] = makePersisted(createSignal<string[]>([]), {
+        name: `course-${props.courseId}-modules-open-items`,
+    });
 
     const toggleItem = (itemId: string) => {
         setOpenItems((prev) => {
@@ -62,7 +61,7 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
     );
 
     return (
-        <Accordion multiple={true} value={openItems} class="w-full">
+        <Accordion multiple={true} value={openItems()} class="w-full">
             <For each={props.modules}>{renderModule}</For>
         </Accordion>
     );

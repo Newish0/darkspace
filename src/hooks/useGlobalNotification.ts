@@ -1,8 +1,3 @@
-// import { D2LActivityFeedFetcher, INotification } from "@/services/BS/scraper/notification";
-// import { createPersistentStore } from "./persistentStore";
-// import { createStore } from "solid-js/store";
-// import { onCleanup, onMount } from "solid-js";
-
 import { D2LActivityFeedFetcher, INotification } from "@/services/BS/scraper/notification";
 import { createResource, createSignal, onCleanup } from "solid-js";
 
