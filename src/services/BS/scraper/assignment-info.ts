@@ -37,12 +37,7 @@ function parseSubmissionsHTML(html: string): IAssignmentInfo {
     };
 
     // Find all submission rows (direct children of the table)
-    const submissionRows = Array.from(doc.querySelectorAll("table#z_g > tbody > tr"));
-    // .filter(
-    //     (row) => row.querySelector("label:first-child")?.textContent?.trim()
-    // );
-
-    console.log("submissionRows", submissionRows);
+    const submissionRows = Array.from(doc.querySelectorAll("table.d2l-table > tbody > tr"));
 
     const processFileRow = (row: Element) => {
         const file = processFileCell(row.querySelector("td:nth-child(2)"));
