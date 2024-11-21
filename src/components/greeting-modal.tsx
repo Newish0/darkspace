@@ -47,26 +47,29 @@ const preloadContent = async (progressCallback?: (progress: number) => void) => 
 };
 
 interface GreetingModalProps {
-    onClose: () => void;
+    onClose: (preloaded?: boolean) => void;
 }
 
 export function GreetingModal(props: GreetingModalProps) {
     const [isOpen, setIsOpen] = createSignal(true);
     const [isLoading, setIsLoading] = createSignal(false);
     const [progress, setProgress] = createSignal(0);
+    const [error, setError] = createSignal("");
 
     const handlePreload = async () => {
         setIsLoading(true);
 
         try {
             await preloadContent((p) => setProgress(p));
+            handleOpenChange(false, true);
+        } catch (e: any) {
+            setError(e?.message || "Something went wrong.");
         } finally {
             setIsLoading(false);
-            handleOpenChange(false);
         }
     };
 
-    const handleOpenChange = (isOpen: boolean) => {
+    const handleOpenChange = (isOpen: boolean, preloaded?: boolean) => {
         setIsOpen(isOpen);
         if (!isOpen) props.onClose();
     };
@@ -81,6 +84,9 @@ export function GreetingModal(props: GreetingModalProps) {
                         but will improve your browsing experience.
                         <Show when={isLoading()}>
                             <Progress class="mt-4" value={progress()} maxValue={1} />
+                        </Show>
+                        <Show when={error()}>
+                            <p class="mt-4 text-error-foreground">{error()}</p>
                         </Show>
                     </DialogDescription>
                 </DialogHeader>

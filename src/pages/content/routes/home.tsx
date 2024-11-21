@@ -3,6 +3,7 @@ import CourseCard from "@/components/course-card";
 import { GreetingModal } from "@/components/greeting-modal";
 import PageWrapper from "@/components/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
+import { useUserMeta } from "@/hooks/user-meta";
 import { getEnrollments } from "@/services/BS/api/enrollment";
 import { makePersisted } from "@solid-primitives/storage";
 import { createEffect, createSignal, For, Show } from "solid-js";
@@ -10,13 +11,18 @@ import { createEffect, createSignal, For, Show } from "solid-js";
 export default function Home() {
     const enrollments = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
 
-    const [isFirstTimeUser, setIsFirstTimeUser] = makePersisted(createSignal(true), {
-        name: "first-time-user",
-    });
+    const [userMeta, setUserMeta] = useUserMeta();
 
     createEffect(() => {
         console.log("HOME: enrollments", enrollments());
     });
+
+    const handleGreetingModalClose = (preloaded?: boolean) => {
+        setUserMeta({
+            isFirstTimeUser: false,
+            preloadedContent: preloaded ?? false,
+        });
+    };
 
     return (
         <PageWrapper title="Dashboard" allowBack={false}>
@@ -26,8 +32,8 @@ export default function Home() {
                 </ControlledSuspense>
             </div>
 
-            <Show when={isFirstTimeUser()}>
-                <GreetingModal onClose={() => setIsFirstTimeUser(false)} />
+            <Show when={userMeta().isFirstTimeUser}>
+                <GreetingModal onClose={handleGreetingModalClose} />
             </Show>
         </PageWrapper>
     );
