@@ -2,7 +2,7 @@ import { createAsyncCached } from "@/hooks/async-cached";
 import { getCourseAnnouncements, getCourseModules, IAnnouncement } from "@/services/BS/scraper";
 import { A } from "@solidjs/router";
 import { CalendarIcon } from "lucide-solid";
-import { For, JSX, Show } from "solid-js";
+import { createSignal, For, JSX, Show } from "solid-js";
 import ControlledSuspense from "./controlled-suspense";
 import CourseTabs from "./course-tabs";
 import NestedCourseAccordion, {
@@ -13,6 +13,8 @@ import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
 import UpcomingDisplay from "./upcoming-display";
+import { createPersistentStore } from "@/hooks/persistentStore";
+import { makePersisted } from "@solid-primitives/storage";
 
 export default function CourseHome({
     courseId,
@@ -21,6 +23,10 @@ export default function CourseHome({
     courseId: string;
     children?: JSX.Element;
 }) {
+    const [panelSizes, setPanelSizes] = makePersisted(createSignal<number[]>([0.2, 0.65, 0.15]), {
+        name: `panel-sizes-course-${courseId}`,
+    });
+
     const courseModules = createAsyncCached(() => getCourseModules(courseId), {
         keys: () => ["course-modules", courseId],
     });
@@ -29,10 +35,12 @@ export default function CourseHome({
         keys: () => ["announcements", courseId],
     });
 
-    // createEffect(() => {
-    //     // console.log(modulesQuery.data);
-    //     // console.log(JSON.stringify(announcementsQuery.data, null, 2));
-    // });
+    const handlePanelResize = (sizes?: number[]) => {
+        // Need to check if sizes are valid because router can make sizes funky 
+        if (sizes?.length === 3 && !sizes?.some((s) => s === null)) {
+            setPanelSizes(sizes);
+        }
+    };
 
     return (
         <PageWrapper
@@ -41,8 +49,12 @@ export default function CourseHome({
             hideOverflow={true}
             centerElement={<CourseTabs courseId={courseId} value="home" />}
         >
-            <Resizable class="h-full rounded-lg shadow-sm border">
-                <ResizablePanel initialSize={0.2} class="overflow-hidden">
+            <Resizable
+                class="h-full rounded-lg shadow-sm border"
+                onSizesChange={handlePanelResize}
+                sizes={panelSizes()}
+            >
+                <ResizablePanel initialSize={0.2} minSize={0.1} class="overflow-hidden">
                     <div class="flex flex-col h-full">
                         <h2 class="text-xl font-bold border-b px-4 py-2">Module List</h2>
 
@@ -71,7 +83,7 @@ export default function CourseHome({
                     </div>
                 </ResizablePanel>
                 <ResizableHandle withHandle />
-                <ResizablePanel initialSize={0.65} class="overflow-hidden">
+                <ResizablePanel initialSize={0.65} minSize={0.3} class="overflow-hidden">
                     <div class="flex flex-col h-full">
                         <Show
                             when={children !== undefined}
@@ -91,7 +103,7 @@ export default function CourseHome({
                     </div>
                 </ResizablePanel>
                 <ResizableHandle withHandle />
-                <ResizablePanel initialSize={0.15} class="overflow-hidden">
+                <ResizablePanel initialSize={0.15} minSize={0.1} class="overflow-hidden">
                     <div class="flex flex-col h-full">
                         <UpcomingDisplay courseId={courseId} />
                     </div>
