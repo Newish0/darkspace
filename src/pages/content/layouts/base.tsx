@@ -1,42 +1,27 @@
-import { A, createAsync, RouteSectionProps } from "@solidjs/router";
-import { Component, ErrorBoundary, Match, Show, Suspense, Switch } from "solid-js";
+import { A, RouteSectionProps } from "@solidjs/router";
+import { Component, ErrorBoundary, Show } from "solid-js";
 
-import { createSignal, For } from "solid-js";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-    Menu,
-    LayoutDashboard,
-    ChevronDown,
-    ChevronRight,
-    Github,
-    Library,
-    SearchIcon,
-} from "lucide-solid";
-import { getEnrollments } from "@/services/BS/api/enrollment";
+import ControlledSuspense from "@/components/controlled-suspense";
+import Notification from "@/components/notification";
+import ThemeToggle from "@/components/theme-toggle";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Toaster } from "solid-sonner";
-import ErrorMessageAlert from "@/components/ui/error-message-alert";
-import ControlledSuspense from "@/components/controlled-suspense";
-import { createAsyncCached } from "@/hooks/async-cached";
-import Notification from "@/components/notification";
-import { TextField, TextFieldInput, TextFieldLabel } from "@/components/ui/text-field";
-import Kbd from "@/components/ui/kbd";
-import ThemeToggle from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import ErrorMessageAlert from "@/components/ui/error-message-alert";
+import Kbd from "@/components/ui/kbd";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { createAsyncCached } from "@/hooks/async-cached";
+import { getEnrollments } from "@/services/BS/api/enrollment";
+import { Github, LayoutDashboard, Library, Menu, SearchIcon } from "lucide-solid";
+import { createSignal, For } from "solid-js";
+import { createPersistentStore } from "@/hooks/persistentStore";
+import { usePersistentNav } from "@/hooks/persistent-nav";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
 
@@ -64,7 +49,10 @@ const RightElement = () => (
 );
 
 function NavContent() {
+    const COURSE_LIST_VALUE = "enrollments";
     const enrollment = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
+
+    const [persistNav, setPersistNav] = usePersistentNav();
 
     const [showAllCourses, setShowAllCourses] = createSignal(false);
 
@@ -74,6 +62,10 @@ function NavContent() {
         } else {
             return enrollment()?.slice(0, 10);
         }
+    };
+
+    const handleCourseListChange = (values: string[]) => {
+        setPersistNav({ isCourseListOpen: values.includes(COURSE_LIST_VALUE) });
     };
 
     return (
@@ -92,8 +84,14 @@ function NavContent() {
                         Dashboard
                     </A>
                     <div>
-                        <Accordion multiple={false} collapsible class="p-2">
-                            <AccordionItem value="enrollments" class="border-none">
+                        <Accordion
+                            multiple={false}
+                            collapsible
+                            class="p-2"
+                            value={persistNav.isCourseListOpen ? [COURSE_LIST_VALUE] : undefined}
+                            onChange={handleCourseListChange}
+                        >
+                            <AccordionItem value={COURSE_LIST_VALUE} class="border-none">
                                 <AccordionTrigger class="py-0">
                                     <div class="flex items-center gap-2">
                                         <Library class="h-4 w-4" />
