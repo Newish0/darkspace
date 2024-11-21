@@ -453,12 +453,21 @@ function extractNameAndUrl(row: Element, quizInfo: IQuizInfo, document: Document
 
 function extractDates(row: Element, quizInfo: IQuizInfo): void {
     const dateSpan = row.querySelector(SELECTORS.QUIZ.DATE_SPAN);
+
+    console.log(dateSpan);
     if (dateSpan) {
         const dateText = dateSpan.textContent || "";
-        const dueDateMatch = dateText.match(REGEX_PATTERNS.DUE_DATE);
+
+        let dueDateText = dateText;
+        if (dateText.includes("Available")) {
+            dueDateText = dateText.slice(0, dateText.indexOf("Available")).trim();
+        }
+
+        const dueDateMatch = dueDateText.match(REGEX_PATTERNS.DUE_DATE);
         if (dueDateMatch) {
             quizInfo.dueDate = dueDateMatch[1].trim();
         }
+
         const availableMatch = dateText.match(REGEX_PATTERNS.AVAILABLE_DATE);
         if (availableMatch) {
             quizInfo.startDate = availableMatch[1].trim();

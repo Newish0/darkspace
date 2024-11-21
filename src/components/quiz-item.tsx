@@ -1,5 +1,5 @@
 import { Component, createSignal, Show, For, Switch, Match, JSX, ComponentProps } from "solid-js";
-import { format, isPast } from "date-fns";
+import { isPast } from "date-fns";
 import {
     ChevronDown,
     ChevronUp,
@@ -175,7 +175,7 @@ const QuizDetails: Component<{ quiz: IQuizInfo }> = (props) => (
                     <Show when={item.date}>
                         <li class="flex items-center">
                             <Calendar class="mr-2 h-4 w-4" />
-                            {item.label}: {format(new Date(item.date!), "PPP")}
+                            {item.label}: {item.date}
                         </li>
                     </Show>
                 )}
