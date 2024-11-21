@@ -10,7 +10,7 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
     const handleDownload = (url: string, filename: string) => {
         const a = document.createElement("a");
         a.href = url;
-        a.download = filename;
+        a.download = url.split("/").pop() || filename;
         a.click();
     };
 
@@ -37,11 +37,11 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
                                     Type: {item.type || "Unknown"}
                                 </p>
                             </CardContent>
-                            <CardFooter class="flex justify-between mt-auto gap-1">
+                            <CardFooter class="flex flex-wrap mt-auto gap-1">
                                 <ContentModal>
                                     <ContentModalTrigger
                                         as={Button<"button">}
-                                        variant="ghost"
+                                        variant="outline"
                                         size="sm"
                                     >
                                         <ExternalLink class="w-4 h-4 mr-2" />
@@ -62,7 +62,7 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
                                     when={item.downloadable}
                                     fallback={
                                         <Button
-                                            variant="ghost"
+                                            variant="secondary"
                                             size="sm"
                                             onClick={() => handleCopyLink(item.url)}
                                         >

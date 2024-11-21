@@ -65,6 +65,7 @@ function NavContent() {
                             collapsible
                             class="p-2"
                             value={persistNav().isCourseListOpen ? [COURSE_LIST_VALUE] : undefined}
+                            defaultValue={[COURSE_LIST_VALUE]}
                             onChange={handleCourseListChange}
                         >
                             <AccordionItem value={COURSE_LIST_VALUE} class="border-none">
