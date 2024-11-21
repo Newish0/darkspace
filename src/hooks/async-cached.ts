@@ -141,6 +141,11 @@ export function getAsyncCached<T>(keys: string[]) {
     return asyncCache.get<T>(cacheKey);
 }
 
+export function setAsyncCached<T>(keys: string[], value: T) {
+    return asyncCache.set<T>(getKey(keys), value);
+}
+
+
 /**
  * Creates a cached async function in which the initial value is fetched from the cache asynchronously.
  * @param fn The function to cache
