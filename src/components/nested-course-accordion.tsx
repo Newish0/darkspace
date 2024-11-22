@@ -10,8 +10,6 @@ import { A } from "@solidjs/router";
 import { For, Match, Show, Switch, createSignal } from "solid-js";
 
 const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
-    // const [openItems, setOpenItems] = createSignal<string[]>([]);
-
     const [openItems, setOpenItems] = makePersisted(createSignal<string[]>([]), {
         name: `course-${props.courseId}-modules-open-items`,
     });
@@ -30,7 +28,7 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
         <Switch>
             <Match when={module.children && module.children.length}>
                 <AccordionItem value={module.moduleId} class="border-none px-2">
-                    <AccordionTrigger onClick={() => toggleItem(module.moduleId)}>
+                    <AccordionTrigger onClick={() => toggleItem(module.moduleId)} class="text-left">
                         {module.name}
                     </AccordionTrigger>
                     <AccordionContent class="pl-4">
