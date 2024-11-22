@@ -6,6 +6,7 @@ import {
     ResourceViewerDialogTrigger,
 } from "./ui/resource-viewer-dialog";
 import { Button, buttonVariants } from "./ui/button";
+import { D2LOfficeFileViewer } from "./d2l-aws-office-file-viewer";
 
 const TitleElement = (props: {
     title?: string;
@@ -43,21 +44,33 @@ const LeftActions = (props: { url?: string }) => (
 interface ContentModalContentProps {
     url?: string;
     title?: string;
-    contentType: "webpage" | "pdf"; // TODO: Allow not providing a content type and inferring it from the URL
+    contentType: "webpage" | "pdf";
+    toolbar?: boolean;
 }
 
-const ContentModalContent = (props: ContentModalContentProps) => {
+const ContentModalContent = ({
+    contentType,
+    url,
+    toolbar = true,
+    title,
+}: ContentModalContentProps) => {
+    console.log("[Content URL]", url);
+
     return (
         <ResourceViewerDialogContent
-            title={<TitleElement title={props.title} type={props.contentType} />}
-            leftActions={<LeftActions url={props.url} />}
+            title={<TitleElement title={title} type={contentType} />}
+            leftActions={<LeftActions url={url} />}
         >
             <Switch>
-                <Match when={props.contentType === "webpage"}>
-                    <iframe src={props.url} class="w-full h-full border-none" title={props.title} />
+                <Match when={contentType === "webpage"}>
+                    <iframe src={url} class="w-full h-full border-none" title={title} />
                 </Match>
-                <Match when={props.contentType === "pdf"}>
-                    <embed src={props.url} type="application/pdf" class="w-full h-full" />
+                <Match when={contentType === "pdf"}>
+                    <embed
+                        src={`${url}#${toolbar ? "toolbar=1" : "toolbar=0"}`}
+                        type="application/pdf"
+                        class="w-full h-full"
+                    />
                 </Match>
             </Switch>
         </ResourceViewerDialogContent>

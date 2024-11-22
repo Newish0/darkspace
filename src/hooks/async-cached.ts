@@ -145,7 +145,6 @@ export function setAsyncCached<T>(keys: string[], value: T) {
     return asyncCache.set<T>(getKey(keys), value);
 }
 
-
 /**
  * Creates a cached async function in which the initial value is fetched from the cache asynchronously.
  * @param fn The function to cache
@@ -184,7 +183,12 @@ export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncC
 
             // Call the function and cache the result
             const result = await fn();
-            await asyncCache.set(key(), result);
+
+            // only cache if result is null, undefined or empty string
+            if (result !== null && result !== undefined && result !== "") {
+                await asyncCache.set(key(), result);
+            }
+
             return result;
         },
         {

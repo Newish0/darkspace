@@ -1,12 +1,44 @@
-import { createSignal, For, Show } from "solid-js";
+import { createResource, createSignal, For, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyIcon, Download, ExternalLink } from "lucide-solid";
 import { IModuleTopic } from "@/services/BS/scraper";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { toast } from "solid-sonner";
+import { isOfficeFile } from "@/utils/path";
+import { getOfficeFilePreviewUrl } from "@/services/BS/scraper/aws-office-file-preview";
+import { createAsyncCached } from "@/hooks/async-cached";
 
-const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
+const TopicModalWithTrigger = (props: { topic: IModuleTopic; courseId: string }) => {
+    const url = isOfficeFile(props.topic.url)
+        ? createAsyncCached(() => getOfficeFilePreviewUrl(props.courseId, props.topic.id), {
+              keys: () => ["office-file-preview-url", props.courseId, props.topic.id],
+          })
+        : () => props.topic.url;
+
+    return (
+        <Show when={url()}>
+            {(url) => (
+                <ContentModal>
+                    <ContentModalTrigger as={Button<"button">} variant="outline" size="sm">
+                        <ExternalLink class="w-4 h-4 mr-2" />
+                        Open
+                    </ContentModalTrigger>
+                    <ContentModalContent
+                        toolbar={!isOfficeFile(props.topic.url)}
+                        url={url()}
+                        title={props.topic.name}
+                        contentType={
+                            props.topic.url.toLowerCase().includes(".pdf") ? "pdf" : "webpage"
+                        }
+                    />
+                </ContentModal>
+            )}
+        </Show>
+    );
+};
+
+const ModuleContentList = (props: { items?: IModuleTopic[]; courseId: string }) => {
     const handleDownload = (url: string, filename: string) => {
         const a = document.createElement("a");
         a.href = url;
@@ -38,26 +70,7 @@ const ModuleContentList = (props: { items?: IModuleTopic[] }) => {
                                 </p>
                             </CardContent>
                             <CardFooter class="flex flex-wrap mt-auto gap-1">
-                                <ContentModal>
-                                    <ContentModalTrigger
-                                        as={Button<"button">}
-                                        variant="outline"
-                                        size="sm"
-                                    >
-                                        <ExternalLink class="w-4 h-4 mr-2" />
-                                        Open
-                                    </ContentModalTrigger>
-                                    <ContentModalContent
-                                        url={item.url}
-                                        title={item.name}
-                                        contentType={
-                                            item.url.toLowerCase().includes(".pdf")
-                                                ? "pdf"
-                                                : "webpage"
-                                        }
-                                    />
-                                </ContentModal>
-
+                                <TopicModalWithTrigger topic={item} courseId={props.courseId} />
                                 <Show
                                     when={item.downloadable}
                                     fallback={
