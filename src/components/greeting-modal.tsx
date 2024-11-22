@@ -9,42 +9,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from "~/components/ui/dialog";
-import { getEnrollments } from "@/services/BS/api/enrollment";
-import { setAsyncCached } from "@/hooks/async-cached";
-import { getCourseAnnouncements, getCourseModules, getQuizzes } from "@/services/BS/scraper";
-import { getAssignments } from "@/services/BS/scraper/assignment";
-import { getGrades } from "@/services/BS/scraper/grade";
+
 import { Progress } from "./ui/progress";
-
-const preloadContent = async (progressCallback?: (progress: number) => void) => {
-    let progress = 0;
-
-    const enrollments = await getEnrollments();
-    setAsyncCached(["enrollments"], enrollments);
-
-    progress += 0.05;
-    progressCallback?.(progress);
-
-    const promises = enrollments.map(async (course) => {
-        const modules = await getCourseModules(course.id);
-        setAsyncCached(["course-modules", course.id], modules);
-        const announcements = await getCourseAnnouncements(course.id);
-        setAsyncCached(["announcements", course.id], announcements);
-
-        const assignments = await getAssignments(course.id);
-        setAsyncCached(["assignments", course.id], assignments);
-        const quizzes = await getQuizzes(course.id);
-        setAsyncCached(["quizzes", course.id], quizzes);
-
-        const grades = await getGrades(course.id);
-        setAsyncCached(["grades", course.id], grades);
-
-        progress += 0.95 / enrollments.length;
-        progressCallback?.(progress);
-    });
-
-    await Promise.allSettled(promises);
-};
+import { preloadContent } from "@/services/content-service";
 
 interface GreetingModalProps {
     onClose: (preloaded?: boolean) => void;

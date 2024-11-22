@@ -133,7 +133,7 @@ type CreateAsyncCachedOptions = {
  * @param keys An array of strings representing the keys to identify the cached value.
  * @returns A Promise that resolves to the cached value of type T or null if not found.
  */
-export function getAsyncCached<T>(keys: string[]) {
+export function getAsyncCached<T>(keys: string[]): Promise<T | null> {
     // Generate a cache key by joining the array of keys
     const cacheKey = getKey(keys);
 

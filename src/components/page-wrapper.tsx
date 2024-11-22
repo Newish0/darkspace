@@ -1,13 +1,12 @@
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeftIcon, SearchIcon } from "lucide-solid";
-import { children, Component, JSX, Show } from "solid-js";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { A } from "@solidjs/router";
-import { cn } from "@/lib/utils";
 import Notification from "@/components/notification";
-import Kbd from "@/components/ui/kbd";
 import ThemeToggle from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { ArrowLeftIcon } from "lucide-solid";
+import { Component, JSX, Show } from "solid-js";
+import { CommandSearch } from "./command-search";
 
 type RouteSectionProps = {
     title: string;
@@ -21,16 +20,7 @@ type RouteSectionProps = {
 
 const RightElement = () => (
     <div class="flex justify-end items-center gap-2">
-        <Button variant={"outline"} class="gap-8 text-muted-foreground hover:text-foreground">
-            <div class="flex items-center gap-2">
-                <SearchIcon size={16} />
-                <span>Search...</span>
-            </div>
-            <div class="space-x-2 h-min hidden xl:block">
-                <Kbd>Ctrl</Kbd>
-                <Kbd>P</Kbd>
-            </div>
-        </Button>
+        <CommandSearch />
 
         <Notification />
         <ThemeToggle />

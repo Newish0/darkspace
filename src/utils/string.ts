@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+
 /**
  * Extracts a single UUID from a given string.
  * Supports both dash-separated and continuous UUID formats.
@@ -47,4 +49,16 @@ export function extractUuid(
     }
 
     return uuid;
+}
+
+/**
+ * Converts an HTML string to a text string while removing any HTML tags.
+ *
+ * @param input - The HTML string to convert
+ * @returns The text string without HTML tags
+ */
+export function htmlToString(input: string): string {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = DOMPurify.sanitize(input);
+    return tempDiv.textContent || "";
 }
