@@ -1,16 +1,12 @@
 import { getAsyncCached, setAsyncCached } from "@/hooks/async-cached";
 import { getEnrollments, IClass } from "@/services/BS/api/enrollment";
-import {
-    getCourseAnnouncements,
-    getCourseModules,
-    getQuizzes,
-    IAnnouncement,
-    IModule,
-    IQuizInfo,
-} from "@/services/BS/scraper";
+
 import { getAssignments, IAssignment } from "@/services/BS/scraper/assignment";
 import { getGrades, IGradeData } from "@/services/BS/scraper/grade";
-import { CourseContent, getUnstableCourseContent, UnstableModule } from "./BS/api/unstable-module";
+import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
+import { CourseContent, getUnstableCourseContent } from "./BS/api/unstable-module";
+import { getCourseAnnouncements, IAnnouncement } from "./BS/scraper/announcements";
+import { getCourseModules, IModule } from "./BS/scraper/course-modules";
 
 export const preloadContent = async (progressCallback?: (progress: number) => void) => {
     let progress = 0;

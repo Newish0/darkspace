@@ -1,20 +1,16 @@
-import { createEffect, For, Match, Show, Suspense, Switch } from "solid-js";
-import { useParams, createAsync } from "@solidjs/router";
-import {
-    getQuizzes,
-    getQuizSubmissionsFromUrl,
-    IQuizInfo,
-    IQuizSubmission,
-} from "@/services/BS/scraper";
-import PageWrapper from "@/components/page-wrapper";
-import CourseTabs from "@/components/course-tabs";
-import QuizItem from "@/components/quiz-item";
-import { QuizItemSkeleton } from "@/components/quiz-item";
+import AssignmentItem from "@/components/assignment-item";
 import ControlledSuspense from "@/components/controlled-suspense";
+import CourseTabs from "@/components/course-tabs";
+import PageWrapper from "@/components/page-wrapper";
+import QuizItem, { QuizItemSkeleton } from "@/components/quiz-item";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getAssignments } from "@/services/BS/scraper/assignment";
-import AssignmentItem from "@/components/assignment-item";
+import {
+    getQuizzes
+} from "@/services/BS/scraper/quizzes";
+import { useParams } from "@solidjs/router";
 import { AlertCircle } from "lucide-solid";
+import { createEffect, For, Show } from "solid-js";
 
 const CourseCoursework = () => {
     const params = useParams<{ courseId: string }>();

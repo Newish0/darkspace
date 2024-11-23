@@ -1,19 +1,19 @@
-import { Component, For, Show, Switch, Match, createSignal } from "solid-js";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { IGradeCategory, IGradeData, IGradeItem, IGradeScore } from "@/services/BS/scraper/grade";
-import { Award, BookOpen, AlertCircle } from "lucide-solid";
-import { Separator } from "./ui/separator";
-import UnsafeHtml from "./unsafe-html";
+import { AlertCircle, Award, BookOpen } from "lucide-solid";
+import { Component, For, Match, Show, Switch } from "solid-js";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
+import UnsafeHtml from "./unsafe-html";
 
 const ScoreDisplay: Component<{ score: IGradeScore }> = (props) => {
     const getPercentage = () => {

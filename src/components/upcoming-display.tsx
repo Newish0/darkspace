@@ -1,14 +1,13 @@
 import { createAsyncCached } from "@/hooks/async-cached";
-import course from "@/pages/content/routes/course";
-import { getQuizzes, IQuizInfo } from "@/services/BS/scraper";
 import { getAssignments, IAssignment } from "@/services/BS/scraper/assignment";
-import { format, isPast } from "date-fns";
-import { createEffect, on, For, Switch, Match, Show, Component } from "solid-js";
+import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
+import { isPast } from "date-fns";
+import { Component, For, Match, Show, Switch } from "solid-js";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, BookOpenIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from "lucide-solid";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { A } from "@solidjs/router";
+import { BookOpenIcon, CalendarIcon, CheckCircleIcon, ClockIcon, XCircleIcon } from "lucide-solid";
 
 type CourseWork = (IAssignment & { type: "assignment" }) | (IQuizInfo & { type: "quiz" });
 

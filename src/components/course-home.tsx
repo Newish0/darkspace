@@ -1,5 +1,8 @@
+import PageWrapper from "@/components/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
-import { getCourseAnnouncements, getCourseModules, IAnnouncement } from "@/services/BS/scraper";
+import { getCourseAnnouncements, IAnnouncement } from "@/services/BS/scraper/announcements";
+import { getCourseModules } from "@/services/BS/scraper/course-modules";
+import { makePersisted } from "@solid-primitives/storage";
 import { A } from "@solidjs/router";
 import { CalendarIcon } from "lucide-solid";
 import { createSignal, For, JSX, Show } from "solid-js";
@@ -8,12 +11,10 @@ import CourseTabs from "./course-tabs";
 import NestedCourseAccordion, {
     NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES,
 } from "./nested-course-accordion";
-import PageWrapper from "@/components/page-wrapper";
 import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
 import UpcomingDisplay from "./upcoming-display";
-import { makePersisted } from "@solid-primitives/storage";
 
 export default function CourseHome({
     courseId,

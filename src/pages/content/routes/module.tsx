@@ -1,22 +1,16 @@
-import {
-    Component,
-    createEffect,
-    ErrorBoundary,
-    For,
-    Match,
-    Show,
-    Suspense,
-    Switch,
-} from "solid-js";
-import Course from "./course";
-import { createAsync, RouteSectionProps, useParams } from "@solidjs/router";
+import ControlledSuspense from "@/components/controlled-suspense";
 import CourseHome from "@/components/course-home";
-import { getModuleContent } from "@/services/BS/scraper";
 import ModuleContentList from "@/components/module-content-list";
 import UnsafeHtml from "@/components/unsafe-html";
-import { Badge } from "@/components/ui/badge";
 import { createAsyncCached } from "@/hooks/async-cached";
-import ControlledSuspense from "@/components/controlled-suspense";
+import { getModuleContent } from "@/services/BS/scraper/module-content";
+import { useParams } from "@solidjs/router";
+import {
+    createEffect,
+    Match,
+    Show,
+    Switch
+} from "solid-js";
 
 const Module = () => {
     const params = useParams();

@@ -4,7 +4,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { IModule } from "@/services/BS/scraper";
+import { IModule } from "@/services/BS/scraper/course-modules";
 import { makePersisted } from "@solid-primitives/storage";
 import { A } from "@solidjs/router";
 import { For, Match, Show, Switch, createSignal } from "solid-js";

@@ -1,13 +1,13 @@
-import { createResource, createSignal, For, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CopyIcon, Download, ExternalLink } from "lucide-solid";
-import { IModuleTopic } from "@/services/BS/scraper";
-import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
-import { toast } from "solid-sonner";
-import { isOfficeFile } from "@/utils/path";
-import { getOfficeFilePreviewUrl } from "@/services/BS/scraper/aws-office-file-preview";
 import { createAsyncCached } from "@/hooks/async-cached";
+import { getOfficeFilePreviewUrl } from "@/services/BS/scraper/aws-office-file-preview";
+import { IModuleTopic } from "@/services/BS/scraper/module-content";
+import { isOfficeFile } from "@/utils/path";
+import { CopyIcon, Download, ExternalLink } from "lucide-solid";
+import { For, Show } from "solid-js";
+import { toast } from "solid-sonner";
+import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import ControlledSuspense from "./controlled-suspense";
 import { Skeleton } from "./ui/skeleton";
 

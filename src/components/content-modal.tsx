@@ -41,7 +41,7 @@ const LeftActions = (props: { url?: string }) => (
 );
 
 interface ContentModalContentProps {
-    url: string;
+    url?: string;
     previewUrl?: string;
     title?: string;
     contentType: "webpage" | "pdf";

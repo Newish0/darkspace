@@ -1,27 +1,26 @@
-import { Component, createSignal, Show, For, Switch, Match, JSX, ComponentProps } from "solid-js";
-import { isPast } from "date-fns";
-import {
-    ChevronDown,
-    ChevronUp,
-    Calendar,
-    Clock,
-    Link2,
-    CheckCircle,
-    AlertCircle,
-    HelpCircle,
-    Play,
-    RotateCcw,
-} from "lucide-solid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getQuizSubmissionsFromUrl, IQuizInfo, IQuizSubmission } from "@/services/BS/scraper";
-import { createAsync } from "@solidjs/router";
 import { createAsyncCached } from "@/hooks/async-cached";
+import { getQuizSubmissionsFromUrl, IQuizInfo, IQuizSubmission } from "@/services/BS/scraper/quizzes";
 import { getQuizSummaryUrl } from "@/services/BS/url";
+import { isPast } from "date-fns";
+import {
+    AlertCircle,
+    Calendar,
+    CheckCircle,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    HelpCircle,
+    Link2,
+    Play,
+    RotateCcw,
+} from "lucide-solid";
+import { Component, ComponentProps, createSignal, For, JSX, Match, Show, Switch } from "solid-js";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 
 interface QuizItemProps {
