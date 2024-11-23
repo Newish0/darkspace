@@ -1,4 +1,4 @@
-import { A, RouteSectionProps } from "@solidjs/router";
+import { A, RouteSectionProps, useMatch } from "@solidjs/router";
 import { Component, ErrorBoundary, Show } from "solid-js";
 
 import ControlledSuspense from "@/components/controlled-suspense";
@@ -17,10 +17,12 @@ import Kbd from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { createAsyncCached } from "@/hooks/async-cached";
-import { getEnrollments } from "@/services/BS/api/enrollment";
+import { getEnrollments, isClassActuallyActive } from "@/services/BS/api/enrollment";
 import { Github, LayoutDashboard, Library, Menu, SearchIcon } from "lucide-solid";
 import { createSignal, For } from "solid-js";
 import { usePersistentNav } from "@/hooks/persistent-nav";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
 
@@ -33,10 +35,11 @@ function NavContent() {
     const [showAllCourses, setShowAllCourses] = createSignal(false);
 
     const filteredEnrollments = () => {
+        const activeEnrollments = enrollment()?.filter(isClassActuallyActive);
         if (showAllCourses()) {
-            return enrollment();
+            return activeEnrollments;
         } else {
-            return enrollment()?.slice(0, 10);
+            return activeEnrollments?.slice(0, 10);
         }
     };
 
@@ -51,11 +54,7 @@ function NavContent() {
             </div>
             <ScrollArea class="flex-1">
                 <nav class="flex flex-col gap-2 p-4">
-                    <A
-                        href="/"
-                        class="flex items-center gap-2 text-sm font-medium p-2 rounded-md"
-                        // activeClass="bg-muted"
-                    >
+                    <A href="/" class="flex items-center gap-2 text-sm font-medium p-2 rounded-md">
                         <LayoutDashboard class="h-4 w-4" />
                         Dashboard
                     </A>
@@ -82,15 +81,27 @@ function NavContent() {
                                             fallback={<p>Loading...</p>}
                                         >
                                             <For each={filteredEnrollments()}>
-                                                {(course) => (
-                                                    <A
-                                                        href={`/courses/${course.id}`}
-                                                        class="block text-sm p-2 rounded-md truncate"
-                                                        activeClass="bg-muted"
-                                                    >
-                                                        {course.name}
-                                                    </A>
-                                                )}
+                                                {(course) => {
+                                                    const href = `/courses/${course.id}`;
+                                                    const match = useMatch(() => href);
+                                                    return (
+                                                        <Tooltip openDelay={1000}>
+                                                            <TooltipTrigger
+                                                                as={"a"}
+                                                                href={href}
+                                                                class={cn(
+                                                                    "block text-sm p-2 rounded-md truncate",
+                                                                    match() ? "bg-muted" : ""
+                                                                )}
+                                                            >
+                                                                {course.name}
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                {course.name}
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    );
+                                                }}
                                             </For>
 
                                             <Show when={!showAllCourses()}>

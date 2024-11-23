@@ -8,7 +8,7 @@ import { getBannerImageUrl } from "@/services/BS/api/image";
 import { createResource, Show } from "solid-js";
 import UnsafeHtml from "./unsafe-html";
 import { A } from "@solidjs/router";
-import { IClass } from "@/services/BS/api/enrollment";
+import { IClass, isClassActuallyActive } from "@/services/BS/api/enrollment";
 
 export default function CourseCard({ course }: { course: IClass }) {
     const [bannerImg] = createResource(() => getBannerImageUrl(course.id, course.imgId));
@@ -20,14 +20,6 @@ export default function CourseCard({ course }: { course: IClass }) {
             month: "short",
             day: "numeric",
         });
-    };
-
-    const actuallyActive = () => {
-        if (!course.startDate || !course.endDate) return course.isActive;
-        const now = new Date();
-        const start = new Date(course.startDate);
-        const end = new Date(course.endDate);
-        return now >= start && now <= end;
     };
 
     const disabled = () => (course.id ? false : true);
@@ -56,8 +48,8 @@ export default function CourseCard({ course }: { course: IClass }) {
                     <div>
                         <h3 class="text-2xl font-bold">{course.name}</h3>
                     </div>
-                    <Badge variant={actuallyActive() ? "default" : "secondary"}>
-                        {actuallyActive() ? "Active" : "Inactive"}
+                    <Badge variant={isClassActuallyActive(course) ? "default" : "secondary"}>
+                        {isClassActuallyActive(course) ? "Active" : "Inactive"}
                     </Badge>
                 </div>
 

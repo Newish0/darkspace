@@ -17,6 +17,14 @@ export interface IClass {
     id: string;
 }
 
+export function isClassActuallyActive(course: IClass): boolean {
+    if (!course.startDate || !course.endDate) return course.isActive;
+    const now = new Date();
+    const start = new Date(course.startDate);
+    const end = new Date(course.endDate);
+    return now >= start && now <= end;
+}
+
 export async function getEnrollments(): Promise<IClass[]> {
     const baseDoc = await getBaseDocument();
     const url = getEnrollmentsUrl(baseDoc);
