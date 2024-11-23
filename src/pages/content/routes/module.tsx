@@ -29,7 +29,7 @@ const Module = () => {
     // });
 
     return (
-        <Show when={params.courseId} fallback={<div>Course ID not found</div>}>
+        <Show when={params.courseId} keyed fallback={<div>Course ID not found</div>}>
             <CourseHome courseId={params.courseId}>
                 <ControlledSuspense hasContent={!!moduleContent()} fallback={<div>Loading...</div>}>
                     <h2 class="text-xl font-bold border-b px-4 py-2 flex justify-between items-center">
