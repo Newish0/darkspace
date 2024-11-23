@@ -5,13 +5,17 @@ import { getOfficeFilePreviewUrl } from "@/services/BS/scraper/aws-office-file-p
 import { IModuleTopic } from "@/services/BS/scraper/module-content";
 import { isOfficeFile } from "@/utils/path";
 import { CopyIcon, Download, ExternalLink } from "lucide-solid";
-import { For, Show } from "solid-js";
+import { createEffect, For, Show } from "solid-js";
 import { toast } from "solid-sonner";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import ControlledSuspense from "./controlled-suspense";
 import { Skeleton } from "./ui/skeleton";
 
-const TopicModalWithTrigger = (props: { topic: IModuleTopic; courseId: string }) => {
+const TopicModalWithTrigger = (props: {
+    topic: IModuleTopic;
+    courseId: string;
+    defaultOpen?: boolean;
+}) => {
     const previewUrl = isOfficeFile(props.topic.url)
         ? createAsyncCached(() => getOfficeFilePreviewUrl(props.courseId, props.topic.id), {
               keys: () => ["office-file-preview-url", props.courseId, props.topic.id],
@@ -28,7 +32,7 @@ const TopicModalWithTrigger = (props: { topic: IModuleTopic; courseId: string })
             hasContent={!!previewUrl()}
             fallback={<Skeleton radius={5} width={82} height={34} />}
         >
-            <ContentModal>
+            <ContentModal defaultOpen={props.defaultOpen}>
                 <ContentModalTrigger as={Button<"button">} variant="outline" size="sm">
                     <ExternalLink class="w-4 h-4 mr-2" />
                     Open
@@ -45,7 +49,13 @@ const TopicModalWithTrigger = (props: { topic: IModuleTopic; courseId: string })
     );
 };
 
-const ModuleContentList = (props: { items?: IModuleTopic[]; courseId: string }) => {
+interface ModuleContentListProps {
+    items?: IModuleTopic[];
+    courseId: string;
+    openedTopicId?: string;
+}
+
+const ModuleContentList = (props: ModuleContentListProps) => {
     const handleDownload = (url: string, filename: string) => {
         const a = document.createElement("a");
         a.href = url;
@@ -59,6 +69,15 @@ const ModuleContentList = (props: { items?: IModuleTopic[]; courseId: string }) 
         // TODO: Get <Toaster /> working so that we can show a toast
         toast.success("Link copied to clipboard");
     };
+
+    createEffect(() => {
+        if (props.openedTopicId) {
+            const element = document.getElementById(props.openedTopicId);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth" });
+            }
+        }
+    });
 
     return (
         <>
@@ -77,7 +96,11 @@ const ModuleContentList = (props: { items?: IModuleTopic[]; courseId: string }) 
                                 </p>
                             </CardContent>
                             <CardFooter class="flex flex-wrap mt-auto gap-1">
-                                <TopicModalWithTrigger topic={item} courseId={props.courseId} />
+                                <TopicModalWithTrigger
+                                    topic={item}
+                                    courseId={props.courseId}
+                                    defaultOpen={item.id === props.openedTopicId}
+                                />
                                 <Show
                                     when={item.downloadable}
                                     fallback={

@@ -4,16 +4,12 @@ import ModuleContentList from "@/components/module-content-list";
 import UnsafeHtml from "@/components/unsafe-html";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getModuleContent } from "@/services/BS/scraper/module-content";
-import { useParams } from "@solidjs/router";
-import {
-    createEffect,
-    Match,
-    Show,
-    Switch
-} from "solid-js";
+import { useParams, useSearchParams } from "@solidjs/router";
+import { createEffect, Match, Show, Switch } from "solid-js";
 
 const Module = () => {
     const params = useParams();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const moduleContent = createAsyncCached(
         () => getModuleContent(params.courseId, params.moduleId),
@@ -22,15 +18,15 @@ const Module = () => {
         }
     );
 
-    createEffect(() => {
-        console.log("MODULE ID", params.moduleId);
-    });
+    // createEffect(() => {
+    //     console.log("MODULE ID", params.moduleId);
+    // });
 
-    createEffect(() => {
-        console.log("SHOWING MODULE ID", moduleContent()?.id);
-        console.log("MODULE DESCRIPTION", moduleContent()?.description);
-        console.log("MODULE TOPICS", moduleContent()?.topics);
-    });
+    // createEffect(() => {
+    //     console.log("SHOWING MODULE ID", moduleContent()?.id);
+    //     console.log("MODULE DESCRIPTION", moduleContent()?.description);
+    //     console.log("MODULE TOPICS", moduleContent()?.topics);
+    // });
 
     return (
         <Show when={params.courseId} fallback={<div>Course ID not found</div>}>
@@ -71,6 +67,11 @@ const Module = () => {
                             <ModuleContentList
                                 items={moduleContent()?.topics}
                                 courseId={params.courseId}
+                                openedTopicId={
+                                    Array.isArray(searchParams.topic)
+                                        ? searchParams.topic?.at(0)
+                                        : searchParams.topic
+                                }
                             />
                         </div>
                     </div>
