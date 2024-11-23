@@ -8,13 +8,28 @@ export function useGlobalNotification(category: number) {
     const [hasNew, setHasNew] = createSignal(false);
 
     // Use resource instead of signal so we can use <Suspense />
-    const [notifications, { mutate: setNotifications }] = createResource(() => {
-        if (fetcher.getCurrentFeed().length) {
-            return fetcher.getCurrentFeed();
-        } else {
-            return fetcher.getMoreFeed();
+    let resolver: (value: INotification[]) => void;
+    const [_notifications, { mutate: _setNotifications }] = createResource(
+        // Defer actual fetching until notifications() access.
+        // This is so that we get the most up to date notifications.
+        () =>
+            new Promise<INotification[]>((r) => {
+                resolver = r;
+            })
+    );
+
+    if (fetcher.getCurrentFeed().length) {
+        _setNotifications(fetcher.getCurrentFeed());
+    }
+
+    // Actual accessor for notifications
+    const getNotifications = () => {
+        if (!_notifications()?.length) {
+            fetcher.getMoreFeed().then(resolver);
         }
-    });
+
+        return _notifications();
+    };
 
     const unsubscribe = fetcher.subscribeToUpdates((hasNew) => {
         setHasNew(hasNew);
@@ -26,7 +41,7 @@ export function useGlobalNotification(category: number) {
 
     const getOlder = () => {
         fetcher.getMoreFeed().then((newNotifications) => {
-            setNotifications((prevNotifications = []) => [
+            _setNotifications((prevNotifications = []) => [
                 ...prevNotifications,
                 ...newNotifications,
             ]);
@@ -39,7 +54,7 @@ export function useGlobalNotification(category: number) {
     };
 
     return {
-        notifications,
+        notifications: getNotifications,
         getOlder,
         hasNew,
         readAll,
