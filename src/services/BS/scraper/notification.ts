@@ -1,4 +1,6 @@
+import { getUnstableCourseContent, UnstableModule } from "../api/unstable-module";
 import { getSearchParam, parseD2LPartial } from "../util";
+import { IModule } from "./course-modules";
 
 // Interfaces for the parsed data
 export interface INotification {
@@ -103,7 +105,7 @@ export class D2LActivityFeedFetcher {
             const d2lPartial = await response.text();
             const html = parseD2LPartial(d2lPartial)?.Payload?.Html || "";
 
-            const newNotifications = parseD2LNotifications(html);
+            const newNotifications = await parseD2LNotifications(html);
 
             // Append new notifications and update last timestamp
             this.notifications = [...this.notifications, ...newNotifications];
@@ -118,18 +120,12 @@ export class D2LActivityFeedFetcher {
      * Marks all notifications as read. Returns true on success, false if the request fails.
      */
     async markAllAsRead(): Promise<boolean> {
-        try {
-            this.isLoading = true;
-            // Fetch the feed with "GetAlertsDaylight" endpoint which marks all notifications as read
-            const response = await this.fetchFeed("GetAlertsDaylight");
+        // Fetch the feed with "GetAlertsDaylight" endpoint which marks all notifications as read
+        const response = await this.fetchFeed("GetAlertsDaylight");
 
-            // If the response is not OK, return false
-            if (!response.ok) {
-                return false;
-            }
-        } finally {
-            // Set isLoading to false after the request is finished
-            this.isLoading = false;
+        // If the response is not OK, return false
+        if (!response.ok) {
+            return false;
         }
 
         // Return true if the request is successful
@@ -346,56 +342,57 @@ function parseGradeDetails(titleText: string): IGradeDetails | undefined {
  * @param htmlString The HTML string to parse
  * @returns Array of parsed notifications
  */
-function parseD2LNotifications(htmlString: string): INotification[] {
+async function parseD2LNotifications(htmlString: string): Promise<INotification[]> {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, "text/html");
 
     const items = doc.querySelectorAll(".d2l-datalist-item-actionable");
-    const notifications: INotification[] = [];
 
-    items.forEach((item) => {
-        // Skip placeholder items
-        if (item.classList.contains("d2l-datalist-item-placeholder")) {
-            return;
-        }
-
-        const contentDiv = item.querySelector(".d2l-datalist-item-content");
-        if (!contentDiv) return;
-
-        const link = item.querySelector("a.d2l-link");
-        const courseSpan = item.querySelector(".d2l-textblock-secondary.vui-emphasis");
-        const timestampAbbr = item.querySelector("abbr.d2l-fuzzydate");
-        const iconElement = item.querySelector("d2l-icon");
-
-        if (!link || !courseSpan || !timestampAbbr) return;
-
-        const titleText = link.textContent?.trim() || "";
-        const courseText = courseSpan.textContent?.trim() || "";
-        const type = determineNotificationType(iconElement, courseText);
-
-        const notification: INotification = {
-            type,
-            title: titleText,
-            course: extractCourseName(courseText),
-            link: remapD2LActivityFeedUrl(link.getAttribute("href") || "", type),
-            timestamp: new Date(
-                parseInt(timestampAbbr.getAttribute("data-date") || "")
-            ).toISOString(),
-            icon: iconElement?.getAttribute("icon") || undefined,
-        };
-
-        // Add grade details if it's a grade notification
-        if (type === "grade") {
-            const details = parseGradeDetails(titleText);
-            if (details) {
-                notification.details = details;
+    const notifications: (INotification | undefined)[] = await Promise.all(
+        Array.from(items).map(async (item) => {
+            // Skip placeholder items
+            if (item.classList.contains("d2l-datalist-item-placeholder")) {
+                return;
             }
-        }
 
-        notifications.push(notification);
-    });
+            const contentDiv = item.querySelector(".d2l-datalist-item-content");
+            if (!contentDiv) return;
 
-    return notifications;
+            const link = item.querySelector("a.d2l-link");
+            const courseSpan = item.querySelector(".d2l-textblock-secondary.vui-emphasis");
+            const timestampAbbr = item.querySelector("abbr.d2l-fuzzydate");
+            const iconElement = item.querySelector("d2l-icon");
+
+            if (!link || !courseSpan || !timestampAbbr) return;
+
+            const titleText = link.textContent?.trim() || "";
+            const courseText = courseSpan.textContent?.trim() || "";
+            const type = determineNotificationType(iconElement, courseText);
+
+            const notification: INotification = {
+                type,
+                title: titleText,
+                course: extractCourseName(courseText),
+                link: await remapD2LActivityFeedUrl(link.getAttribute("href") || "", type),
+                timestamp: new Date(
+                    parseInt(timestampAbbr.getAttribute("data-date") || "")
+                ).toISOString(),
+                icon: iconElement?.getAttribute("icon") || undefined,
+            };
+
+            // Add grade details if it's a grade notification
+            if (type === "grade") {
+                const details = parseGradeDetails(titleText);
+                if (details) {
+                    notification.details = details;
+                }
+            }
+
+            return notification;
+        })
+    );
+
+    return notifications.filter((notification): notification is INotification => !!notification);
 }
 
 /**
@@ -404,7 +401,7 @@ function parseD2LNotifications(htmlString: string): INotification[] {
  * @param type The type of notification this is for.
  * @returns The remapped URL.
  */
-function remapD2LActivityFeedUrl(href: string, type: INotification["type"]) {
+async function remapD2LActivityFeedUrl(href: string, type: INotification["type"]) {
     const numGroupsRegex = /(\d+)/g;
 
     // TODO: Add more granularity so we can jump to correct item on page
@@ -415,8 +412,15 @@ function remapD2LActivityFeedUrl(href: string, type: INotification["type"]) {
             return `/courses/${courseId}`;
         }
         case "content": {
-            // The URL is of the form /d2l/le/content/<courseId>
-            const courseId = href.replace("/d2l/le/content/", "").match(numGroupsRegex)?.[0];
+            // The URL is of the form /d2l/le/content/<courseId>/viewContent/<topicId>/View
+            const match = href.replace("/d2l/le/content/", "").match(numGroupsRegex);
+            const courseId = match?.[0];
+            const topicId = match?.[1];
+            if (courseId && topicId) {
+                const modulePath = await getModuleId(courseId, topicId);
+                if (modulePath) return `/courses/${courseId}/m/${modulePath}?topic=${topicId}`;
+            }
+
             return `/courses/${courseId}`;
         }
         case "grade": {
@@ -436,4 +440,35 @@ function remapD2LActivityFeedUrl(href: string, type: INotification["type"]) {
         default:
             return "";
     }
+}
+
+async function getModuleId(courseId: string, topicId: string): Promise<number | null> {
+    const toc = await getUnstableCourseContent(courseId);
+
+    const recursiveFindModule = (module: UnstableModule): number | null => {
+        // Check if the current module contains the topic
+        if (module.Topics.some((topic) => topic.TopicId.toString() === topicId)) {
+            return module.ModuleId;
+        }
+
+        // Search through all nested modules
+        for (const nextModule of module.Modules) {
+            const result = recursiveFindModule(nextModule);
+            if (result !== null) {
+                return result;
+            }
+        }
+
+        return null;
+    };
+
+    // Search through all top-level modules
+    for (const module of toc.Modules) {
+        const result = recursiveFindModule(module);
+        if (result !== null) {
+            return result;
+        }
+    }
+
+    return null;
 }
