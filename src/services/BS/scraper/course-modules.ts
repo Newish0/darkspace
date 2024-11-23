@@ -1,5 +1,6 @@
 import { getUnstableCourseContent, UnstableModule } from "@/services/BS/api/unstable-module";
 import { htmlToDocument } from "@/services/BS/util";
+import { BASE_URL } from "../url";
 
 // Types
 export interface IModule {
@@ -14,7 +15,7 @@ export interface IModule {
 
 // Constants
 const URL_CONFIG = {
-    COURSE_MODULE: "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/Home",
+    COURSE_MODULE: `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/Home`,
 };
 
 const SELECTORS = {

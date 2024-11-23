@@ -1,6 +1,7 @@
 import { debounce } from "@/utils/debounce";
 import { getBaseDocument } from "../base-doc";
 import { ApiTokenError } from "../errors";
+import { BASE_URL } from "../url";
 
 // Promise to track ongoing token requests
 let tokenRequestPromise: Promise<string> | null = null;
@@ -91,7 +92,7 @@ async function getXsrfTokenFromDocument(): Promise<string> {
  * @throws {ApiTokenError} If the request fails.
  */
 async function fetchApiToken(xsrfToken: string): Promise<Response> {
-    const oAuthEndpoint = "https://bright.uvic.ca/d2l/lp/auth/oauth2/token";
+    const oAuthEndpoint = `${BASE_URL}/d2l/lp/auth/oauth2/token`;
     const headers = {
         accept: "*/*",
         "accept-language": "en-GB,en;q=0.6",

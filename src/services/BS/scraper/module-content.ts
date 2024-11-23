@@ -1,4 +1,5 @@
 import { getUnstableCourseContent, UnstableModule } from "../api/unstable-module";
+import { BASE_URL } from "../url";
 import { parseD2LPartial, htmlToDocument } from "../util";
 
 // Types
@@ -22,10 +23,8 @@ export interface IModuleDetails {
 
 // Constants
 const URL_CONFIG = {
-    BASE: "https://bright.uvic.ca",
-    MODULE_CONTENT:
-        "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc",
-    CONTENT_SERVICE: "https://bright.uvic.ca/d2l/le/contentservice/topic/{{TOPIC_ID}}/launch",
+    MODULE_CONTENT: `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc`,
+    CONTENT_SERVICE: `${BASE_URL}/d2l/le/contentservice/topic/{{TOPIC_ID}}/launch`,
 };
 
 async function getModuleContentFromD2LPartial(

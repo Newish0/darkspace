@@ -1,3 +1,4 @@
+import { BASE_URL } from "../url";
 import { htmlToDocument } from "../util";
 
 // Types
@@ -9,7 +10,7 @@ export interface IAnnouncement {
 
 // Constants
 const URL_CONFIG = {
-    COURSE_ANNOUNCEMENTS: "https://bright.uvic.ca/d2l/lms/news/main.d2l?ou={{CLASS_ID}}",
+    COURSE_ANNOUNCEMENTS: `${BASE_URL}/d2l/lms/news/main.d2l?ou={{CLASS_ID}}`,
 };
 
 const SELECTORS = {

@@ -1,3 +1,5 @@
+import { BASE_URL } from "../url";
+
 interface ISubmissionFile {
     filename: string;
     filesize?: string;
@@ -113,8 +115,7 @@ function extractUserId(onclick: string): string {
 }
 
 const URL_CONFIG = {
-    SUBMISSIONS:
-        "https://bright.uvic.ca/d2l/lms/dropbox/user/folders_history.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}",
+    SUBMISSIONS: `${BASE_URL}/d2l/lms/dropbox/user/folders_history.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}`,
 };
 
 export async function getAssignmentInfo(

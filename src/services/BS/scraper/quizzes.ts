@@ -1,3 +1,4 @@
+import { BASE_URL } from "../url";
 import { htmlToDocument } from "../util";
 
 // Types
@@ -27,10 +28,8 @@ export interface IQuizInfo {
 
 // Constants
 const URL_CONFIG = {
-    BASE: "https://bright.uvic.ca",
-    QUIZ_SUMMARY:
-        "https://bright.uvic.ca/d2l/lms/quizzing/user/quiz_summary.d2l?qi={{QUIZ_ID}}&ou={{COURSE_ID}}",
-    QUIZZES_LIST: "https://bright.uvic.ca/d2l/lms/quizzing/user/quizzes_list.d2l?ou={{COURSE_ID}}",
+    QUIZ_SUMMARY: `${BASE_URL}/d2l/lms/quizzing/user/quiz_summary.d2l?qi={{QUIZ_ID}}&ou={{COURSE_ID}}`,
+    QUIZZES_LIST: `${BASE_URL}/d2l/lms/quizzing/user/quizzes_list.d2l?ou={{COURSE_ID}}`,
 };
 
 const SELECTORS = {
@@ -81,7 +80,7 @@ function extractQuizSubmissions(html: string): IQuizSubmission[] {
         const attemptLink = row.querySelector(SELECTORS.QUIZ_SUBMISSION.ATTEMPT_LINK);
         if (!attemptLink) return;
 
-        const attemptUrl = new URL(attemptLink.getAttribute("href") || "", URL_CONFIG.BASE).href;
+        const attemptUrl = new URL(attemptLink.getAttribute("href") || "", BASE_URL).href;
         const attemptId = attemptUrl.match(REGEX_PATTERNS.ATTEMPT_ID)?.[1] || "";
         const attemptNumber = index + 1;
 
@@ -205,7 +204,7 @@ function extractQuizSubmissionsUrl(row: Element, quizInfo: IQuizInfo): void {
     if (feedbackCell) {
         const url = feedbackCell.querySelector("a")?.getAttribute("href");
         if (url) {
-            quizInfo.submissionsUrl = new URL(url, URL_CONFIG.BASE).href;
+            quizInfo.submissionsUrl = new URL(url, BASE_URL).href;
         }
     }
 }

@@ -1,7 +1,7 @@
+import { BASE_URL } from "../url";
 import { htmlToDocument } from "../util";
 
-const URL_TEMPLATE =
-    "https://bright.uvic.ca/d2l/le/content/{{COURSE_ID}}/viewContent/{{TOPIC_ID}}/View";
+const URL_TEMPLATE = `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/viewContent/{{TOPIC_ID}}/View`;
 
 function getContentViewUrl(courseId: string, topicId: string): string {
     const url = URL_TEMPLATE.replace("{{COURSE_ID}}", courseId).replace("{{TOPIC_ID}}", topicId);

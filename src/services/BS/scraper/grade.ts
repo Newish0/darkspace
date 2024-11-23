@@ -1,4 +1,4 @@
-import { getRubricUrl } from "@/services/BS/url";
+import { BASE_URL, getRubricUrl } from "@/services/BS/url";
 
 export type IGradeScore = {
     points?: string; // e.g., "27 / 30"
@@ -116,7 +116,7 @@ function extractGrades(html: string, courseId: string): IGradeData {
 }
 
 const URL_CONFIG = {
-    GRADES_LIST: "https://bright.uvic.ca/d2l/lms/grades/my_grades/main.d2l?ou={{COURSE_ID}}",
+    GRADES_LIST: `${BASE_URL}/d2l/lms/grades/my_grades/main.d2l?ou={{COURSE_ID}}`,
 };
 
 export async function getGrades(courseId: string): Promise<IGradeData> {
