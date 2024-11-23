@@ -27,16 +27,10 @@ const URL_CONFIG = {
     CONTENT_SERVICE: `${BASE_URL}/d2l/le/contentservice/topic/{{TOPIC_ID}}/launch`,
 };
 
-async function getModuleContentFromD2LPartial(
-    courseId: string,
-    moduleId: string
-): Promise<IModuleDetails> {
-    const d2lPartial = await fetch(
-        URL_CONFIG.MODULE_CONTENT.replace("{{COURSE_ID}}", courseId).replace(
-            "{{MODULE_ID}}",
-            moduleId
-        )
-    ).then((res) => res.text());
+const PARTIAL_ONLY_MODULES = ["Overview"];
+
+async function getPartialAsDoc(url: string): Promise<Document> {
+    const d2lPartial = await fetch(url).then((res) => res.text());
 
     const d2lPartialParsed = parseD2LPartial(d2lPartial);
 
@@ -45,6 +39,22 @@ async function getModuleContentFromD2LPartial(
     }
 
     const doc = htmlToDocument(d2lPartialParsed.Payload.Html);
+
+    return doc;
+}
+
+async function getModuleContentFromD2LPartial(
+    courseId: string,
+    moduleId: string
+): Promise<IModuleDetails> {
+    console.log("[getModuleContentFromD2LPartial] Fetching module", courseId, moduleId);
+
+    const url = URL_CONFIG.MODULE_CONTENT.replace("{{COURSE_ID}}", courseId).replace(
+        "{{MODULE_ID}}",
+        moduleId
+    );
+
+    const doc = await getPartialAsDoc(url);
 
     const moduleName = doc.querySelector("h1.d2l-page-title")?.textContent;
 
@@ -70,73 +80,76 @@ async function getModuleContentFromD2LPartial(
         })
         .filter((item) => item !== null);
 
+    // Extract HTML descriptions
+    const descriptionElement = doc.querySelector("d2l-html-block");
+    const html = descriptionElement?.getAttribute("html");
+
     return {
         id: moduleId,
         name: moduleName || undefined,
         topics,
+        description: {
+            html: html || undefined,
+        },
     };
 }
 
 export async function getModuleContent(
     courseId: string,
-    moduleId: string,
-    useUnstable = true
+    moduleId: string
 ): Promise<IModuleDetails> {
-    if (useUnstable) {
-        const unstableContent = await getUnstableCourseContent(courseId);
-
-        const findModule = (m: UnstableModule) => m.ModuleId.toString() === moduleId;
-
-        const recursiveFindModule = (m: UnstableModule): UnstableModule | undefined => {
-            if (findModule(m)) {
-                return m;
-            } else {
-                return m.Modules.find(recursiveFindModule);
-            }
-        };
-
-        let um: UnstableModule | undefined = undefined;
-        for (const m of unstableContent.Modules) {
-            um = recursiveFindModule(m);
-            if (um) break;
-        }
-
-        if (!um) {
-            throw new Error("Module not found");
-        }
-
-        console.log("[getModuleContent] Found module", um);
-
-        return {
-            name: um.Title || undefined,
-            id: um.ModuleId.toString(),
-            topics:
-                um.Topics.map((t) => {
-                    let url = t.Url;
-
-                    if (t.IsContentServiceAudioOrVideo) {
-                        // url = t.ContentUrl;
-                        url = URL_CONFIG.CONTENT_SERVICE.replace(
-                            "{{TOPIC_ID}}",
-                            t.TopicId.toString()
-                        );
-                    }
-
-                    const topic = {
-                        name: t.Title,
-                        type: t.TypeIdentifier, // OR t.Url.split(".").at(-1) || ""; // TODO: infer from extension
-                        url,
-                        id: t.TopicId.toString(),
-                        downloadable: t.TypeIdentifier === "File", // TODO: handle other types
-                    };
-                    return topic;
-                }) ?? [],
-            description: {
-                text: um.Description.Text,
-                html: um.Description.Html,
-            },
-        };
-    } else {
+    if (PARTIAL_ONLY_MODULES.includes(moduleId)) {
         return getModuleContentFromD2LPartial(courseId, moduleId);
     }
+
+    const unstableContent = await getUnstableCourseContent(courseId);
+
+    const findModule = (m: UnstableModule) => m.ModuleId.toString() === moduleId;
+
+    const recursiveFindModule = (m: UnstableModule): UnstableModule | undefined => {
+        if (findModule(m)) {
+            return m;
+        } else {
+            return m.Modules.find(recursiveFindModule);
+        }
+    };
+
+    let um: UnstableModule | undefined = undefined;
+    for (const m of unstableContent.Modules) {
+        um = recursiveFindModule(m);
+        if (um) break;
+    }
+
+    if (!um) {
+        throw new Error("Module not found");
+    }
+
+    console.log("[getModuleContent] Found module", um);
+
+    return {
+        name: um.Title || undefined,
+        id: um.ModuleId.toString(),
+        topics:
+            um.Topics.map((t) => {
+                let url = t.Url;
+
+                if (t.IsContentServiceAudioOrVideo) {
+                    // url = t.ContentUrl;
+                    url = URL_CONFIG.CONTENT_SERVICE.replace("{{TOPIC_ID}}", t.TopicId.toString());
+                }
+
+                const topic = {
+                    name: t.Title,
+                    type: t.TypeIdentifier, // OR t.Url.split(".").at(-1) || ""; // TODO: infer from extension
+                    url,
+                    id: t.TopicId.toString(),
+                    downloadable: t.TypeIdentifier === "File", // TODO: handle other types
+                };
+                return topic;
+            }) ?? [],
+        description: {
+            text: um.Description.Text,
+            html: um.Description.Html,
+        },
+    };
 }
