@@ -56,7 +56,7 @@ export async function getDocsFromCachedContent(contents: CachedContent[]) {
                 id: idCount++,
                 name: assignment.name,
                 description: `${content.course.name} ⋅ ${assignment.name}`,
-                dsUrl: `/courses/${content.course.id}/coursework/?cw=${assignment.id}`,
+                dsUrl: `/courses/${content.course.id}/coursework?cw=${assignment.id}`,
                 date: new Date().toString(),
                 type: "assignment",
             });
@@ -67,7 +67,7 @@ export async function getDocsFromCachedContent(contents: CachedContent[]) {
                 id: idCount++,
                 name: quiz.name,
                 description: `${content.course.name} ⋅ ${quiz.name}`,
-                dsUrl: `/courses/${content.course.id}/quizzes/?quiz=${quiz.id}`,
+                dsUrl: `/courses/${content.course.id}/coursework?cw=${quiz.id}`,
                 date: new Date().toString(),
                 type: "quiz",
             });

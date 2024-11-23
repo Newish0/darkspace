@@ -94,12 +94,22 @@ export function CommandSearch() {
                         onValueChange={setQuery}
                     />
                     <CommandList>
-                        <Show when={results().length === 0}>
-                            <CommandEmpty>
-                                <div>No results found.</div>
-                                <div class="text-xs">Make sure you have preloaded all content.</div>
-                            </CommandEmpty>
-                        </Show>
+                        <Switch>
+                            <Match when={!query()}>
+                                <CommandEmpty>
+                                    <div>Start typing to search.</div>
+                                </CommandEmpty>
+                            </Match>
+                            <Match when={results().length === 0}>
+                                <CommandEmpty>
+                                    <div>No results found.</div>
+                                    <div class="text-xs">
+                                        Make sure you have preloaded all content.
+                                    </div>
+                                </CommandEmpty>
+                            </Match>
+                        </Switch>
+
                         <CommandGroup>
                             <For each={results().slice(0, 20)}>
                                 {(item) => (

@@ -87,6 +87,7 @@ export default function CourseHome({
                     <div class="flex flex-col h-full">
                         <Show
                             when={children !== undefined}
+                            keyed
                             fallback={
                                 <ControlledSuspense
                                     hasContent={!!courseAnnouncements()}
