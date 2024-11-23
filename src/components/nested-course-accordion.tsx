@@ -32,13 +32,19 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
                         {module.name}
                     </AccordionTrigger>
                     <AccordionContent class="pl-4">
-                        <Show when={module.description?.html || module.description?.text}>
+                        <Show
+                            when={
+                                module.hasTopics ||
+                                module.description?.html ||
+                                module.description?.text
+                            }
+                        >
                             <A
                                 href={`/courses/${props.courseId}/m/${module.moduleId}?description=1`}
                                 class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}
                                 activeClass="bg-muted"
                             >
-                                Module Description
+                                Module {module.hasTopics ? "Content" : "Description"}
                             </A>
                         </Show>
 
