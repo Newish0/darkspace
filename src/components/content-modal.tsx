@@ -1,12 +1,11 @@
-import { ExternalLink, ExternalLinkIcon, FileTextIcon, PanelsTopLeftIcon } from "lucide-solid";
-import { createEffect, createSignal, Match, Switch } from "solid-js";
+import { ExternalLinkIcon, FileTextIcon, PanelsTopLeftIcon } from "lucide-solid";
+import { createEffect, Match, Switch } from "solid-js";
+import { buttonVariants } from "./ui/button";
 import {
     ResourceViewerDialog,
     ResourceViewerDialogContent,
     ResourceViewerDialogTrigger,
 } from "./ui/resource-viewer-dialog";
-import { Button, buttonVariants } from "./ui/button";
-import { D2LOfficeFileViewer } from "./d2l-aws-office-file-viewer";
 
 const TitleElement = (props: {
     title?: string;
@@ -42,7 +41,8 @@ const LeftActions = (props: { url?: string }) => (
 );
 
 interface ContentModalContentProps {
-    url?: string;
+    url: string;
+    previewUrl?: string;
     title?: string;
     contentType: "webpage" | "pdf";
     toolbar?: boolean;
@@ -51,10 +51,15 @@ interface ContentModalContentProps {
 const ContentModalContent = ({
     contentType,
     url,
-    toolbar = true,
+    previewUrl,
+    toolbar,
     title,
 }: ContentModalContentProps) => {
-    console.log("[Content URL]", url);
+    const pdfPreviewUrl = () => `${previewUrl || url}#${toolbar ? "toolbar=1" : "toolbar=0"}`;
+
+    createEffect(() => {
+        console.log("[Content URL]", url, "| Toolbar:", toolbar, "| Type:", contentType);
+    });
 
     return (
         <ResourceViewerDialogContent
@@ -63,14 +68,14 @@ const ContentModalContent = ({
         >
             <Switch>
                 <Match when={contentType === "webpage"}>
-                    <iframe src={url} class="w-full h-full border-none" title={title} />
+                    <iframe
+                        src={previewUrl || url}
+                        class="w-full h-full border-none"
+                        title={title}
+                    />
                 </Match>
                 <Match when={contentType === "pdf"}>
-                    <embed
-                        src={`${url}#${toolbar ? "toolbar=1" : "toolbar=0"}`}
-                        type="application/pdf"
-                        class="w-full h-full"
-                    />
+                    <embed src={pdfPreviewUrl()} type="application/pdf" class="w-full h-full" />
                 </Match>
             </Switch>
         </ResourceViewerDialogContent>

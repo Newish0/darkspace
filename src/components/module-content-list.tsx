@@ -8,33 +8,40 @@ import { toast } from "solid-sonner";
 import { isOfficeFile } from "@/utils/path";
 import { getOfficeFilePreviewUrl } from "@/services/BS/scraper/aws-office-file-preview";
 import { createAsyncCached } from "@/hooks/async-cached";
+import ControlledSuspense from "./controlled-suspense";
+import { Skeleton } from "./ui/skeleton";
 
 const TopicModalWithTrigger = (props: { topic: IModuleTopic; courseId: string }) => {
-    const url = isOfficeFile(props.topic.url)
+    const previewUrl = isOfficeFile(props.topic.url)
         ? createAsyncCached(() => getOfficeFilePreviewUrl(props.courseId, props.topic.id), {
               keys: () => ["office-file-preview-url", props.courseId, props.topic.id],
           })
         : () => props.topic.url;
 
+    const contentType = () => {
+        if (isOfficeFile(props.topic.url)) return "pdf";
+        return props.topic.url.toLowerCase().includes(".pdf") ? "pdf" : "webpage";
+    };
+
     return (
-        <Show when={url()}>
-            {(url) => (
-                <ContentModal>
-                    <ContentModalTrigger as={Button<"button">} variant="outline" size="sm">
-                        <ExternalLink class="w-4 h-4 mr-2" />
-                        Open
-                    </ContentModalTrigger>
-                    <ContentModalContent
-                        toolbar={!isOfficeFile(props.topic.url)}
-                        url={url()}
-                        title={props.topic.name}
-                        contentType={
-                            props.topic.url.toLowerCase().includes(".pdf") ? "pdf" : "webpage"
-                        }
-                    />
-                </ContentModal>
-            )}
-        </Show>
+        <ControlledSuspense
+            hasContent={!!previewUrl()}
+            fallback={<Skeleton radius={5} width={82} height={34} />}
+        >
+            <ContentModal>
+                <ContentModalTrigger as={Button<"button">} variant="outline" size="sm">
+                    <ExternalLink class="w-4 h-4 mr-2" />
+                    Open
+                </ContentModalTrigger>
+                <ContentModalContent
+                    toolbar={!isOfficeFile(props.topic.url)}
+                    url={props.topic.url}
+                    previewUrl={previewUrl()!}
+                    title={props.topic.name}
+                    contentType={contentType()}
+                />
+            </ContentModal>
+        </ControlledSuspense>
     );
 };
 
