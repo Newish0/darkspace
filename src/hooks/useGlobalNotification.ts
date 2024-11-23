@@ -8,32 +8,16 @@ export function useGlobalNotification(category: number) {
     const [hasNew, setHasNew] = createSignal(false);
 
     // Use resource instead of signal so we can use <Suspense />
-    let resolver: (value: INotification[]) => void;
-    const [_notifications, { mutate: _setNotifications }] = createResource(
-        // Defer actual fetching until notifications() access.
-        // This is because calling getInitialFeed() will cause
-        // backend to "mark all notifications as read".
-        () =>
-            new Promise<INotification[]>((r) => {
-                resolver = r;
-            })
-    );
-
-    if (fetcher.getCurrentFeed().length) {
-        _setNotifications(fetcher.getCurrentFeed());
-    }
-
-    // Actual accessor for notifications
-    const getNotifications = () => {
-        if (!_notifications()?.length) {
-            fetcher.getInitialFeed().then(resolver);
+    const [notifications, { mutate: setNotifications }] = createResource(() => {
+        if (fetcher.getCurrentFeed().length) {
+            return fetcher.getCurrentFeed();
+        } else {
+            return fetcher.getMoreFeed();
         }
-
-        return _notifications();
-    };
+    });
 
     const unsubscribe = fetcher.subscribeToUpdates((hasNew) => {
-        if (hasNew) setHasNew(hasNew);
+        setHasNew(hasNew);
     });
 
     onCleanup(() => {
@@ -42,7 +26,7 @@ export function useGlobalNotification(category: number) {
 
     const getOlder = () => {
         fetcher.getMoreFeed().then((newNotifications) => {
-            _setNotifications((prevNotifications = []) => [
+            setNotifications((prevNotifications = []) => [
                 ...prevNotifications,
                 ...newNotifications,
             ]);
@@ -50,11 +34,12 @@ export function useGlobalNotification(category: number) {
     };
 
     const readAll = () => {
-        setHasNew(false);
+        setHasNew(false); // optimistic update
+        fetcher.markAllAsRead().then((successful) => setHasNew(!successful)); // actual update
     };
 
     return {
-        notifications: getNotifications,
+        notifications,
         getOlder,
         hasNew,
         readAll,

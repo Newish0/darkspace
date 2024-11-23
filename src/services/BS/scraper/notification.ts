@@ -88,41 +88,12 @@ export class D2LActivityFeedFetcher {
     }
 
     /**
-     * Fetches and returns the initial feed data
-     */
-    async getInitialFeed(): Promise<INotification[]> {
-        if (this.isLoading) {
-            throw new Error("A feed request is already in progress");
-        }
-
-        try {
-            this.isLoading = true;
-            const response = await this.fetchFeed("GetAlertsDaylight");
-
-            const d2lPartial = await response.text();
-            const html = parseD2LPartial(d2lPartial)?.Payload?.Html || "";
-
-            const notifications = parseD2LNotifications(html);
-
-            // Store the notifications and update last timestamp
-            this.notifications = notifications;
-
-            return notifications;
-        } finally {
-            this.isLoading = false;
-        }
-    }
-
-    /**
-     * Fetches more feed data automatically using the last timestamp
+     * Fetches and returns the feed data automatically using the last timestamp.
+     * If this is the first call, last timestamp is set to the current time.
      */
     async getMoreFeed(): Promise<INotification[]> {
         if (this.isLoading) {
             throw new Error("A feed request is already in progress");
-        }
-
-        if (!this.lastTimestamp) {
-            throw new Error("No previous feed loaded. Call getInitialFeed first.");
         }
 
         try {
@@ -130,7 +101,6 @@ export class D2LActivityFeedFetcher {
             const response = await this.fetchFeed("GetMoreAlerts");
 
             const d2lPartial = await response.text();
-            console.log("d2lPartial", d2lPartial);
             const html = parseD2LPartial(d2lPartial)?.Payload?.Html || "";
 
             const newNotifications = parseD2LNotifications(html);
@@ -144,6 +114,32 @@ export class D2LActivityFeedFetcher {
         }
     }
 
+    /**
+     * Marks all notifications as read. Returns true on success, false if the request fails.
+     */
+    async markAllAsRead(): Promise<boolean> {
+        try {
+            this.isLoading = true;
+            // Fetch the feed with "GetAlertsDaylight" endpoint which marks all notifications as read
+            const response = await this.fetchFeed("GetAlertsDaylight");
+
+            // If the response is not OK, return false
+            if (!response.ok) {
+                return false;
+            }
+        } finally {
+            // Set isLoading to false after the request is finished
+            this.isLoading = false;
+        }
+
+        // Return true if the request is successful
+        return true;
+    }
+
+    /**
+     * Checks if there are new notifications. Returns true if there are updates, false otherwise.
+     * @returns true if there are new notifications, false otherwise
+     */
     async checkForUpdates(): Promise<boolean> {
         const urlParams = new URLSearchParams({
             isXhr: "true",
@@ -152,6 +148,7 @@ export class D2LActivityFeedFetcher {
 
         const url = `${this.baseUrl}/d2l/activityFeed/checkForNewAlerts?${urlParams.toString()}`;
 
+        // Fetch the JSON response from the server
         return fetch(url, {
             headers: {
                 Accept: "application/json",
@@ -222,7 +219,13 @@ export class D2LActivityFeedFetcher {
         this.notifications = [];
     }
 
+    /**
+     * Fetches the activity feed from the specified endpoint.
+     * @param endpoint - The endpoint to fetch data from, either "GetAlertsDaylight" or "GetMoreAlerts".
+     * @returns A promise that resolves to the fetch API response.
+     */
     private async fetchFeed(endpoint: "GetAlertsDaylight" | "GetMoreAlerts"): Promise<Response> {
+        // Prepare URL parameters for the request
         const urlParams = new URLSearchParams({
             Category: this.category.toString(),
             isXhr: "true",
@@ -232,20 +235,19 @@ export class D2LActivityFeedFetcher {
             _d2l_prc$hasActiveForm: "false",
         });
 
+        // If fetching more alerts, include the last timestamp in the parameters
         if (endpoint === "GetMoreAlerts") {
-            if (!this.lastTimestamp) {
-                throw new Error("No last timestamp available");
-            }
-
             urlParams.append("LastMessage", new Date(this.lastTimestamp).toISOString());
             urlParams.append("_d2l_prc$validClassNames", "d2l-datalist-item-placeholder");
             urlParams.append("_d2l_prc$validClassNames", "d2l-datalist-simpleitem");
         }
 
+        // Construct the full URL for the request
         const url = `${this.baseUrl}/d2l/NavigationArea/${
             this.courseId
         }/ActivityFeed/${endpoint}?${urlParams.toString()}`;
 
+        // Perform the fetch request and return the response
         return fetch(url, {
             headers: {
                 Accept: "application/json",
@@ -254,8 +256,14 @@ export class D2LActivityFeedFetcher {
         });
     }
 
-    get lastTimestamp(): string | null {
-        return this.notifications.at(-1)?.timestamp ?? null;
+    /**
+     * Returns the last timestamp of the currently loaded notifications, or the current time
+     * if the feed is empty.
+     * @returns The last timestamp of the currently loaded notifications, or the current time
+     *          if the feed is empty.
+     */
+    get lastTimestamp(): string {
+        return this.notifications.at(-1)?.timestamp ?? new Date().toISOString();
     }
 }
 
