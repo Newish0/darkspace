@@ -20,9 +20,11 @@ import {
     GraduationCapIcon,
     RssIcon,
     SearchIcon,
-    TimerIcon
+    TimerIcon,
 } from "lucide-solid";
 import Kbd from "./ui/kbd";
+
+import { createShortcut } from "@solid-primitives/keyboard";
 
 function DocIcon(props: { type: Doc4Index["type"]; class?: string }) {
     return (
@@ -55,6 +57,14 @@ export function CommandSearch() {
     const { query, setQuery, results } = useCommandSearch();
     const navigate = useNavigate();
 
+    createShortcut(
+        ["Control", "K"],
+        () => {
+            setOpen(true);
+        },
+        { preventDefault: true, requireReset: true }
+    );
+
     const handleSelect = (item: Doc4Index) => {
         setOpen(false);
         navigate(item.dsUrl);
@@ -73,7 +83,7 @@ export function CommandSearch() {
                 </div>
                 <div class="space-x-2 h-min hidden xl:block">
                     <Kbd>Ctrl</Kbd>
-                    <Kbd>P</Kbd>
+                    <Kbd>K</Kbd>
                 </div>
             </DialogTrigger>
             <DialogContent class="p-0">

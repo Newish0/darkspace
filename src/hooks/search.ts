@@ -13,7 +13,18 @@ export function useCommandSearch() {
         const miniSearch = new MiniSearch({
             fields: ["name", "description"],
             storeFields: ["name", "description", "dsUrl", "date", "contentUrl", "type"],
-            searchOptions: { fuzzy: 0.2 },
+            searchOptions: {
+                fuzzy: 0.2,
+
+                boost: {
+                    name: 2,
+                },
+                // boostDocument(documentId, term, storedFields) {
+                //     console.log(storedFields);
+
+                //     return 1;
+                // },
+            },
         });
 
         const cachedContent = await getCachedContent();
