@@ -31,7 +31,12 @@ const CourseWorkItem: Component<CourseWorkItemProps> = (props) => {
                             <ClockIcon size={18} class="flex-shrink-0" />
                         </Match>
                     </Switch>
-                    <A href={`/courses/${props.courseId}/coursework?id=${props.item.id}`} class="hover:underline">{props.item.name}</A>
+                    <A
+                        href={`/courses/${props.courseId}/coursework?id=${props.item.id}`}
+                        class="hover:underline"
+                    >
+                        {props.item.name}
+                    </A>
                 </CardTitle>
                 <CardDescription>
                     {props.item.type.charAt(0).toUpperCase() + props.item.type.slice(1)}
@@ -48,20 +53,26 @@ const CourseWorkItem: Component<CourseWorkItemProps> = (props) => {
 
                     <Show when={props.item.type === "assignment"}>
                         <div class="flex items-center gap-2">
-                            <Switch>
-                                <Match when={props.item.status === "submitted"}>
-                                    <CheckCircleIcon
-                                        class="text-success-foreground flex-shrink-0"
-                                        size={14}
-                                    />
-                                </Match>
-                                <Match when={props.item.status !== "submitted"}>
+                            <Show
+                                when={
+                                    props.item.status === "submitted" ||
+                                    props.item.status === "returned" ||
+                                    props.item.status === "completed" ||
+                                    props.item.status === "retry-in-progress"
+                                }
+                                fallback={
                                     <XCircleIcon
                                         class="text-error-foreground flex-shrink-0"
                                         size={14}
                                     />
-                                </Match>
-                            </Switch>
+                                }
+                            >
+                                <CheckCircleIcon
+                                    class="text-success-foreground flex-shrink-0"
+                                    size={14}
+                                />
+                            </Show>
+
                             <span class="text-xs">
                                 Status: {props.item.status?.replaceAll("-", " ") || "Unknown"}
                             </span>
@@ -124,8 +135,6 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
                 (a, b) =>
                     new Date(a?.dueDate || "").getTime() - new Date(b?.dueDate || "").getTime()
             );
-
-        console.log("items", items);
 
         return items.filter(
             (item) =>
