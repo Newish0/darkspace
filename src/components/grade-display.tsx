@@ -7,7 +7,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { IGradeCategory, IGradeData, IGradeItem, IGradeScore } from "@/services/BS/scraper/grade";
+import { IGradeCategory, IGradeData, IGradeItem, IGradeScore } from "@/services/BS/scraper/grades";
 import { AlertCircle, Award, BookOpen } from "lucide-solid";
 import { Component, For, Match, Show, Switch } from "solid-js";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";

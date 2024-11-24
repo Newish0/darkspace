@@ -2,7 +2,7 @@ import { getAsyncCached, setAsyncCached } from "@/hooks/async-cached";
 import { getEnrollments, IClass } from "@/services/BS/api/enrollment";
 
 import { getAssignments, IAssignment } from "@/services/BS/scraper/assignment";
-import { getGrades, IGradeData } from "@/services/BS/scraper/grade";
+import { getGrades, IGradeData } from "@/services/BS/scraper/grades";
 import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
 import { CourseContent, getUnstableCourseContent } from "./BS/api/unstable-module";
 import { getCourseAnnouncements, IAnnouncement } from "./BS/scraper/announcements";

@@ -1,4 +1,3 @@
-
 export const BASE_URL = "https://bright.uvic.ca";
 
 const ASSIGNMENT_SUBMIT_URL = `${BASE_URL}/d2l/lms/dropbox/user/folder_submit_files.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}`;
@@ -30,6 +29,8 @@ export function getQuizSummaryUrl(quizId: string, courseId: string) {
 
 const RUBRIC_URL = `${BASE_URL}/d2l/lms/grades/my_grades/activities_dialog.d2l?ou={{COURSE_ID}}&objectId={{OBJECT_ID}}&userId={{USER_ID}}&rubricId={{RUBRIC_ID}}`;
 
+const STATISTICS_URL = `${BASE_URL}/d2l/lms/grades/my_grades/statistics_dialog.d2l?ou={{COURSE_ID}}&objectId={{OBJECT_ID}}`;
+
 /**
  * Reverse engineered from `ViewActivities()` function in D2L's my_grades.js
  * Specifically: https://bright.uvic.ca/d2l/lms/grades/static/include/my_grades.js?v=20.24.10.20758
@@ -46,6 +47,18 @@ export function getRubricUrl(courseId: string, objectId: string, userId: string,
     return url;
 }
 
-
-
-
+/**
+ * Reverse engineered from `ShowGradeObjectStatisticsDialog(objectId, userId)` function in D2L's my_grades.js
+ * Specifically: https://bright.uvic.ca/d2l/lms/grades/static/include/my_grades.js?v=20.24.10.20758
+ * And also from the URL in the statistics popup.
+ * @param courseId
+ * @param objectId
+ * @returns
+ */
+export function getStatisticUrl(courseId: string, objectId: string) {
+    const url = STATISTICS_URL.replace("{{COURSE_ID}}", courseId).replace(
+        "{{OBJECT_ID}}",
+        objectId
+    );
+    return url;
+}
