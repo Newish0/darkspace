@@ -9,13 +9,65 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { IGradeCategory, IGradeData, IGradeItem, IGradeScore } from "@/services/BS/scraper/grades";
 import { AlertCircle, Award, BookOpen } from "lucide-solid";
-import { Component, For, Match, Show, Switch } from "solid-js";
+import { Component, ComponentProps, createEffect, For, Match, Show, Switch } from "solid-js";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
+import { getGradeStatistics } from "@/services/BS/scraper/grade-statistics";
+import { createAsyncCached } from "@/hooks/async-cached";
+import { GradeDistributionChart } from "./grade-distribution-chart";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "./ui/dialog";
 
-const ScoreDisplay: Component<{ score: IGradeScore }> = (props) => {
+const StatisticsModal: Component<{ url: string }> = (props) => {
+    const statistics = createAsyncCached(() => getGradeStatistics(props.url), {
+        keys: () => ["grade-statistics", props.url],
+    });
+
+    return (
+        <Show when={statistics()} keyed>
+            {(statistics) => (
+                <Dialog>
+                    <DialogTrigger as={Button<"button">} variant={"link"}>
+                        View Statistics
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Grade Distribution</DialogTitle>
+                            <Show when={statistics.averagePercentage}>
+                                {(averagePercentage) => (
+                                    <DialogDescription>
+                                        Average Percentage: {averagePercentage().toFixed(2)}%
+                                    </DialogDescription>
+                                )}
+                            </Show>
+                        </DialogHeader>
+                        <Show
+                            when={statistics.distributions.length}
+                            fallback={
+                                <div class="text-center text-muted-foreground py-8 flex flex-col items-center gap-4">
+                                    <AlertCircle size={36}/>
+                                    <p>No distributions available</p>
+                                </div>
+                            }
+                        >
+                            <GradeDistributionChart data={statistics} />
+                        </Show>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </Show>
+    );
+};
+
+const ScoreDisplay: Component<{ score: IGradeScore; statisticUrl?: string }> = (props) => {
     const getPercentage = () => {
         if (!props.score.percentage) return 0;
         const percentage = parseInt(props.score.percentage.replace("%", "").trim(), 10);
@@ -24,23 +76,30 @@ const ScoreDisplay: Component<{ score: IGradeScore }> = (props) => {
 
     return (
         <div class="w-full space-y-4">
-            <div class="flex justify-start items-center gap-4">
-                <Show when={props.score.points}>
-                    <p class="font-medium">{props.score.points}</p>
-                </Show>
-                <Show when={props.score.percentage}>
-                    <p class="font-medium">{props.score.percentage?.replace(" ", "")}</p>
-                </Show>
-                <Show when={props.score.weightAchieved}>
-                    <p class="text-muted-foreground text-xs">
-                        Weight: {props.score.weightAchieved}
-                    </p>
-                </Show>
-                <Show when={props.score.isDropped}>
-                    <Badge variant="destructive" class="mt-1">
-                        Dropped
-                    </Badge>
-                </Show>
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <Show when={props.score.points}>
+                        <p class="font-medium">{props.score.points}</p>
+                    </Show>
+                    <Show when={props.score.percentage}>
+                        <p class="font-medium">{props.score.percentage?.replace(" ", "")}</p>
+                    </Show>
+                    <Show when={props.score.weightAchieved}>
+                        <p class="text-muted-foreground text-xs">
+                            Weight: {props.score.weightAchieved}
+                        </p>
+                    </Show>
+                    <Show when={props.score.isDropped}>
+                        <Badge variant="destructive" class="mt-1">
+                            Dropped
+                        </Badge>
+                    </Show>
+                </div>
+                <div>
+                    <Show when={props.statisticUrl}>
+                        {(statisticUrl) => <StatisticsModal url={statisticUrl()} />}
+                    </Show>
+                </div>
             </div>
 
             <Progress value={getPercentage()} class="" />
@@ -56,7 +115,7 @@ const GradeItem: Component<{ item: IGradeItem }> = (props) => {
                     <BookOpen class="w-4 h-4 mr-2 text-primary" />
                     {props.item.name}
                 </h4>
-                <ScoreDisplay score={props.item.score} />
+                <ScoreDisplay score={props.item.score} statisticUrl={props.item.statisticUrl} />
             </div>
             <div class="flex gap-4">
                 <Separator orientation="vertical"></Separator>
