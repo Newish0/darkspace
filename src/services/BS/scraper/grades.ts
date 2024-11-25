@@ -79,7 +79,7 @@ function isCategoryRow(rowTexts: string[]): boolean {
 }
 
 function isTopLevelRow(rowTexts: string[]): boolean {
-    return rowTexts.length === 4;
+    return rowTexts.length === 4 || rowTexts.length === 3;
 }
 
 function removeIsDropped(text: string): string {
@@ -130,19 +130,34 @@ function extractGrades(html: string, courseId: string): IGradeData {
     const headers = Array.from(headerElements || []).map(
         (header) => header.textContent?.trim() || ""
     );
-    if (!headers.every((header) => EXPECTED_GRADE_HEADERS.includes(header))) {
-        console.warn("[scraper.grade.extractGrades] Expected headers not found. Expected headers:");
+    if (
+        !headers.every((header) => EXPECTED_GRADE_HEADERS.includes(header)) ||
+        headers.length !== EXPECTED_GRADE_HEADERS.length
+    ) {
+        console.warn("[scraper.grade.extractGrades] Unexpected grade headers found.");
     }
+
+    const hasWeightAchieved = headers.includes("Weight Achieved");
 
     for (const row of rows.slice(1)) {
         const tdElements = Array.from(row.querySelectorAll("td"));
         const thElement = row.querySelector("th");
-        const tdTexts = tdElements.map((td) => td.textContent?.trim() || "");
+
+        let tdTexts = tdElements.map((td) => td.textContent?.trim() || "");
+
+        // Add missing weight achieved so it can be parsed
+        if (!hasWeightAchieved) {
+            const index = tdTexts.length === 3 ? 1 : 2;
+            tdTexts.splice(index, 0, "- / -");
+        }
+
         const cleanedTdTexts = tdTexts.map(removeIsDropped);
         const isDropped = tdTexts.some(hasIsDropped);
         const name = thElement?.textContent?.trim() || "";
 
         const statisticUrl = thElement ? getStatistic(thElement, courseId) : undefined;
+
+        console.log(tdTexts);
 
         if (isCategoryRow(tdTexts)) {
             const [_, weightAchieved, percentage] = cleanedTdTexts;
