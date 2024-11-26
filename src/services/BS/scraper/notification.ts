@@ -1,4 +1,5 @@
-import { getUnstableCourseContent, UnstableModule } from "../api/unstable-module";
+import { getAsyncCached, setAsyncCached } from "@/hooks/async-cached";
+import { CourseContent, getUnstableCourseContent, UnstableModule } from "../api/unstable-module";
 import { getSearchParam, parseD2LPartial } from "../util";
 import { IModule } from "./course-modules";
 
@@ -404,7 +405,6 @@ async function parseD2LNotifications(htmlString: string): Promise<INotification[
 async function remapD2LActivityFeedUrl(href: string, type: INotification["type"]) {
     const numGroupsRegex = /(\d+)/g;
 
-    // TODO: Add more granularity so we can jump to correct item on page
     switch (type) {
         case "announcement": {
             // The URL is of the form /d2l/p/le/news/<courseId>
@@ -443,7 +443,10 @@ async function remapD2LActivityFeedUrl(href: string, type: INotification["type"]
 }
 
 async function getModuleId(courseId: string, topicId: string): Promise<number | null> {
-    const toc = await getUnstableCourseContent(courseId);
+    // Try cache first then fetch and cache
+    let toc = await getAsyncCached<CourseContent>(["toc", courseId]);
+    if (!toc) toc = await getUnstableCourseContent(courseId);
+    if (toc) setAsyncCached(["toc", courseId], toc);
 
     const recursiveFindModule = (module: UnstableModule): number | null => {
         // Check if the current module contains the topic
