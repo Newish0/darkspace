@@ -4,37 +4,25 @@ import { renderRoot } from "./main";
 import viteCss from "@/styles/global.css?inline";
 
 import favIcon from "@/../public/favicon.ico";
-import Browser from "webextension-polyfill";
+import browser from "webextension-polyfill";
 
-console.log("START", performance.now());
-
-function removeAllGivenTags(tagName: string, except?: (eln: Element) => boolean) {
-    const tags = document.querySelectorAll(tagName);
-    for (const tag of tags) {
-        if (except && except(tag as HTMLElement)) continue;
-        tag.remove();
-    }
-}
+console.debug("[Darkspace] START", performance.now());
 
 function removeBSResources() {
-    const favIconUrl = Browser.runtime.getURL(favIcon);
+    const favIconUrl = browser.runtime.getURL(favIcon);
 
     document.documentElement.innerHTML = `
         <!DOCTYPE html>
         <html lang="en">
             <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Darkspace</title>
-                <link rel="icon" type="image/x-icon" href="${favIconUrl}">
+                <meta charset="UTF-8" data-darkspace>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" data-darkspace>
+                <title data-darkspace>Darkspace</title>
+                <link rel="icon" type="image/x-icon" href="${favIconUrl}" data-darkspace>
             </head>
             <body>
             </body>
         </html>`;
-    // // removeAllGivenTags("iframe");
-    // // removeAllGivenTags("style");
-    // // removeAllGivenTags("link");
-    // // removeAllGivenTags("script");
 
     // Hide everything that was on the page
     for (const eln of document.body?.children) {
@@ -46,22 +34,13 @@ function init() {
     // Inject our styles
     const style = document.createElement("style");
     style.innerHTML = viteCss;
+    style.setAttribute("data-darkspace", "");
     document.head.appendChild(style);
 
     const root = document.createElement("div");
-    root.classList.add(
-        // "dark", // Dark mode
-        // "w-full",
-        // "h-full",
-        // "overflow-auto",
-        // "absolute",
-        // "top-0",
-        // "left-0",
-        // "z-[100]",
-        "bg-background",
-        "text-foreground"
-    );
+    root.classList.add("bg-background", "text-foreground");
     root.id = "root";
+    root.setAttribute("data-darkspace", "");
     document.body.appendChild(root);
     // document.body.style.overflow = "hidden";
 
@@ -80,6 +59,5 @@ if (EXCLUSION_RULES.some((rule) => rule())) {
     removeBSResources();
     init();
 
-    console.log("END", performance.now());
+    console.debug("[Darkspace]", performance.now());
 }
-
