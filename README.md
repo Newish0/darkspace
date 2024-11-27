@@ -1,58 +1,68 @@
 # Darkspace 🌙
 
-[![GitHub license](https://img.shields.io/github/license/Newish0/darkspace)](https://github.com/Newish0/darkspace/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/Newish0/darkspace)](https://github.com/Newish0/darkspace/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/Newish0/darkspace)](https://github.com/Newish0/darkspace/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/Newish0/darkspace)](https://github.com/Newish0/darkspace/pulls)
-[![Made with SolidJS](https://img.shields.io/badge/Made%20with-SolidJS-2C4F7C?logo=solid&logoColor=white)](https://www.solidjs.com/)
-[![Vite](https://img.shields.io/badge/Vite-B73BFE?logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/newish0/darkspace?style=for-the-badge)](https://github.com/newish0/darkspace/releases/latest)
+[![GitHub Release Date](https://img.shields.io/github/release-date/newish0/darkspace?style=for-the-badge)](https://github.com/newish0/darkspace/releases)
+[![npm version](https://img.shields.io/github/package-json/v/newish0/darkspace?style=for-the-badge)](https://github.com/newish0/darkspace/blob/main/package.json)
+
+[![GitHub license](https://img.shields.io/github/license/Newish0/darkspace?style=for-the-badge)](https://github.com/Newish0/darkspace/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/Newish0/darkspace?style=for-the-badge)](https://github.com/Newish0/darkspace/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/Newish0/darkspace?style=for-the-badge)](https://github.com/Newish0/darkspace/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/Newish0/darkspace?style=for-the-badge)](https://github.com/Newish0/darkspace/pulls)
+[![Made with SolidJS](https://img.shields.io/badge/Made%20with-SolidJS-2C4F7C?logo=solid&logoColor=white&style=for-the-badge)](https://www.solidjs.com/)
+[![Vite](https://img.shields.io/badge/Vite-B73BFE?logo=vite&logoColor=FFD62E&style=for-the-badge)](https://vitejs.dev/)
 
 Darkspace is a modern, user-friendly Chrome/Firefox extension that provides an alternative frontend for Brightspace, reimagining how students interact with their learning management system. Built with performance and aesthetics in mind, it offers a refreshing take on the traditional Brightspace interface.
 
 ## ✨ Features
 
-- **Modern UI/UX**: Clean, intuitive interface designed for contemporary educational needs
-- **Dark Mode Support**: Native dark theme support for comfortable viewing in any lighting condition
-- **Performance Optimized**: Fast loading times and smooth navigation powered by SolidJS
-- **Enhanced Navigation**: Streamlined access to courses, assignments, and resources
-- **Global Search**: Search for the exact resource you're looking for
-
+-   **Modern UI/UX**: Clean, intuitive interface that does what you expect
+-   **Dark Mode Support**: Native dark theme support
+-   **Performance Optimized**: Near zero loading and smooth navigation with caching and SolidJS reactivity
+-   **Enhanced Navigation**: Streamlined access to courses, assignments, and resources
+-   **Global Search**: Search for the exact resource you're looking for
 
 ## 🚀 Getting Started
 
 ### Installation
 
+1. Download the [latest release](https://github.com/newish0/darkspace/releases/latest)
+
+2. Load the extension in Chrome:
+    - Open Chrome and navigate to `chrome://extensions`
+    - Enable "Developer mode"
+    - Click "Load unpacked"
+    - Select the `dist` directory from your project folder
+
+## 🛠️ Technology Stack
+
+-   **[SolidJS](https://www.solidjs.com/)**: A declarative, efficient, and flexible JavaScript library for building user interfaces
+-   **[Vite](https://vite.dev/)**: Next generation frontend tooling
+-   **[CRXJS](https://crxjs.dev/)**: Chrome Extension tools for Vite
+-   **TypeScript**: For type-safe code
+-   **TailwindCSS + SolidUI(shadcn)**: For styling
+
+## 📝 Development
+
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/Newish0/darkspace.git
 cd darkspace
 ```
 
 2. Install dependencies:
+
 ```bash
 pnpm install
 ```
 
-3. Start the development server:
+### Development Mode
+
+Start the development server with hot reload:
+
 ```bash
 pnpm dev
 ```
-
-4. Load the extension in Chrome:
-   - Open Chrome and navigate to `chrome://extensions`
-   - Enable "Developer mode"
-   - Click "Load unpacked"
-   - Select the `dist` directory from your project folder
-
-## 🛠️ Technology Stack
-
-- **[SolidJS](https://www.solidjs.com/)**: A declarative, efficient, and flexible JavaScript library for building user interfaces
-- **[Vite](https://vitejs.dev/)**: Next generation frontend tooling
-- **[CRXJS](https://crxjs.dev/)**: Chrome Extension tools for Vite
-- **TypeScript**: For type-safe code
-- **TailwindCSS + SolidUI(shadcn)**: For styling
-
-## 📝 Development
 
 ### Build
 
@@ -63,14 +73,6 @@ pnpm build
 ```
 
 The extension will be built into the `dist` directory.
-
-### Development Mode
-
-Start the development server with hot reload:
-
-```bash
-pnpm dev
-```
 
 ## 🤝 Contributing
 
@@ -88,10 +90,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Built with [SolidJS](https://www.solidjs.com/)
-- Powered by [Vite](https://vitejs.dev/) and [CRXJS](https://crxjs.dev/)
-- Motivated by Brightspace
-- Thanks to all contributors who have helped improve this project
+-   Built with [SolidJS](https://www.solidjs.com/)
+-   Powered by [Vite](https://vitejs.dev/) and [CRXJS](https://crxjs.dev/)
+-   Very much motivated by Brightspace
+-   Thanks to all contributors who have helped improve this project
 
 ## ⚠️ Disclaimer
 
