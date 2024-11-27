@@ -163,7 +163,6 @@ function extractNameAndUrl(row: Element, quizInfo: IQuizInfo, document: Document
 function extractDates(row: Element, quizInfo: IQuizInfo): void {
     const dateSpan = row.querySelector(SELECTORS.QUIZ.DATE_SPAN);
 
-    console.log(dateSpan);
     if (dateSpan) {
         const dateText = dateSpan.textContent || "";
 
