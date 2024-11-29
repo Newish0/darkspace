@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { A } from "@solidjs/router";
 import { BookOpenIcon, CalendarIcon, CheckCircleIcon, ClockIcon, XCircleIcon } from "lucide-solid";
+import { getCourseCalendarEvents } from "@/services/BS/calendar/course-calendar";
 
 type CourseWork = (IAssignment & { type: "assignment" }) | (IQuizInfo & { type: "quiz" });
 
@@ -120,6 +121,8 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
     const assignments = createAsyncCached(() => getAssignments(props.courseId), {
         keys: () => ["assignments", props.courseId],
     });
+
+    getCourseCalendarEvents(props.courseId).then((events) => console.log(events));
 
     const upcoming = () => {
         const assignmentCws: CourseWork[] = (assignments() ?? []).map((assignment) => ({
