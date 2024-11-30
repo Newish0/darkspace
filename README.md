@@ -26,12 +26,12 @@ Darkspace is a modern, user-friendly Chrome/Firefox extension that provides an a
 ### Installation
 
 1. Download the [latest release](https://github.com/newish0/darkspace/releases/latest)
-
-2. Load the extension in Chrome:
+2. Unzip the `darkspace-v0.x.x.zip` archive
+3. Load the extension in Chrome:
     - Open Chrome and navigate to `chrome://extensions`
     - Enable "Developer mode"
     - Click "Load unpacked"
-    - Select the `darkspace-v0.x.x.zip` directory from your project folder
+    - Select the `darkspace-v0.x.x` directory that was unzipped from your project folder
 
 ## 🛠️ Technology Stack
 
