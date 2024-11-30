@@ -15,6 +15,7 @@ import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
 import UpcomingDisplay from "./upcoming-display";
+import { useCourseName } from "@/hooks/use-course-name";
 
 export default function CourseHome({
     courseId,
@@ -35,6 +36,8 @@ export default function CourseHome({
         keys: () => ["announcements", courseId],
     });
 
+    const courseName = useCourseName(courseId, true);
+
     const handlePanelResize = (sizes?: number[]) => {
         // Need to check if sizes are valid because router can make sizes funky
         if (sizes?.length === 3 && !sizes?.some((s) => s === null)) {
@@ -44,7 +47,7 @@ export default function CourseHome({
 
     return (
         <PageWrapper
-            title="Course"
+            title={courseName()}
             allowBack={true}
             hideOverflow={true}
             centerElement={<CourseTabs courseId={courseId} value="home" />}

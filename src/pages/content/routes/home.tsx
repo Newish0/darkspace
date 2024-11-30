@@ -5,8 +5,7 @@ import PageWrapper from "@/components/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { useUserMeta } from "@/hooks/user-meta";
 import { getEnrollments } from "@/services/BS/api/enrollment";
-import { makePersisted } from "@solid-primitives/storage";
-import { createEffect, createSignal, For, Show } from "solid-js";
+import { For, Show } from "solid-js";
 
 export default function Home() {
     const enrollments = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });

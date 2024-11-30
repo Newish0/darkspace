@@ -4,11 +4,12 @@ import CourseTabs from "@/components/course-tabs";
 import PageWrapper from "@/components/page-wrapper";
 import QuizItem, { QuizItemSkeleton } from "@/components/quiz-item";
 import { createAsyncCached } from "@/hooks/async-cached";
+import { useCourseName } from "@/hooks/use-course-name";
 import { getAssignments } from "@/services/BS/scraper/assignment";
 import { getQuizzes } from "@/services/BS/scraper/quizzes";
 import { useParams } from "@solidjs/router";
 import { AlertCircle } from "lucide-solid";
-import { createEffect, For, Show } from "solid-js";
+import { For, Show } from "solid-js";
 
 const CourseCoursework = () => {
     const params = useParams<{ courseId: string }>();
@@ -35,6 +36,8 @@ const CourseCoursework = () => {
         return items.toSorted((a, b) => (a?.dueDate.getTime() ?? 0) - (b?.dueDate.getTime() ?? 0));
     };
 
+    const courseName = useCourseName(params.courseId, true);
+
 
     return (
         <>
@@ -48,7 +51,7 @@ const CourseCoursework = () => {
                 }
             >
                 <PageWrapper
-                    title="Coursework"
+                    title={courseName()}
                     allowBack={true}
                     centerElement={<CourseTabs courseId={params.courseId} value="coursework" />}
                 >
