@@ -1,7 +1,8 @@
 name: Create Release Draft
 on:
   push:
-    branches: ['main']
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0
   workflow_dispatch:
 
 permissions:
@@ -31,20 +32,20 @@ jobs:
       - name: Build
         run: pnpm run build
         
-      - name: Get version
-        id: package-version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      - name: Get version from tag
+        id: get-version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Zip artifact
-        run: zip -r dist-v${{ steps.package-version.outputs.version }}.zip dist
+        run: zip -r dist-${{ github.ref_name }}.zip dist
 
       - name: Create Release Draft
         uses: softprops/action-gh-release@v1
         with:
-          files: dist-v${{ steps.package-version.outputs.version }}.zip
+          files: dist-${{ github.ref_name }}.zip
           draft: true
           generate_release_notes: true
-          tag_name: v${{ steps.package-version.outputs.version }}
-          name: Release v${{ steps.package-version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
