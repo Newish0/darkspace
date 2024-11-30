@@ -22,6 +22,11 @@ export interface IGradeDetails {
     weightedTotal: number;
 }
 
+interface FetchOptions {
+    timestamp?: string;
+    previousNotifications?: INotification[];
+}
+
 type SubscriptionCallback = (hasUpdates: boolean) => void;
 type UnsubscribeFn = () => void;
 
@@ -32,18 +37,15 @@ type UnsubscribeFn = () => void;
  *
  * try {
  *   // Get initial feed
- *   const initialNotifications = await fetcher.getInitialFeed();
+ *   const initialNotifications = await fetcher.getMoreFeed();
  *   console.log('Initial notifications:', initialNotifications);
  *
- *   // Load more if available
- *   if (fetcher.canLoadMore()) {
- *     const moreNotifications = await fetcher.getMoreFeed();
+ *   // Load more by passing the last timestamp
+ *   const lastTimestamp = initialNotifications.at(-1)?.timestamp;
+ *   if (lastTimestamp) {
+ *     const moreNotifications = await fetcher.getMoreFeed({ timestamp: lastTimestamp });
  *     console.log('Additional notifications:', moreNotifications);
  *   }
- *
- *   // Get all loaded notifications
- *   const allNotifications = fetcher.getCurrentFeed();
- *   console.log('All loaded notifications:', allNotifications);
  * } catch (error) {
  *   console.error('Error fetching feed:', error);
  * }
@@ -52,7 +54,6 @@ export class D2LActivityFeedFetcher {
     private baseUrl: string;
     private courseId: string;
     private category: number;
-    private notifications: INotification[] = [];
     private isLoading = false;
     private updateSubscriptions: Set<SubscriptionCallback> = new Set();
     private alreadyPolling = false;
@@ -91,27 +92,34 @@ export class D2LActivityFeedFetcher {
     }
 
     /**
-     * Fetches and returns the feed data automatically using the last timestamp.
-     * If this is the first call, last timestamp is set to the current time.
+     * Fetches and returns feed data. Can optionally use a timestamp or previous notifications
+     * to determine what data to fetch next.
+     * @param options Optional parameters including timestamp or previous notifications
+     * @returns Promise resolving to an array of new notifications
      */
-    async getMoreFeed(): Promise<INotification[]> {
+    async getMoreFeed(options: FetchOptions = {}): Promise<INotification[]> {
         if (this.isLoading) {
             throw new Error("A feed request is already in progress");
         }
 
         try {
             this.isLoading = true;
-            const response = await this.fetchFeed("GetMoreAlerts");
+
+            // Determine the timestamp to use
+            const timestamp =
+                options.timestamp ??
+                options.previousNotifications?.at(-1)?.timestamp ??
+                new Date().toISOString();
+
+            const response = await this.fetchFeed(
+                timestamp === new Date().toISOString() ? "GetAlertsDaylight" : "GetMoreAlerts",
+                timestamp
+            );
 
             const d2lPartial = await response.text();
             const html = parseD2LPartial(d2lPartial)?.Payload?.Html || "";
 
-            const newNotifications = await parseD2LNotifications(html);
-
-            // Append new notifications and update last timestamp
-            this.notifications = [...this.notifications, ...newNotifications];
-
-            return newNotifications;
+            return await parseD2LNotifications(html);
         } finally {
             this.isLoading = false;
         }
@@ -121,21 +129,12 @@ export class D2LActivityFeedFetcher {
      * Marks all notifications as read. Returns true on success, false if the request fails.
      */
     async markAllAsRead(): Promise<boolean> {
-        // Fetch the feed with "GetAlertsDaylight" endpoint which marks all notifications as read
-        const response = await this.fetchFeed("GetAlertsDaylight");
-
-        // If the response is not OK, return false
-        if (!response.ok) {
-            return false;
-        }
-
-        // Return true if the request is successful
-        return true;
+        const response = await this.fetchFeed("GetAlertsDaylight", new Date().toISOString());
+        return response.ok;
     }
 
     /**
      * Checks if there are new notifications. Returns true if there are updates, false otherwise.
-     * @returns true if there are new notifications, false otherwise
      */
     async checkForUpdates(): Promise<boolean> {
         const urlParams = new URLSearchParams({
@@ -145,7 +144,6 @@ export class D2LActivityFeedFetcher {
 
         const url = `${this.baseUrl}/d2l/activityFeed/checkForNewAlerts?${urlParams.toString()}`;
 
-        // Fetch the JSON response from the server
         return fetch(url, {
             headers: {
                 Accept: "application/json",
@@ -158,8 +156,7 @@ export class D2LActivityFeedFetcher {
     }
 
     /**
-     * Starts a polling loop to check for new notifications. If there are updates, calls all
-     * registered subscription callbacks. If there are no subscriptions, stops polling.
+     * Starts a polling loop to check for new notifications.
      */
     private startPolling() {
         const pollingLoop = async () => {
@@ -181,9 +178,8 @@ export class D2LActivityFeedFetcher {
     }
 
     /**
-     * Subscribes to update notifications. If the polling loop is not already running, starts it.
-     * Returns a function to unsubscribe from updates.
-     * @param callback - Function to call when new notifications are available
+     * Subscribes to update notifications. Returns a function to unsubscribe.
+     * @param callback Function to call when new notifications are available
      */
     subscribeToUpdates(callback: SubscriptionCallback): UnsubscribeFn {
         this.updateSubscriptions.add(callback);
@@ -196,33 +192,14 @@ export class D2LActivityFeedFetcher {
     }
 
     /**
-     * Returns all currently loaded notifications
-     */
-    getCurrentFeed(): INotification[] {
-        return [...this.notifications];
-    }
-
-    /**
-     * Returns if more data can be loaded
-     */
-    canLoadMore(): boolean {
-        return !!this.lastTimestamp;
-    }
-
-    /**
-     * Clears the current feed state
-     */
-    clearFeed(): void {
-        this.notifications = [];
-    }
-
-    /**
      * Fetches the activity feed from the specified endpoint.
-     * @param endpoint - The endpoint to fetch data from, either "GetAlertsDaylight" or "GetMoreAlerts".
-     * @returns A promise that resolves to the fetch API response.
+     * @param endpoint The endpoint to fetch data from
+     * @param timestamp The timestamp to use for fetching more alerts
      */
-    private async fetchFeed(endpoint: "GetAlertsDaylight" | "GetMoreAlerts"): Promise<Response> {
-        // Prepare URL parameters for the request
+    private async fetchFeed(
+        endpoint: "GetAlertsDaylight" | "GetMoreAlerts",
+        timestamp: string
+    ): Promise<Response> {
         const urlParams = new URLSearchParams({
             Category: this.category.toString(),
             isXhr: "true",
@@ -232,35 +209,22 @@ export class D2LActivityFeedFetcher {
             _d2l_prc$hasActiveForm: "false",
         });
 
-        // If fetching more alerts, include the last timestamp in the parameters
         if (endpoint === "GetMoreAlerts") {
-            urlParams.append("LastMessage", new Date(this.lastTimestamp).toISOString());
+            urlParams.append("LastMessage", timestamp);
             urlParams.append("_d2l_prc$validClassNames", "d2l-datalist-item-placeholder");
             urlParams.append("_d2l_prc$validClassNames", "d2l-datalist-simpleitem");
         }
 
-        // Construct the full URL for the request
         const url = `${this.baseUrl}/d2l/NavigationArea/${
             this.courseId
         }/ActivityFeed/${endpoint}?${urlParams.toString()}`;
 
-        // Perform the fetch request and return the response
         return fetch(url, {
             headers: {
                 Accept: "application/json",
                 "X-Requested-With": "XMLHttpRequest",
             },
         });
-    }
-
-    /**
-     * Returns the last timestamp of the currently loaded notifications, or the current time
-     * if the feed is empty.
-     * @returns The last timestamp of the currently loaded notifications, or the current time
-     *          if the feed is empty.
-     */
-    get lastTimestamp(): string {
-        return this.notifications.at(-1)?.timestamp ?? new Date().toISOString();
     }
 }
 

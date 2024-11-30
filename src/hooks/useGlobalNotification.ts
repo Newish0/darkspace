@@ -8,31 +8,13 @@ export function useGlobalNotification(category: number) {
     const [hasNew, setHasNew] = createSignal(false);
 
     // Use resource instead of signal so we can use <Suspense />
-    let resolver: (value: INotification[]) => void;
-    const [_notifications, { mutate: _setNotifications }] = createResource(
-        // Defer actual fetching until notifications() access.
-        // This is so that we get the most up to date notifications.
-        () =>
-            new Promise<INotification[]>((r) => {
-                resolver = r;
-            })
+    const [notifications, { mutate: setNotifications, refetch }] = createResource<INotification[]>(
+        () => fetcher.getMoreFeed()
     );
-
-    if (fetcher.getCurrentFeed().length) {
-        _setNotifications(fetcher.getCurrentFeed());
-    }
-
-    // Actual accessor for notifications
-    const getNotifications = () => {
-        if (!_notifications()?.length) {
-            fetcher.getMoreFeed().then(resolver);
-        }
-
-        return _notifications();
-    };
 
     const unsubscribe = fetcher.subscribeToUpdates((hasNew) => {
         setHasNew(hasNew);
+        refetch();
     });
 
     onCleanup(() => {
@@ -40,12 +22,16 @@ export function useGlobalNotification(category: number) {
     });
 
     const getOlder = () => {
-        fetcher.getMoreFeed().then((newNotifications) => {
-            _setNotifications((prevNotifications = []) => [
-                ...prevNotifications,
-                ...newNotifications,
-            ]);
-        });
+        fetcher
+            .getMoreFeed({
+                previousNotifications: notifications(),
+            })
+            .then((newNotifications) => {
+                setNotifications((prevNotifications = []) => [
+                    ...prevNotifications,
+                    ...newNotifications,
+                ]);
+            });
     };
 
     const readAll = () => {
@@ -54,7 +40,7 @@ export function useGlobalNotification(category: number) {
     };
 
     return {
-        notifications: getNotifications,
+        notifications,
         getOlder,
         hasNew,
         readAll,
