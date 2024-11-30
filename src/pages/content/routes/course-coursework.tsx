@@ -55,7 +55,7 @@ const CourseCoursework = () => {
                     allowBack={true}
                     centerElement={<CourseTabs courseId={params.courseId} value="coursework" />}
                 >
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 pb-2">
                         <ControlledSuspense
                             hasContent={!!quizzes() && !!assignments()}
                             fallback={<QuizListSkeleton />}

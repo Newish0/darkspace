@@ -66,7 +66,7 @@ const PageWrapper: Component<RouteSectionProps> = (props) => {
 
             <Separator class="my-2" />
 
-            <div class={cn("flex-1", rest.hideOverflow ? "overflow-hidden" : "")}>
+            <div class={cn("flex-1 h-full", rest.hideOverflow ? "overflow-hidden" : "")}>
                 {rest.children}
             </div>
         </div>

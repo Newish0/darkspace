@@ -23,9 +23,11 @@ const Grades = () => {
             hideOverflow={false}
             centerElement={<CourseTabs courseId={params.courseId} value="grades" />}
         >
-            <Show when={gradeData()} keyed>
-                {(data) => <GradeDisplay gradeData={data} />}
-            </Show>
+            <div class="pb-2">
+                <Show when={gradeData()} keyed>
+                    {(data) => <GradeDisplay gradeData={data} />}
+                </Show>
+            </div>
         </PageWrapper>
     );
 };
