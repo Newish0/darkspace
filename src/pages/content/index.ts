@@ -8,7 +8,7 @@ import browser from "webextension-polyfill";
 
 console.debug("[Darkspace] START", performance.now());
 
-function removeBSResources() {
+function replacePage() {
     const favIconUrl = browser.runtime.getURL(favIcon);
 
     document.documentElement.innerHTML = `
@@ -28,6 +28,22 @@ function removeBSResources() {
     for (const eln of document.body?.children) {
         if (eln instanceof HTMLElement) eln.style.display = "none";
     }
+}
+
+function removeAllNonDarkspaceElements() {
+    const bodies = Array.from(document.querySelectorAll("body"));
+    const elns = [...bodies.map((eln) => [...eln.children]).flat(), ...document.head?.children];
+    for (const eln of elns) {
+        if (
+            eln instanceof HTMLElement &&
+            !eln.hasAttribute("data-darkspace") &&
+            !eln.querySelector("[data-darkspace]")
+        ) {
+            eln.remove();
+        }
+    }
+
+    delete (window as any).D2L; // Remove D2L namespace
 }
 
 function init() {
@@ -56,8 +72,15 @@ const EXCLUSION_RULES = [
 if (EXCLUSION_RULES.some((rule) => rule())) {
     /* Do nothing */
 } else {
-    removeBSResources();
+    replacePage();
     init();
+
+    const observer = new MutationObserver(() => {
+        removeAllNonDarkspaceElements();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.head, { childList: true, subtree: true });
+    setTimeout(() => observer.disconnect(), 10000);
 
     console.debug("[Darkspace]", performance.now());
 }

@@ -18,11 +18,29 @@ const transformedManifest: ManifestV3Export = {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-    plugins: [solidPlugin(), crx({ manifest: transformedManifest })],
+    plugins: [
+        solidPlugin(),
+        crx({ manifest: transformedManifest }),
+        {
+            name: "add-data-darkspace-attribute",
+            transform(code, id) {
+                if (id.endsWith(".jsx") || id.endsWith(".tsx")) {
+                    // Add data-darkspace to elements during build
+                    return {
+                        code: code.replace(
+                            /<([a-z][a-zA-Z0-9]*)(?=[\s>])/g,
+                            '<$1 data-darkspace=""'
+                        ),
+                        map: null,
+                    };
+                }
+            },
+        },
+    ],
 
     define: {
         __APP_ENV__: {
-            VERSION: `${pkg.version}`
+            VERSION: `${pkg.version}`,
         },
     },
 
