@@ -1,5 +1,6 @@
 import { query } from "@solidjs/router";
 import { BASE_URL } from "../url";
+import { getAsyncCached, setAsyncCached } from "@/hooks/async-cached";
 
 /*
  * Using Unstable Content API
@@ -86,3 +87,37 @@ export const getUnstableCourseContent = query(async (courseId: string): Promise<
     const data = await response.json();
     return data;
 }, "unstableCourseContentByCourseId");
+
+export async function getModuleId(courseId: string, topicId: string): Promise<number | null> {
+    // Try cache first then fetch and cache
+    let toc = await getAsyncCached<CourseContent>(["toc", courseId]);
+    if (!toc) toc = await getUnstableCourseContent(courseId);
+    if (toc) setAsyncCached(["toc", courseId], toc);
+
+    const recursiveFindModule = (module: UnstableModule): number | null => {
+        // Check if the current module contains the topic
+        if (module.Topics.some((topic) => topic.TopicId.toString() === topicId)) {
+            return module.ModuleId;
+        }
+
+        // Search through all nested modules
+        for (const nextModule of module.Modules) {
+            const result = recursiveFindModule(nextModule);
+            if (result !== null) {
+                return result;
+            }
+        }
+
+        return null;
+    };
+
+    // Search through all top-level modules
+    for (const module of toc.Modules) {
+        const result = recursiveFindModule(module);
+        if (result !== null) {
+            return result;
+        }
+    }
+
+    return null;
+}

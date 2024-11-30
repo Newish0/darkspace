@@ -1,107 +1,191 @@
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getAssignments, IAssignment } from "@/services/BS/scraper/assignment";
 import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
-import { isPast } from "date-fns";
-import { Component, For, Match, Show, Switch } from "solid-js";
+import { format as formatDate, isPast } from "date-fns";
+import { Component, createEffect, For, Match, Show, Switch } from "solid-js";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { A } from "@solidjs/router";
-import { BookOpenIcon, CalendarIcon, CheckCircleIcon, ClockIcon, XCircleIcon } from "lucide-solid";
+import { CalendarEvent } from "@/services/BS/calendar/calendar-transformer";
 import { getCourseCalendarEvents } from "@/services/BS/calendar/course-calendar";
+import { A } from "@solidjs/router";
+import {
+    BookOpenIcon,
+    CalendarDaysIcon,
+    CalendarIcon,
+    CheckCircleIcon,
+    ClockIcon,
+    XCircleIcon,
+} from "lucide-solid";
 
-type CourseWork = (IAssignment & { type: "assignment" }) | (IQuizInfo & { type: "quiz" });
-
-interface CourseWorkItemProps {
-    item: CourseWork;
+interface UpcomingItemProps {
+    type: "assignment" | "quiz" | "calendar";
+    item: IAssignment | IQuizInfo | CalendarEvent;
     courseId: string;
 }
 
-const CourseWorkItem: Component<CourseWorkItemProps> = (props) => {
-    const isPast = () => (props.item.dueDate ? new Date(props.item.dueDate) < new Date() : false);
+const UpcomingItem: Component<UpcomingItemProps> = (props) => {
+    const isPast = () => {
+        if (props.type === "quiz" || props.type === "assignment") {
+            const item = props.item as IAssignment | IQuizInfo;
+            return item.dueDate ? new Date(item.dueDate) < new Date() : false;
+        } else if (props.type === "calendar") {
+            const event = props.item as CalendarEvent;
+            if (event.eventType === "due")
+                return event.dueDate ? event.dueDate < new Date() : false;
+        }
+    };
+
+    const dueDate = (): string | undefined => {
+        if (props.type === "quiz" || props.type === "assignment") {
+            const item = props.item as IAssignment | IQuizInfo;
+            return item.dueDate;
+        } else if (props.type === "calendar") {
+            const event = props.item as CalendarEvent;
+            if (event.eventType === "due")
+                return event.dueDate && formatDate(event.dueDate, "MMM d, yyyy h:mm a");
+        }
+    };
+
+    const DynamicIcon = () => (
+        <Switch>
+            <Match when={props.type === "assignment" ? props.item : null}>
+                <BookOpenIcon size={18} class="flex-shrink-0" />
+            </Match>
+            <Match when={props.type === "quiz"}>
+                <ClockIcon size={18} class="flex-shrink-0" />
+            </Match>
+            <Match when={props.type === "calendar"}>
+                <CalendarDaysIcon size={18} class="flex-shrink-0" />
+            </Match>
+        </Switch>
+    );
+
+    const ItemLink = () => (
+        <Switch>
+            <Match when={props.type === "assignment" ? props.item : null}>
+                <A
+                    href={`/courses/${props.courseId}/coursework?id=${
+                        (props.item as IAssignment).id
+                    }`}
+                    class="hover:underline"
+                >
+                    {props.item.name}
+                </A>
+            </Match>
+            <Match when={props.type === "quiz"}>
+                <A
+                    href={`/courses/${props.courseId}/coursework?id=${
+                        (props.item as IQuizInfo).id
+                    }`}
+                    class="hover:underline"
+                >
+                    {props.item.name}
+                </A>
+            </Match>
+            <Match when={props.type === "calendar"}>
+                {(_) => {
+                    const event = props.item as CalendarEvent;
+
+                    const url = () => {
+                        if (event.itemType === "topic") {
+                            return `/courses/${event.courseId}/m/${event.moduleId}?topic=${event.topicId}`;
+                        }
+
+                        return "";
+                    };
+
+                    return (
+                        <A href={url()} class="hover:underline">
+                            {props.item.name}
+                        </A>
+                    );
+                }}
+            </Match>
+        </Switch>
+    );
 
     return (
         <Card classList={{ "opacity-50": isPast() }}>
             <CardHeader class="p-4">
                 <CardTitle class="flex items-center gap-2 text-base">
-                    <Switch>
-                        <Match when={props.item.type === "assignment"}>
-                            <BookOpenIcon size={18} class="flex-shrink-0" />
-                        </Match>
-                        <Match when={props.item.type === "quiz"}>
-                            <ClockIcon size={18} class="flex-shrink-0" />
-                        </Match>
-                    </Switch>
-                    <A
-                        href={`/courses/${props.courseId}/coursework?id=${props.item.id}`}
-                        class="hover:underline"
-                    >
-                        {props.item.name}
-                    </A>
+                    <DynamicIcon />
+                    <ItemLink />
                 </CardTitle>
                 <CardDescription>
-                    {props.item.type.charAt(0).toUpperCase() + props.item.type.slice(1)}
+                    {props.type.charAt(0).toUpperCase() + props.type.slice(1)}
                 </CardDescription>
             </CardHeader>
             <CardContent class="px-4 pb-4">
                 <div class="space-y-2">
-                    <Show when={props.item.dueDate}>
+                    <Show when={dueDate()}>
                         <div class="flex items-center gap-2">
                             <CalendarIcon class="text-muted-foreground flex-shrink-0" size={14} />
-                            <span class="text-xs">Due: {props.item.dueDate}</span>
+                            <span class="text-xs">Due: {dueDate()}</span>
                         </div>
                     </Show>
 
-                    <Show when={props.item.type === "assignment"}>
-                        <div class="flex items-center gap-2">
-                            <Show
-                                when={
-                                    props.item.status === "submitted" ||
-                                    props.item.status === "returned" ||
-                                    props.item.status === "completed" ||
-                                    props.item.status === "retry-in-progress"
-                                }
-                                fallback={
-                                    <XCircleIcon
-                                        class="text-error-foreground flex-shrink-0"
-                                        size={14}
-                                    />
-                                }
-                            >
-                                <CheckCircleIcon
-                                    class="text-success-foreground flex-shrink-0"
-                                    size={14}
-                                />
-                            </Show>
+                    <Show when={props.type === "assignment"}>
+                        {(_) => {
+                            const assignment = props.item as IAssignment;
+                            return (
+                                <div class="flex items-center gap-2">
+                                    <Show
+                                        when={
+                                            assignment.status === "submitted" ||
+                                            assignment.status === "returned"
+                                        }
+                                        fallback={
+                                            <XCircleIcon
+                                                class="text-error-foreground flex-shrink-0"
+                                                size={14}
+                                            />
+                                        }
+                                    >
+                                        <CheckCircleIcon
+                                            class="text-success-foreground flex-shrink-0"
+                                            size={14}
+                                        />
+                                    </Show>
 
-                            <span class="text-xs">
-                                Status: {props.item.status?.replaceAll("-", " ") || "Unknown"}
-                            </span>
-                        </div>
+                                    <span class="text-xs">
+                                        Status:{" "}
+                                        {assignment.status?.replaceAll("-", " ") || "Unknown"}
+                                    </span>
+                                </div>
+                            );
+                        }}
                     </Show>
 
-                    <Show when={props.item.type === "quiz" && props.item.status}>
-                        {(status) => (
-                            <Badge variant={status() === "completed" ? "outline" : "secondary"}>
-                                {status()}
-                            </Badge>
-                        )}
-                    </Show>
-
-                    <Show
-                        when={
-                            props.item.type === "quiz" &&
-                            props.item.attempts !== undefined &&
-                            props.item.attemptsAllowed !== undefined
-                                ? props.item
-                                : null
-                        }
-                    >
-                        {(quiz) => (
-                            <div>
-                                Attempts: {quiz().attempts} / {quiz().attemptsAllowed}
-                            </div>
-                        )}
+                    <Show when={props.type === "quiz"}>
+                        {(_) => {
+                            const quiz = props.item as IQuizInfo;
+                            const status = quiz.status;
+                            return (
+                                <>
+                                    <Badge
+                                        variant={status === "completed" ? "outline" : "secondary"}
+                                    >
+                                        {status}
+                                    </Badge>
+                                    <Show
+                                        when={
+                                            quiz.attempts !== undefined &&
+                                            quiz.attemptsAllowed !== undefined
+                                                ? quiz
+                                                : null
+                                        }
+                                    >
+                                        {(quiz) => (
+                                            <div>
+                                                Attempts: {quiz().attempts} /{" "}
+                                                {quiz().attemptsAllowed}
+                                            </div>
+                                        )}
+                                    </Show>
+                                </>
+                            );
+                        }}
                     </Show>
                 </div>
             </CardContent>
@@ -122,29 +206,59 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
         keys: () => ["assignments", props.courseId],
     });
 
-    getCourseCalendarEvents(props.courseId).then((events) => console.log(events));
+    const calendarEvents = createAsyncCached(() => getCourseCalendarEvents(props.courseId), {
+        keys: () => ["calendar-events", props.courseId],
+    });
 
     const upcoming = () => {
-        const assignmentCws: CourseWork[] = (assignments() ?? []).map((assignment) => ({
-            ...assignment,
-            type: "assignment",
-        }));
+        const assignmentItems =
+            assignments()?.map((assignment) => ({
+                item: assignment,
+                type: "assignment",
+            })) ?? [];
 
-        const quizCws: CourseWork[] = (quizzes() ?? []).map((quiz) => ({ ...quiz, type: "quiz" }));
+        const quizItems = quizzes()?.map((quiz) => ({ item: quiz, type: "quiz" })) ?? [];
 
-        const items: CourseWork[] = [...assignmentCws, ...quizCws]
+        const dueCalendarEventItems =
+            calendarEvents()
+                // Only events that are due
+                ?.filter((event) => event.eventType === "due")
+
+                // Only topics and unknown because assignments and quizzes are handled above
+                ?.filter((event) => event.itemType === "topic" || event.itemType === "unknown")
+
+                // convert to upcoming item
+                .map((event) => ({ item: event, type: "calendar" })) ?? [];
+
+        // Sort by due date
+        const items = [assignmentItems, quizItems, dueCalendarEventItems]
             .flat()
-            .toSorted(
-                (a, b) =>
-                    new Date(a?.dueDate || "").getTime() - new Date(b?.dueDate || "").getTime()
-            );
+            .toSorted((a, b) => {
+                const aDate = a?.item?.dueDate;
+                const bDate = b?.item?.dueDate;
+                return new Date(aDate || "").getTime() - new Date(bDate || "").getTime();
+            });
 
-        return items.filter(
-            (item) =>
-                (item.status !== "submitted" && item.endDate && !isPast(new Date(item.endDate))) ||
-                !isPast(new Date(item?.dueDate ?? ""))
-        );
-        // return items.filter((item) => !isPast(new Date(item?.dueDate ?? "")));
+        // Only show future items
+        return items.filter((item) => {
+            // Only show calendar events that are due in the future
+            if (item.type === "calendar") {
+                const event = item.item as CalendarEvent;
+                if (event.eventType === "due" && event.dueDate) return !isPast(event.dueDate);
+                else return false;
+            }
+
+            const assignmentOrQuiz = item.item as IAssignment | IQuizInfo;
+
+            // Only show assignments and quizzes that are not submitted and not reached the end date
+            // Otherwise, remove from the list once submitted and past the due date.
+            return (
+                (assignmentOrQuiz.status !== "submitted" &&
+                    assignmentOrQuiz.endDate &&
+                    !isPast(new Date(assignmentOrQuiz.endDate))) ||
+                !isPast(new Date(assignmentOrQuiz?.dueDate ?? ""))
+            );
+        }) as Omit<UpcomingItemProps, "courseId">[]; // Need to be careful here with type since we are using `as`
     };
 
     return (
@@ -156,7 +270,7 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
 
             <div class="p-4 space-y-2 overflow-auto h-full">
                 <For each={upcoming()}>
-                    {(cw) => <CourseWorkItem item={cw} courseId={props.courseId} />}
+                    {(upcoming) => <UpcomingItem {...upcoming} courseId={props.courseId} />}
                 </For>
             </div>
         </>
