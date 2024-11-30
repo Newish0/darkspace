@@ -18,16 +18,6 @@ const Module = () => {
         }
     );
 
-    // createEffect(() => {
-    //     console.log("MODULE ID", params.moduleId);
-    // });
-
-    // createEffect(() => {
-    //     console.log("SHOWING MODULE ID", moduleContent()?.id);
-    //     console.log("MODULE DESCRIPTION", moduleContent()?.description);
-    //     console.log("MODULE TOPICS", moduleContent()?.topics);
-    // });
-
     return (
         <Show when={params.courseId} keyed fallback={<div>Course ID not found</div>}>
             <CourseHome courseId={params.courseId}>

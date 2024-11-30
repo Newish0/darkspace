@@ -47,7 +47,7 @@ async function getModuleContentFromD2LPartial(
     courseId: string,
     moduleId: string
 ): Promise<IModuleDetails> {
-    console.log("[getModuleContentFromD2LPartial] Fetching module", courseId, moduleId);
+    console.debug("[getModuleContentFromD2LPartial] Fetching module", courseId, moduleId);
 
     const url = URL_CONFIG.MODULE_CONTENT.replace("{{COURSE_ID}}", courseId).replace(
         "{{MODULE_ID}}",
@@ -124,7 +124,7 @@ export async function getModuleContent(
         throw new Error("Module not found");
     }
 
-    console.log("[getModuleContent] Found module", um);
+    console.debug("[getModuleContent] Found module", um);
 
     return {
         name: um.Title || undefined,

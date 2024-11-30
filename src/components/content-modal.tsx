@@ -58,7 +58,7 @@ const ContentModalContent = ({
     const pdfPreviewUrl = () => `${previewUrl || url}#${toolbar ? "toolbar=1" : "toolbar=0"}`;
 
     createEffect(() => {
-        console.log("[Content URL]", url, "| Toolbar:", toolbar, "| Type:", contentType);
+        console.debug("[Content URL]", url, "| Toolbar:", toolbar, "| Type:", contentType);
     });
 
     return (

@@ -243,10 +243,6 @@ const AssignmentSubmissions: Component<{
         }
     );
 
-    createEffect(() => {
-        console.log(submissions());
-    });
-
     return (
         <Show when={props.assignment.id} fallback={<p>None</p>}>
             <ControlledSuspense hasContent={!!submissions()} fallback={<p>Loading...</p>}>

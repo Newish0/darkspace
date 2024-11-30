@@ -157,8 +157,6 @@ function extractGrades(html: string, courseId: string): IGradeData {
 
         const statisticUrl = thElement ? getStatistic(thElement, courseId) : undefined;
 
-        console.log(tdTexts);
-
         if (isCategoryRow(tdTexts)) {
             const [_, weightAchieved, percentage] = cleanedTdTexts;
 

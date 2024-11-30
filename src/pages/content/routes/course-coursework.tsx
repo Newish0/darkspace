@@ -5,9 +5,7 @@ import PageWrapper from "@/components/page-wrapper";
 import QuizItem, { QuizItemSkeleton } from "@/components/quiz-item";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getAssignments } from "@/services/BS/scraper/assignment";
-import {
-    getQuizzes
-} from "@/services/BS/scraper/quizzes";
+import { getQuizzes } from "@/services/BS/scraper/quizzes";
 import { useParams } from "@solidjs/router";
 import { AlertCircle } from "lucide-solid";
 import { createEffect, For, Show } from "solid-js";
@@ -20,11 +18,6 @@ const CourseCoursework = () => {
 
     const assignments = createAsyncCached(() => getAssignments(params.courseId), {
         keys: () => ["assignments", params.courseId],
-    });
-
-    createEffect(() => {
-        console.log("assignments", assignments());
-        console.log("quizzes", quizzes());
     });
 
     const courseWorkItems = () => {
@@ -42,7 +35,6 @@ const CourseCoursework = () => {
         return items.toSorted((a, b) => (a?.dueDate.getTime() ?? 0) - (b?.dueDate.getTime() ?? 0));
     };
 
-    createEffect(() => console.log("courseWorkItems", courseWorkItems()));
 
     return (
         <>

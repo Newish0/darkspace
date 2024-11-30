@@ -5,9 +5,6 @@ import { Show } from "solid-js";
 const Course = () => {
     const params = useParams();
 
-    console.log("Course", params.courseId);
-
-
     return (
         <Show when={params.courseId} keyed fallback={<div>Course ID not found</div>}>
             <CourseHome courseId={params.courseId} />

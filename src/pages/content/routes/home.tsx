@@ -13,10 +13,6 @@ export default function Home() {
 
     const [userMeta, setUserMeta] = useUserMeta();
 
-    createEffect(() => {
-        console.log("HOME: enrollments", enrollments());
-    });
-
     const handleGreetingModalClose = (preloaded?: boolean) => {
         setUserMeta({
             isFirstTimeUser: false,
