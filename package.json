@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@corvu/resizable": "^0.2.3",
+    "@date-fns/tz": "^1.2.0",
     "@kobalte/core": "^0.13.6",
     "@solid-primitives/keyboard": "^1.2.8",
     "@solid-primitives/refs": "^1.0.8",

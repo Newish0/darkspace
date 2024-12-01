@@ -1,11 +1,13 @@
+import { TZDate } from "@date-fns/tz";
 import { BASE_URL } from "../url";
 import { htmlToDocument } from "../util";
+import { DEFAULT_TIMEZONE, getTimezone } from "../timezone";
 
 // Types
 export interface IAnnouncement {
     html: string;
     title?: string;
-    dateTime?: string;
+    dateTime?: Date;
 }
 
 // Constants
@@ -32,6 +34,8 @@ export async function getCourseAnnouncements(courseId: string): Promise<IAnnounc
     ).then((res) => res.text());
     const doc = htmlToDocument(htmlString, false);
 
+    const timezone = (await getTimezone()) || DEFAULT_TIMEZONE;
+
     /**
      * The following code assumes that the HTML structure of the page is as follows:
      * <tr>
@@ -53,12 +57,14 @@ export async function getCourseAnnouncements(courseId: string): Promise<IAnnounc
         const currentRow = eln.closest("tr"); // closest <tr> parent that contains the current element
         const previousRow = currentRow?.previousElementSibling; // the previous <tr> tag
         const title = previousRow?.querySelector("a")?.textContent;
-        const dateTime = previousRow?.querySelector("label")?.textContent;
+        const sysDateTime = previousRow?.querySelector("label")?.textContent;
+
+        const dateTime = sysDateTime ? new TZDate(sysDateTime, timezone) : undefined;
 
         const announcement: IAnnouncement = {
             html: html || "",
             title: title || undefined,
-            dateTime: dateTime || undefined,
+            dateTime,
         };
 
         return announcement;

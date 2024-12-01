@@ -16,6 +16,7 @@ import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
 import UpcomingDisplay from "./upcoming-display";
 import { useCourseName } from "@/hooks/use-course-name";
+import { formatDate } from "date-fns";
 
 export default function CourseHome({
     courseId,
@@ -130,7 +131,11 @@ function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }
                                 <h3 class="text-xl font-medium">{a.title}</h3>
                                 <div class="flex items-center text-sm text-muted-foreground">
                                     <CalendarIcon class="mr-1 h-4 w-4" />
-                                    <span>{a.dateTime}</span>
+                                    <span>
+                                        {a.dateTime
+                                            ? formatDate(a.dateTime, "MMM d, yyyy h:mm a")
+                                            : "Unknown"}
+                                    </span>
                                 </div>
                             </div>
                             <Separator class="my-2" />

@@ -19,6 +19,7 @@ export interface IClass {
 
 export function isClassActuallyActive(course: IClass): boolean {
     if (!course.startDate || !course.endDate) return course.isActive;
+
     const now = new Date();
     const start = new Date(course.startDate);
     const end = new Date(course.endDate);

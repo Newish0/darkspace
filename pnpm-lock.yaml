@@ -11,6 +11,9 @@ importers:
       '@corvu/resizable':
         specifier: ^0.2.3
         version: 0.2.3(solid-js@1.9.1)
+      '@date-fns/tz':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@kobalte/core':
         specifier: ^0.13.6
         version: 0.13.6(solid-js@1.9.1)
@@ -265,6 +268,9 @@ packages:
 
   '@crxjs/vite-plugin@2.0.0-beta.28':
     resolution: {integrity: sha512-JUoB1431PvruQqVpxvJ5j6qh0NNx5sXafAXo+VltORtJQrS6wprI5QK4k6PLKV+WacsFuPLveM2ydBCEopU49w==}
+
+  '@date-fns/tz@1.2.0':
+    resolution: {integrity: sha512-LBrd7MiJZ9McsOgxqWX7AaxrDjcFVjWH/tIKJd7pnR7McaslGYOP1QmmiBXdJH/H/yLCT+rcQ7FaPBUxRGUtrg==}
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -2037,6 +2043,8 @@ snapshots:
       rxjs: 7.5.7
     transitivePeerDependencies:
       - supports-color
+
+  '@date-fns/tz@1.2.0': {}
 
   '@esbuild/aix-ppc64@0.21.5':
     optional: true

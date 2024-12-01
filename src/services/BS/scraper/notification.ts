@@ -339,9 +339,12 @@ async function parseD2LNotifications(htmlString: string): Promise<INotification[
                 title: titleText,
                 course: extractCourseName(courseText),
                 link: await remapD2LActivityFeedUrl(link.getAttribute("href") || "", type),
+
+                // No need to use timezone here as `data-date` is Unix timestamp
                 timestamp: new Date(
                     parseInt(timestampAbbr.getAttribute("data-date") || "")
                 ).toISOString(),
+
                 icon: iconElement?.getAttribute("icon") || undefined,
             };
 
