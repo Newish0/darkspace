@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { ArrowLeftIcon } from "lucide-solid";
 import { Component, JSX, Show, splitProps } from "solid-js";
 import { CommandSearch } from "./command-search";
+import { createAsyncCached } from "@/hooks/async-cached";
+import { getUserProfile } from "@/services/BS/scraper/user";
 
 type RouteSectionProps = {
     title?: string;
@@ -18,19 +20,27 @@ type RouteSectionProps = {
     sticky?: boolean;
 };
 
-const RightElement = () => (
-    <div class="flex justify-end items-center gap-2">
-        <CommandSearch />
+const RightElement = () => {
+    const userProfile = createAsyncCached(getUserProfile, {
+        keys: () => ["user-profile"],
+    });
 
-        <Notification />
-        <ThemeToggle />
+    return (
+        <div class="flex justify-end items-center gap-2">
+            <CommandSearch />
 
-        <Avatar>
-            <AvatarImage src="" />
-            <AvatarFallback>ME</AvatarFallback>
-        </Avatar>
-    </div>
-);
+            <Notification />
+            <ThemeToggle />
+
+            <Avatar>
+                <AvatarImage src={userProfile()?.profilePic} />
+                <AvatarFallback>{`${userProfile()?.first?.[0]}${
+                    userProfile()?.last?.[0]
+                }`}</AvatarFallback>
+            </Avatar>
+        </div>
+    );
+};
 
 const PageWrapper: Component<RouteSectionProps> = (props) => {
     const [{ sticky = true, rightElement = <RightElement /> }, rest] = splitProps(props, [
