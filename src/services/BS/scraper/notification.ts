@@ -9,7 +9,7 @@ export interface INotification {
     title: string;
     course: string;
     link: string;
-    timestamp: string;
+    timestamp: string; // This timestamp is in ISO format (timezone included).
     details?: IGradeDetails;
     icon?: string;
 }

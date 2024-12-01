@@ -5,9 +5,13 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createAsyncCached } from "@/hooks/async-cached";
-import { getQuizSubmissionsFromUrl, IQuizInfo, IQuizSubmission } from "@/services/BS/scraper/quizzes";
+import {
+    getQuizSubmissionsFromUrl,
+    IQuizInfo,
+    IQuizSubmission,
+} from "@/services/BS/scraper/quizzes";
 import { getQuizSummaryUrl } from "@/services/BS/url";
-import { isPast } from "date-fns";
+import { formatDate, isPast } from "date-fns";
 import {
     AlertCircle,
     Calendar,
@@ -174,7 +178,8 @@ const QuizDetails: Component<{ quiz: IQuizInfo }> = (props) => (
                     <Show when={item.date}>
                         <li class="flex items-center">
                             <Calendar class="mr-2 h-4 w-4" />
-                            {item.label}: {item.date}
+                            {item.label}:{" "}
+                            {item.date ? formatDate(item.date, "MMM d, yyyy h:mm a") : "Unknown"}
                         </li>
                     </Show>
                 )}

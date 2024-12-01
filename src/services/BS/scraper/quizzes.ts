@@ -1,5 +1,7 @@
+import { TZDate } from "@date-fns/tz";
 import { BASE_URL } from "../url";
 import { htmlToDocument } from "../util";
+import { DEFAULT_TIMEZONE, getTimezone } from "../timezone";
 
 // Types
 export interface IQuizSubmission {
@@ -15,9 +17,9 @@ export interface IQuizSubmission {
 
 export interface IQuizInfo {
     name: string;
-    dueDate?: string;
-    startDate?: string;
-    endDate?: string;
+    dueDate?: Date;
+    startDate?: Date;
+    endDate?: Date;
     url?: string;
     id?: string;
     attempts?: number;
@@ -123,7 +125,7 @@ export async function getQuizSubmissionsFromUrl(url: string): Promise<IQuizSubmi
     return extractQuizSubmissions(html);
 }
 
-function extractQuizInfo(htmlString: string): IQuizInfo[] {
+function extractQuizInfo(htmlString: string, timezone: string): IQuizInfo[] {
     const doc = htmlToDocument(htmlString);
     const quizRows = doc.querySelectorAll(SELECTORS.QUIZ.ROW);
 
@@ -131,7 +133,7 @@ function extractQuizInfo(htmlString: string): IQuizInfo[] {
         const quizInfo: IQuizInfo = { name: "" };
 
         extractNameAndUrl(row, quizInfo, doc);
-        extractDates(row, quizInfo);
+        extractDates(row, quizInfo, timezone);
         extractAttempts(row, quizInfo);
         determineStatus(row, quizInfo);
         extractQuizSubmissionsUrl(row, quizInfo);
@@ -160,7 +162,7 @@ function extractNameAndUrl(row: Element, quizInfo: IQuizInfo, document: Document
     }
 }
 
-function extractDates(row: Element, quizInfo: IQuizInfo): void {
+function extractDates(row: Element, quizInfo: IQuizInfo, timezone: string): void {
     const dateSpan = row.querySelector(SELECTORS.QUIZ.DATE_SPAN);
 
     if (dateSpan) {
@@ -173,13 +175,17 @@ function extractDates(row: Element, quizInfo: IQuizInfo): void {
 
         const dueDateMatch = dueDateText.match(REGEX_PATTERNS.DUE_DATE);
         if (dueDateMatch) {
-            quizInfo.dueDate = dueDateMatch[1].trim();
+            const sysTimeDueDate = dueDateMatch[1].trim();
+            quizInfo.dueDate = new TZDate(sysTimeDueDate, timezone);
         }
 
         const availableMatch = dateText.match(REGEX_PATTERNS.AVAILABLE_DATE);
         if (availableMatch) {
-            quizInfo.startDate = availableMatch[1].trim();
-            quizInfo.endDate = availableMatch[2].trim();
+            const sysStartDate = availableMatch[1].trim();
+            const sysEndDate = availableMatch[2].trim();
+
+            quizInfo.startDate = new TZDate(sysStartDate, timezone);
+            quizInfo.endDate = new TZDate(sysEndDate, timezone);
         }
     }
 }
@@ -237,7 +243,9 @@ function determineStatus(row: Element, quizInfo: IQuizInfo): void {
 export async function getQuizzes(courseId: string): Promise<IQuizInfo[]> {
     const url = URL_CONFIG.QUIZZES_LIST.replace("{{COURSE_ID}}", courseId);
     const html = await fetch(url).then((res) => res.text());
-    const quizzes = extractQuizInfo(html);
+    const timezone = (await getTimezone()) || DEFAULT_TIMEZONE;
+    const quizzes = extractQuizInfo(html, timezone);
+
     // HACK: Filter out quizzes that don't have an ID because we can't do anything with them (Likely an error)
     if (quizzes.some((q) => !q.id)) {
         console.warn(

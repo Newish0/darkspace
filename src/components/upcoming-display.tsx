@@ -39,7 +39,7 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
     const dueDate = (): string | undefined => {
         if (props.type === "quiz" || props.type === "assignment") {
             const item = props.item as IAssignment | IQuizInfo;
-            return item.dueDate;
+            return item.dueDate ? formatDate(item.dueDate, "MMM d, yyyy h:mm a") : "Unknown";
         } else if (props.type === "calendar") {
             const event = props.item as CalendarEvent;
             if (event.eventType === "due")
