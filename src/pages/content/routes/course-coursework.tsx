@@ -38,7 +38,6 @@ const CourseCoursework = () => {
 
     const courseName = useCourseName(params.courseId, true);
 
-
     return (
         <>
             <Show

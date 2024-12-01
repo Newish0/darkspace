@@ -1,4 +1,6 @@
+import { TZDate } from "@date-fns/tz";
 import { BASE_URL } from "../url";
+import { DEFAULT_TIMEZONE, getTimezone } from "../timezone";
 
 export interface IAssignment {
     name: string;
@@ -6,9 +8,9 @@ export interface IAssignment {
     groupId?: string;
     tags?: string[];
     group?: string;
-    dueDate?: string;
-    startDate?: string;
-    endDate?: string;
+    dueDate?: Date;
+    startDate?: Date;
+    endDate?: Date;
     accessNote?: string;
     gradePercentage?: number;
     totalPoints?: number;
@@ -55,7 +57,7 @@ const INDEXES = {
     PERCENTAGE_LABEL: 4,
 };
 
-function parseAssignments(html: string): IAssignment[] {
+function parseAssignments(html: string, timezone: string): IAssignment[] {
     // Create a DOM parser
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
@@ -110,7 +112,8 @@ function parseAssignments(html: string): IAssignment[] {
         // Parse dates
         const dueDate = row.querySelector(SELECTORS.DUE_DATE)?.textContent?.trim();
         if (dueDate) {
-            assignment.dueDate = dueDate.replace(TEXT.DUE_DATE_PREFIX, "");
+            const sysDueDate = dueDate.replace(TEXT.DUE_DATE_PREFIX, "");
+            assignment.dueDate = new TZDate(sysDueDate, timezone);
         }
 
         // Parse availability dates and access notes
@@ -119,9 +122,11 @@ function parseAssignments(html: string): IAssignment[] {
             const note = dateItem.querySelector("strong")?.textContent?.trim();
 
             if (dateText.includes(TEXT.AVAILABLE_ON)) {
-                assignment.startDate = dateText.replace(TEXT.AVAILABLE_ON, "");
+                const sysStartDate = dateText.replace(TEXT.AVAILABLE_ON, "").trim();
+                assignment.startDate = new TZDate(sysStartDate, timezone);
             } else if (dateText.includes(TEXT.AVAILABLE_UNTIL)) {
-                assignment.endDate = dateText.replace(TEXT.AVAILABLE_UNTIL, "");
+                const sysEndDate = dateText.replace(TEXT.AVAILABLE_UNTIL, "").trim();
+                assignment.endDate = new TZDate(sysEndDate, timezone);
             }
 
             if (note) {
@@ -179,5 +184,7 @@ export async function getAssignments(courseId: string): Promise<IAssignment[]> {
     }
     const html = await res.text();
 
-    return parseAssignments(html);
+    const timezone = (await getTimezone()) || DEFAULT_TIMEZONE;
+
+    return parseAssignments(html, timezone);
 }

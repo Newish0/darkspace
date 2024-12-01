@@ -25,10 +25,10 @@ interface UpcomingItemProps {
 }
 
 const UpcomingItem: Component<UpcomingItemProps> = (props) => {
-    const isPast = () => {
+    const isPastDueDate = () => {
         if (props.type === "quiz" || props.type === "assignment") {
             const item = props.item as IAssignment | IQuizInfo;
-            return item.dueDate ? new Date(item.dueDate) < new Date() : false;
+            return item.dueDate ? item.dueDate < new Date() : false;
         } else if (props.type === "calendar") {
             const event = props.item as CalendarEvent;
             if (event.eventType === "due")
@@ -106,7 +106,7 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
     );
 
     return (
-        <Card classList={{ "opacity-50": isPast() }}>
+        <Card classList={{ "opacity-50": isPastDueDate() }}>
             <CardHeader class="p-4">
                 <CardTitle class="flex items-center gap-2 text-base">
                     <DynamicIcon />

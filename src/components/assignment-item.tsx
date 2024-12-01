@@ -1,42 +1,30 @@
-import {
-    Component,
-    createSignal,
-    Switch,
-    Match,
-    Show,
-    For,
-    JSX,
-    createEffect,
-    ComponentProps,
-} from "solid-js";
-import { format, isPast } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { IAssignment } from "@/services/BS/scraper/assignment";
+import { getAssignmentFeedbackUrl, getAssignmentSubmitUrl } from "@/services/BS/url";
+import { format, isPast } from "date-fns";
 import {
+    AlertCircle,
+    Calendar,
+    CheckCircle,
     ChevronDown,
     ChevronUp,
-    Calendar,
     Clock,
-    Link2,
-    CheckCircle,
-    AlertCircle,
     HelpCircle,
+    Link2,
     Play,
     RotateCcw,
-    Check,
-    X,
 } from "lucide-solid";
-import { IAssignment } from "@/services/BS/scraper/assignment";
+import { Component, ComponentProps, createSignal, For, JSX, Match, Show, Switch } from "solid-js";
 import { Badge } from "./ui/badge";
-import { getAssignmentFeedbackUrl, getAssignmentSubmitUrl } from "@/services/BS/url";
 
-import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
-import { cn } from "@/lib/utils";
 import { createAsyncCached } from "@/hooks/async-cached";
+import { cn } from "@/lib/utils";
 import { getAssignmentInfo } from "@/services/BS/scraper/assignment-info";
+import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import ControlledSuspense from "./controlled-suspense";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 
