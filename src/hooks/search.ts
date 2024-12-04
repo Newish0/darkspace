@@ -4,7 +4,7 @@ import MiniSearch, { SearchResult } from "minisearch";
 import { Doc4Index, getDocsFromCachedContent } from "@/services/index-service";
 import { getCachedContent } from "@/services/content-service";
 
-export function useCommandSearch() {
+export function useCommandSearch(minScore = 0.5) {
     const [query, setQuery] = createSignal("");
     const [results, setResults] = createSignal<Doc4Index[]>([]);
 
@@ -19,11 +19,13 @@ export function useCommandSearch() {
                 boost: {
                     name: 2,
                 },
-                // boostDocument(documentId, term, storedFields) {
-                //     console.log(storedFields);
+                boostDocument(documentId, term, storedFields) {
+                    const doc4Index = storedFields as Doc4Index;
 
-                //     return 1;
-                // },
+                    if (doc4Index.type === "announcement") return 0.1;
+
+                    return 1;
+                },
             },
         });
 
@@ -39,6 +41,9 @@ export function useCommandSearch() {
         if (!index) return;
 
         const searchResults = searchQuery.trim() ? index.search(searchQuery) : [];
+
+        searchResults.filter((result) => result.score > minScore);
+
         setResults(searchResults as (SearchResult & Doc4Index)[]);
     }, 50);
 

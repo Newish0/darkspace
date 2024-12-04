@@ -2,12 +2,14 @@ import { render } from "solid-js/web";
 
 import { HashRouter, RouteDefinition } from "@solidjs/router";
 
-import { children, lazy, onCleanup } from "solid-js";
+import { lazy, onCleanup } from "solid-js";
 import RootLayout from "./layouts/base";
 
-import { ColorModeProvider, ColorModeScript, createLocalStorageManager } from "@kobalte/core";
-import { debounce } from "@/utils/debounce";
+import { GLOBAL_COURSE_ID } from "@/services/BS/api/enrollment";
 import { getApiToken } from "@/services/BS/api/token";
+import { initPreloadContentOnNotification } from "@/services/content-service";
+import { debounce } from "@/utils/debounce";
+import { ColorModeProvider, ColorModeScript, createLocalStorageManager } from "@kobalte/core";
 
 const routes: RouteDefinition = {
     path: "/",
@@ -44,6 +46,8 @@ const routes: RouteDefinition = {
 const App = () => {
     const storageManager = createLocalStorageManager("vite-ui-theme");
 
+    const cleanupAutoContentPreload = initPreloadContentOnNotification(GLOBAL_COURSE_ID);
+
     /**
      * Listen for window focus events and refresh the API token when the window is
      * focused. This is done to ensure that the token is refreshed and cached when
@@ -57,6 +61,7 @@ const App = () => {
 
     onCleanup(() => {
         window.removeEventListener("focus", handleFocus);
+        cleanupAutoContentPreload();
     });
 
     return (

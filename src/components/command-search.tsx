@@ -109,9 +109,8 @@ export function CommandSearch() {
                                 </CommandEmpty>
                             </Match>
                         </Switch>
-
                         <CommandGroup>
-                            <For each={results().slice(0, 20)}>
+                            <For each={results().slice(0, 50)}>
                                 {(item) => (
                                     <CommandItem
                                         value={item.name}

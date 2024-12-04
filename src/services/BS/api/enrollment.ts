@@ -3,6 +3,8 @@ import { getBaseDocument } from "../base-doc";
 import { EnrollmentFetchError, EnrollmentUrlError, UserIdError } from "../errors";
 import { createApiHeader } from "./http";
 
+export const GLOBAL_COURSE_ID = "6606";
+
 export interface IClass {
     link: string;
     name: string;

@@ -11,7 +11,7 @@ import {
 } from "~/components/ui/dialog";
 
 import { Progress } from "./ui/progress";
-import { preloadContent } from "@/services/content-service";
+import { preloadAllContent } from "@/services/content-service";
 
 interface GreetingModalProps {
     onClose: (preloaded?: boolean) => void;
@@ -27,7 +27,7 @@ export function GreetingModal(props: GreetingModalProps) {
         setIsLoading(true);
 
         try {
-            await preloadContent((p) => setProgress(p));
+            await preloadAllContent((p) => setProgress(p));
             handleOpenChange(false, true);
         } catch (e: any) {
             setError(e?.message || "Something went wrong.");

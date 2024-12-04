@@ -1,10 +1,11 @@
+import { GLOBAL_COURSE_ID } from "@/services/BS/api/enrollment";
 import { D2LActivityFeedFetcher, INotification } from "@/services/BS/scraper/notification";
 import { createResource, createSignal, onCleanup } from "solid-js";
 
-const GLOBAL_ID = "6606";
+
 
 export function useGlobalNotification(category: number) {
-    const fetcher = D2LActivityFeedFetcher.create(GLOBAL_ID, category);
+    const fetcher = D2LActivityFeedFetcher.create(GLOBAL_COURSE_ID, category);
     const [hasNew, setHasNew] = createSignal(false);
 
     // Use resource instead of signal so we can use <Suspense />

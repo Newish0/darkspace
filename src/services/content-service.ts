@@ -7,8 +7,45 @@ import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
 import { CourseContent, getUnstableCourseContent } from "./BS/api/unstable-module";
 import { getCourseAnnouncements, IAnnouncement } from "./BS/scraper/announcements";
 import { getCourseModules, IModule } from "./BS/scraper/course-modules";
+import { D2LActivityFeedFetcher } from "./BS/scraper/notification";
 
-export const preloadContent = async (progressCallback?: (progress: number) => void) => {
+export const initPreloadContentOnNotification = (courseId: string) => {
+    const fetcher = D2LActivityFeedFetcher.create(courseId, 0);
+    return fetcher.subscribeToUpdates(async (hasNew) => {
+        if (hasNew) {
+            const notifications = await fetcher.getMoreFeed();
+            for (const notification of notifications) {
+                const courseIdPattern = /\/courses\/(\d+)/;
+                const match = notification.link.match(courseIdPattern);
+                if (match) {
+                    const courseId = match[1];
+
+                    await preloadCourseContent(courseId);
+                }
+            }
+        }
+    });
+};
+
+export const preloadCourseContent = async (courseId: string) => {
+    const modules = await getCourseModules(courseId);
+    setAsyncCached(["course-modules", courseId], modules);
+    const announcements = await getCourseAnnouncements(courseId);
+    setAsyncCached(["announcements", courseId], announcements);
+
+    const assignments = await getAssignments(courseId);
+    setAsyncCached(["assignments", courseId], assignments);
+    const quizzes = await getQuizzes(courseId);
+    setAsyncCached(["quizzes", courseId], quizzes);
+
+    const grades = await getGrades(courseId);
+    setAsyncCached(["grades", courseId], grades);
+
+    const toc = await getUnstableCourseContent(courseId);
+    setAsyncCached(["toc", courseId], toc);
+};
+
+export const preloadAllContent = async (progressCallback?: (progress: number) => void) => {
     let progress = 0;
 
     const enrollments = await getEnrollments();
@@ -18,21 +55,7 @@ export const preloadContent = async (progressCallback?: (progress: number) => vo
     progressCallback?.(progress);
 
     const promises = enrollments.map(async (course) => {
-        const modules = await getCourseModules(course.id);
-        setAsyncCached(["course-modules", course.id], modules);
-        const announcements = await getCourseAnnouncements(course.id);
-        setAsyncCached(["announcements", course.id], announcements);
-
-        const assignments = await getAssignments(course.id);
-        setAsyncCached(["assignments", course.id], assignments);
-        const quizzes = await getQuizzes(course.id);
-        setAsyncCached(["quizzes", course.id], quizzes);
-
-        const grades = await getGrades(course.id);
-        setAsyncCached(["grades", course.id], grades);
-
-        const toc = await getUnstableCourseContent(course.id);
-        setAsyncCached(["toc", course.id], toc);
+        await preloadCourseContent(course.id);
 
         progress += 0.95 / enrollments.length;
         progressCallback?.(progress);
