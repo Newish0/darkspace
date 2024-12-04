@@ -36,10 +36,10 @@ const routes: RouteDefinition = {
             path: "/courses/:courseId/grades",
             component: lazy(() => import("./routes/grades")),
         },
-        // {
-        //     path: "/courses/:courseId/others",
-        //     component: lazy(() => import("./routes/others")),
-        // },
+        {
+            path: "/courses/:courseId/others",
+            component: lazy(() => import("./routes/others")),
+        },
     ],
 };
 

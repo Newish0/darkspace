@@ -2,27 +2,23 @@ import { A, RouteSectionProps, useMatch } from "@solidjs/router";
 import { Component, ErrorBoundary, Show } from "solid-js";
 
 import ControlledSuspense from "@/components/controlled-suspense";
-import Notification from "@/components/notification";
-import ThemeToggle from "@/components/theme-toggle";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import ErrorMessageAlert from "@/components/ui/error-message-alert";
-import Kbd from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { createAsyncCached } from "@/hooks/async-cached";
-import { getEnrollments, isClassActuallyActive } from "@/services/BS/api/enrollment";
-import { Github, LayoutDashboard, Library, Menu, SearchIcon } from "lucide-solid";
-import { createSignal, For } from "solid-js";
-import { usePersistentNav } from "@/hooks/persistent-nav";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { createAsyncCached } from "@/hooks/async-cached";
+import { usePersistentNav } from "@/hooks/persistent-nav";
 import { cn } from "@/lib/utils";
+import { getEnrollments, isClassActuallyActive } from "@/services/BS/api/enrollment";
+import { Github, LayoutDashboard, Library, Menu } from "lucide-solid";
+import { createSignal, For } from "solid-js";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
 
