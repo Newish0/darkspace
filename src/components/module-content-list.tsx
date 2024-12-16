@@ -10,6 +10,7 @@ import { toast } from "solid-sonner";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import ControlledSuspense from "./controlled-suspense";
 import { Skeleton } from "./ui/skeleton";
+import { buildContentDownloadUrl } from "@/services/BS/url";
 
 const TopicModalWithTrigger = (props: {
     topic: IModuleTopic;
@@ -118,7 +119,10 @@ const ModuleContentList = (props: ModuleContentListProps) => {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() =>
-                                            handleDownload(item.url, item.name || "download")
+                                            handleDownload(
+                                                buildContentDownloadUrl(props.courseId, item.id),
+                                                item.name || `topic-${item.id}`
+                                            )
                                         }
                                     >
                                         <Download class="w-4 h-4 mr-2" />
