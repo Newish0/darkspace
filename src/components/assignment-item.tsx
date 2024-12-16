@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { IAssignment } from "@/services/BS/scraper/assignment";
-import { getAssignmentFeedbackUrl, getAssignmentSubmitUrl } from "@/services/BS/url";
+import { buildAssignmentSubmitUrl, buildAssignmentFeedbackUrl} from "@/services/BS/url";
 import { format, isPast } from "date-fns";
 import {
     AlertCircle,
@@ -84,7 +84,7 @@ const ActionButton: Component<{
                         variant="link"
                         url={
                             props.assignmentId &&
-                            getAssignmentSubmitUrl(
+                            buildAssignmentSubmitUrl(
                                 props.courseId,
                                 props.assignmentId,
                                 props.groupId
@@ -103,7 +103,7 @@ const ActionButton: Component<{
                         variant="outline"
                         url={
                             props.assignmentId &&
-                            getAssignmentSubmitUrl(
+                            buildAssignmentSubmitUrl(
                                 props.courseId,
                                 props.assignmentId,
                                 props.groupId
@@ -122,7 +122,7 @@ const ActionButton: Component<{
                         variant="default"
                         url={
                             props.assignmentId &&
-                            getAssignmentFeedbackUrl(
+                            buildAssignmentFeedbackUrl(
                                 props.courseId,
                                 props.assignmentId,
                                 props.groupId

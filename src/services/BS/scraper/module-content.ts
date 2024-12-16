@@ -1,5 +1,5 @@
 import { getUnstableCourseContent, UnstableModule } from "../api/unstable-module";
-import { BASE_URL } from "../url";
+import { buildModuleContentUrl, buildContentServiceUrl, buildContentViewUrl } from '../url';
 import { parseD2LPartial, htmlToDocument } from "../util";
 
 // Types
@@ -22,11 +22,6 @@ export interface IModuleDetails {
 }
 
 // Constants
-const URL_CONFIG = {
-    MODULE_CONTENT: `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc`,
-    CONTENT_SERVICE: `${BASE_URL}/d2l/le/contentservice/topic/{{TOPIC_ID}}/launch`,
-};
-
 const PARTIAL_ONLY_MODULES = ["Overview"];
 
 async function getPartialAsDoc(url: string): Promise<Document> {
@@ -49,10 +44,7 @@ async function getModuleContentFromD2LPartial(
 ): Promise<IModuleDetails> {
     console.debug("[getModuleContentFromD2LPartial] Fetching module", courseId, moduleId);
 
-    const url = URL_CONFIG.MODULE_CONTENT.replace("{{COURSE_ID}}", courseId).replace(
-        "{{MODULE_ID}}",
-        moduleId
-    );
+    const url = buildModuleContentUrl(courseId, moduleId);
 
     const doc = await getPartialAsDoc(url);
 
@@ -134,8 +126,7 @@ export async function getModuleContent(
                 let url = t.Url;
 
                 if (t.IsContentServiceAudioOrVideo) {
-                    // url = t.ContentUrl;
-                    url = URL_CONFIG.CONTENT_SERVICE.replace("{{TOPIC_ID}}", t.TopicId.toString());
+                    url = buildContentServiceUrl(t.TopicId.toString());
                 }
 
                 const topic = {

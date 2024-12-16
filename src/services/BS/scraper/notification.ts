@@ -1,5 +1,6 @@
 import { getAsyncCached, setAsyncCached } from "@/hooks/async-cached";
 import { CourseContent, getUnstableCourseContent, UnstableModule } from "../api/unstable-module";
+import { buildActivityFeedUrl, buildActivityFeedCheckUrl, buildFullUrl } from "../url";
 import { getSearchParam, parseD2LPartial } from "../util";
 import { IModule } from "./course-modules";
 
@@ -142,7 +143,7 @@ export class D2LActivityFeedFetcher {
             requestId: Math.floor(Math.random() * 1000).toString(),
         });
 
-        const url = `${this.baseUrl}/d2l/activityFeed/checkForNewAlerts?${urlParams.toString()}`;
+        const url = buildActivityFeedCheckUrl(urlParams);
 
         return fetch(url, {
             headers: {
@@ -215,9 +216,7 @@ export class D2LActivityFeedFetcher {
             urlParams.append("_d2l_prc$validClassNames", "d2l-datalist-simpleitem");
         }
 
-        const url = `${this.baseUrl}/d2l/NavigationArea/${
-            this.courseId
-        }/ActivityFeed/${endpoint}?${urlParams.toString()}`;
+        const url = buildActivityFeedUrl(this.courseId, endpoint, urlParams);
 
         return fetch(url, {
             headers: {

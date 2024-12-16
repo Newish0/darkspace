@@ -10,7 +10,7 @@ import {
     IQuizInfo,
     IQuizSubmission,
 } from "@/services/BS/scraper/quizzes";
-import { getQuizSummaryUrl } from "@/services/BS/url";
+import { buildQuizSummaryUrl } from "@/services/BS/url";
 import { formatDate, isPast } from "date-fns";
 import {
     AlertCircle,
@@ -68,7 +68,7 @@ const ActionButton: Component<{
                 {triggerContent}
             </ContentModalTrigger>
             <ContentModalContent
-                url={getQuizSummaryUrl(props.quizId!, props.courseId)}
+                url={buildQuizSummaryUrl(props.quizId!, props.courseId)}
                 title={props.quizName || "Quiz Summary"}
                 contentType="webpage"
             />

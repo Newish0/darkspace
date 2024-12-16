@@ -1,6 +1,6 @@
 import { getUnstableCourseContent, UnstableModule } from "@/services/BS/api/unstable-module";
 import { htmlToDocument } from "@/services/BS/util";
-import { BASE_URL } from "../url";
+import { buildCourseModuleUrl } from '../url';
 
 // Types
 export interface IModule {
@@ -15,10 +15,6 @@ export interface IModule {
 }
 
 // Constants
-const URL_CONFIG = {
-    COURSE_MODULE: `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/Home`,
-};
-
 const SELECTORS = {
     MODULE: {
         TREE: "#D2L_LE_Content_TreeBrowser",
@@ -87,7 +83,7 @@ function getAdditionalModules(doc: Document): IModule[] {
 // }
 
 export async function getCourseModules(courseId: string): Promise<IModule[]> {
-    const html = await fetch(URL_CONFIG.COURSE_MODULE.replace("{{COURSE_ID}}", courseId)).then(
+    const html = await fetch(buildCourseModuleUrl(courseId)).then(
         (res) => res.text()
     );
     const doc = htmlToDocument(html);

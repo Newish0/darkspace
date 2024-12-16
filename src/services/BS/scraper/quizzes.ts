@@ -1,5 +1,5 @@
 import { TZDate } from "@date-fns/tz";
-import { BASE_URL } from "../url";
+import { buildQuizSummaryUrl, buildQuizListUrl, buildFullUrl, BASE_URL } from "../url";
 import { htmlToDocument } from "../util";
 import { DEFAULT_TIMEZONE, getTimezone } from "../timezone";
 
@@ -29,11 +29,6 @@ export interface IQuizInfo {
 }
 
 // Constants
-const URL_CONFIG = {
-    QUIZ_SUMMARY: `${BASE_URL}/d2l/lms/quizzing/user/quiz_summary.d2l?qi={{QUIZ_ID}}&ou={{COURSE_ID}}`,
-    QUIZZES_LIST: `${BASE_URL}/d2l/lms/quizzing/user/quizzes_list.d2l?ou={{COURSE_ID}}`,
-};
-
 const SELECTORS = {
     QUIZ: {
         ROW: 'table[type="list"] tr:not(.d_gh):not([colspan])',
@@ -154,10 +149,7 @@ function extractNameAndUrl(row: Element, quizInfo: IQuizInfo, document: Document
                 .querySelector("form")
                 ?.getAttribute("action")
                 ?.match(REGEX_PATTERNS.COURSE_ID)?.[1];
-            quizInfo.url = URL_CONFIG.QUIZ_SUMMARY.replace("{{QUIZ_ID}}", quizInfo.id).replace(
-                "{{COURSE_ID}}",
-                courseId || ""
-            );
+            quizInfo.url = buildQuizSummaryUrl(quizInfo.id, courseId || "");
         }
     }
 }
@@ -209,7 +201,7 @@ function extractQuizSubmissionsUrl(row: Element, quizInfo: IQuizInfo): void {
     if (feedbackCell) {
         const url = feedbackCell.querySelector("a")?.getAttribute("href");
         if (url) {
-            quizInfo.submissionsUrl = new URL(url, BASE_URL).href;
+            quizInfo.submissionsUrl = buildFullUrl(url);
         }
     }
 }
@@ -241,16 +233,8 @@ function determineStatus(row: Element, quizInfo: IQuizInfo): void {
 }
 
 export async function getQuizzes(courseId: string): Promise<IQuizInfo[]> {
-    const url = URL_CONFIG.QUIZZES_LIST.replace("{{COURSE_ID}}", courseId);
+    const url = buildQuizListUrl(courseId);
     const html = await fetch(url).then((res) => res.text());
     const timezone = (await getTimezone()) || DEFAULT_TIMEZONE;
-    const quizzes = extractQuizInfo(html, timezone);
-
-    // HACK: Filter out quizzes that don't have an ID because we can't do anything with them (Likely an error)
-    if (quizzes.some((q) => !q.id)) {
-        console.warn(
-            "[scraper.getQuizzes] Found quiz without an ID. Likely an error with scraping."
-        );
-    }
-    return quizzes.filter((q) => q.id);
+    return extractQuizInfo(html, timezone);
 }

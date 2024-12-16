@@ -1,4 +1,4 @@
-import { BASE_URL } from "../url";
+import { buildAssignmentSubmitUrl } from '../url';
 
 interface ISubmissionFile {
     filename: string;
@@ -114,20 +114,14 @@ function extractUserId(onclick: string): string {
     return match ? match[1] : "";
 }
 
-const URL_CONFIG = {
-    SUBMISSIONS: `${BASE_URL}/d2l/lms/dropbox/user/folders_history.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}`,
-};
-
 export async function getAssignmentInfo(
     courseId: string,
     assignmentId: string,
     groupId?: string
 ): Promise<IAssignmentInfo> {
-    const url = URL_CONFIG.SUBMISSIONS.replace("{{COURSE_ID}}", courseId)
-        .replace("{{ASSIGNMENT_ID}}", assignmentId)
-        .replace("{{GROUP_ID}}", groupId || "0");
+    const submitUrl = buildAssignmentSubmitUrl(courseId, assignmentId, groupId);
 
-    const res = await fetch(url);
+    const res = await fetch(submitUrl);
     if (!res.ok) {
         throw new Error(`Failed to fetch assignment info: ${res.statusText}`);
     }

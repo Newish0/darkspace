@@ -1,4 +1,4 @@
-import { BASE_URL, getRubricUrl, getStatisticUrl } from "@/services/BS/url";
+import { buildGradesListUrl, buildRubricUrl, buildStatisticUrl } from "../url";
 
 export type IGradeScore = {
     points?: string; // e.g., "27 / 30"
@@ -101,7 +101,7 @@ function getFeedback(row: HTMLTableRowElement, courseId: string) {
     const numbers = rubricOnClick?.match(/\d+/g);
     if (numbers && numbers.length === 3) {
         const [objectId, userId, rubricId] = numbers;
-        rubricUrl = getRubricUrl(courseId, objectId, userId, rubricId);
+        rubricUrl = buildRubricUrl(courseId, objectId, userId, rubricId);
     }
 
     return { comments, rubricUrl } as const;
@@ -114,7 +114,7 @@ function getStatistic(thElement: HTMLTableCellElement, courseId: string): string
 
     if (!objectId) return undefined;
 
-    return getStatisticUrl(courseId, objectId);
+    return buildStatisticUrl(courseId, objectId);
 }
 
 function extractGrades(html: string, courseId: string): IGradeData {
@@ -209,12 +209,8 @@ function extractGrades(html: string, courseId: string): IGradeData {
     return gradeData;
 }
 
-const URL_CONFIG = {
-    GRADES_LIST: `${BASE_URL}/d2l/lms/grades/my_grades/main.d2l?ou={{COURSE_ID}}`,
-};
-
 export async function getGrades(courseId: string): Promise<IGradeData> {
-    const url = URL_CONFIG.GRADES_LIST.replace("{{COURSE_ID}}", courseId);
+    const url = buildGradesListUrl(courseId);
 
     const res = await fetch(url);
     if (!res.ok) {
