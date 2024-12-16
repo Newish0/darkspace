@@ -162,28 +162,36 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
                             const quiz = props.item as IQuizInfo;
                             const status = quiz.status;
                             return (
-                                <>
-                                    <Badge
-                                        variant={status === "completed" ? "outline" : "secondary"}
-                                    >
-                                        {status}
-                                    </Badge>
-                                    <Show
-                                        when={
-                                            quiz.attempts !== undefined &&
-                                            quiz.attemptsAllowed !== undefined
-                                                ? quiz
-                                                : null
-                                        }
-                                    >
-                                        {(quiz) => (
-                                            <div>
-                                                Attempts: {quiz().attempts} /{" "}
-                                                {quiz().attemptsAllowed}
-                                            </div>
-                                        )}
-                                    </Show>
-                                </>
+                                <div class="flex items-center gap-2">
+                                    <Switch>
+                                        <Match
+                                            when={
+                                                status === "not-started" || status === "in-progress"
+                                            }
+                                        >
+                                            <XCircleIcon
+                                                class="text-error-foreground flex-shrink-0"
+                                                size={14}
+                                            />
+                                        </Match>
+                                        <Match when={status === "completed"}>
+                                            <CheckCircleIcon
+                                                class="text-success-foreground flex-shrink-0"
+                                                size={14}
+                                            />
+                                        </Match>
+                                        <Match when={status === "retry-in-progress"}>
+                                            <ClockIcon
+                                                class="text-warning-foreground flex-shrink-0"
+                                                size={14}
+                                            />
+                                        </Match>
+                                    </Switch>
+
+                                    <span class="text-xs">
+                                        Status: {status?.replaceAll("-", " ") || "Unknown"}
+                                    </span>
+                                </div>
                             );
                         }}
                     </Show>

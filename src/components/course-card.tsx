@@ -72,16 +72,17 @@ export default function CourseCard({ course }: { course: IClass }) {
                     </div>
                 </div>
             </CardContent>
-            <CardFooter>
-                <Show when={!disabled()}>
+
+            <Show when={!disabled()}>
+                <CardFooter>
                     <A
                         href={darkSpaceCourseLink()}
                         class={cn(buttonVariants({ variant: "link" }), "w-full")}
                     >
                         Go to Course
                     </A>
-                </Show>
-            </CardFooter>
+                </CardFooter>
+            </Show>
         </Card>
     );
 }
