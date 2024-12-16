@@ -47,35 +47,33 @@ interface ContentModalContentProps {
     contentType: "webpage" | "pdf";
     toolbar?: boolean;
 }
+const ContentModalContent = (props: ContentModalContentProps) => {
+    let viewerEln: any;
 
-const ContentModalContent = ({
-    contentType,
-    url,
-    previewUrl,
-    toolbar,
-    title,
-}: ContentModalContentProps) => {
-    const pdfPreviewUrl = () => `${previewUrl || url}#${toolbar ? "toolbar=1" : "toolbar=0"}`;
-
-    createEffect(() => {
-        console.debug("[Content URL]", url, "| Toolbar:", toolbar, "| Type:", contentType);
-    });
+    const pdfPreviewUrl = () =>
+        `${props.previewUrl || props.url}#${props.toolbar ? "toolbar=1" : "toolbar=0"}`;
 
     return (
         <ResourceViewerDialogContent
-            title={<TitleElement title={title} type={contentType} />}
-            leftActions={<LeftActions url={url} />}
+            title={<TitleElement title={props.title} type={props.contentType} />}
+            leftActions={<LeftActions url={props.url} />}
         >
             <Switch>
-                <Match when={contentType === "webpage"}>
+                <Match when={props.contentType === "webpage"}>
                     <iframe
-                        src={previewUrl || url}
+                        src={props.previewUrl || props.url}
                         class="w-full h-full border-none"
-                        title={title}
+                        title={props.title}
+                        ref={viewerEln}
                     />
                 </Match>
-                <Match when={contentType === "pdf"}>
-                    <embed src={pdfPreviewUrl()} type="application/pdf" class="w-full h-full" />
+                <Match when={props.contentType === "pdf"}>
+                    <embed
+                        src={pdfPreviewUrl()}
+                        type="application/pdf"
+                        class="w-full h-full"
+                        ref={viewerEln}
+                    />
                 </Match>
             </Switch>
         </ResourceViewerDialogContent>

@@ -1,5 +1,5 @@
 import { getUnstableCourseContent, UnstableModule } from "../api/unstable-module";
-import { buildModuleContentUrl, buildContentServiceUrl, buildContentViewUrl } from '../url';
+import { buildModuleContentUrl, buildContentServiceUrl, buildContentViewUrl } from "../url";
 import { parseD2LPartial, htmlToDocument } from "../util";
 
 // Types
@@ -127,6 +127,15 @@ export async function getModuleContent(
 
                 if (t.IsContentServiceAudioOrVideo) {
                     url = buildContentServiceUrl(t.TopicId.toString());
+                }
+
+                // The file name part of the UnstableModule URL is not encoded, so we need to it ourselves
+                if (t.TypeIdentifier === "File") {
+                    const urlParts = t.Url.split("/");
+                    const fileName = urlParts.pop();
+                    const recombinedUrl =
+                        urlParts.join("/") + (fileName ? "/" + encodeURIComponent(fileName) : "");
+                    url = recombinedUrl;
                 }
 
                 const topic = {

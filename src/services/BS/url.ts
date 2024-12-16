@@ -20,6 +20,7 @@ const COURSE_MODULE_URL = `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/Home`;
 const MODULE_CONTENT_URL = `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/PartialMainView?identifier={{MODULE_ID}}&_d2l_prc`;
 const CONTENT_SERVICE_URL = `${BASE_URL}/d2l/le/contentservice/topic/{{TOPIC_ID}}/launch`;
 const CONTENT_VIEW_URL = `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/viewContent/{{TOPIC_ID}}/View`;
+const CONTENT_DOWNLOAD_URL = `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/topics/files/download/{{TOPIC_ID}}/DirectFileTopicDownload`;
 
 // Calendar URLs
 const CALENDAR_SUB_URL = `${BASE_URL}/d2l/le/calendar/6606/subscribe/subscribeDialogLaunch?subscriptionOptionId=-1`;
@@ -183,6 +184,15 @@ export function buildContentViewUrl(courseId: string, topicId: string): string {
 }
 
 /**
+ * Builds the URL for downloading content
+ * @param courseId - The course ID
+ * @param topicId - The topic ID
+ */
+export function buildContentDownloadUrl(courseId: string, topicId: string): string {
+    return CONTENT_DOWNLOAD_URL.replace("{{COURSE_ID}}", courseId).replace("{{TOPIC_ID}}", topicId);
+}
+
+/**
  * Builds the URL for the activity feed
  * @param courseId - The course ID
  * @param endpoint - The endpoint name
@@ -209,7 +219,7 @@ export function buildActivityFeedCheckUrl(params: URLSearchParams): string {
 
 /**
  * Type definition for a URL pattern with its corresponding extraction and path building logic
- * 
+ *
  * Each pattern contains:
  *  - pattern: RegExp or string to match the D2L URL
  *  - extractParams: Function to extract parameters from the matched URL
