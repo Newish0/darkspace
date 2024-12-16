@@ -54,13 +54,23 @@ export class D2LActivityFeedFetcher {
     private baseUrl: string;
     private courseId: string;
     private category: number;
-    private isLoading = false;
     private updateSubscriptions: Set<SubscriptionCallback> = new Set();
     private alreadyPolling = false;
     private pollingInterval = 60 * 1000; // 1 minute
 
+    /**
+     * Internal map to store the fetcher instances, keyed by the course ID and category.
+     * This is used to reuse the same fetcher instance for multiple calls to {@link create}.
+     */
     private static fetcherStore = new Map<string, D2LActivityFeedFetcher>();
 
+    /**
+     * Returns a string that can be used as a key to identify a fetcher instance in the internal store.
+     * The key is composed of the course ID and category, separated by a hyphen.
+     * @param courseId - The course ID
+     * @param category - The category
+     * @returns A string key to identify the fetcher instance
+     */
     private static getFetcherKey(courseId: string, category: number): string {
         return `${courseId}-${category}`;
     }
@@ -98,31 +108,21 @@ export class D2LActivityFeedFetcher {
      * @returns Promise resolving to an array of new notifications
      */
     async getMoreFeed(options: FetchOptions = {}): Promise<INotification[]> {
-        if (this.isLoading) {
-            throw new Error("A feed request is already in progress");
-        }
+        // Determine the timestamp to use
+        const timestamp =
+            options.timestamp ??
+            options.previousNotifications?.at(-1)?.timestamp ??
+            new Date().toISOString();
 
-        try {
-            this.isLoading = true;
+        const response = await this.fetchFeed(
+            timestamp === new Date().toISOString() ? "GetAlertsDaylight" : "GetMoreAlerts",
+            timestamp
+        );
 
-            // Determine the timestamp to use
-            const timestamp =
-                options.timestamp ??
-                options.previousNotifications?.at(-1)?.timestamp ??
-                new Date().toISOString();
+        const d2lPartial = await response.text();
+        const html = parseD2LPartial(d2lPartial)?.Payload?.Html || "";
 
-            const response = await this.fetchFeed(
-                timestamp === new Date().toISOString() ? "GetAlertsDaylight" : "GetMoreAlerts",
-                timestamp
-            );
-
-            const d2lPartial = await response.text();
-            const html = parseD2LPartial(d2lPartial)?.Payload?.Html || "";
-
-            return await parseD2LNotifications(html);
-        } finally {
-            this.isLoading = false;
-        }
+        return await parseD2LNotifications(html);
     }
 
     /**
