@@ -1,3 +1,5 @@
+import { getSearchParam } from "./util";
+
 export const BASE_URL = "https://bright.uvic.ca";
 
 // Assignment URLs
@@ -62,7 +64,11 @@ export function buildFullUrl(path: string): string {
  * @param assignmentId - The assignment ID
  * @param groupId - Optional group ID, defaults to "0" for individual assignments
  */
-export function buildAssignmentSubmitUrl(courseId: string, assignmentId: string, groupId?: string): string {
+export function buildAssignmentSubmitUrl(
+    courseId: string,
+    assignmentId: string,
+    groupId?: string
+): string {
     return ASSIGNMENT_SUBMIT_URL.replace("{{ASSIGNMENT_ID}}", assignmentId)
         .replace("{{COURSE_ID}}", courseId)
         .replace("{{GROUP_ID}}", groupId || "0");
@@ -74,7 +80,11 @@ export function buildAssignmentSubmitUrl(courseId: string, assignmentId: string,
  * @param assignmentId - The assignment ID
  * @param groupId - Optional group ID, defaults to "0" for individual assignments
  */
-export function buildAssignmentFeedbackUrl(courseId: string, assignmentId: string, groupId?: string): string {
+export function buildAssignmentFeedbackUrl(
+    courseId: string,
+    assignmentId: string,
+    groupId?: string
+): string {
     return ASSIGNMENT_FEEDBACK_URL.replace("{{ASSIGNMENT_ID}}", assignmentId)
         .replace("{{COURSE_ID}}", courseId)
         .replace("{{GROUP_ID}}", groupId || "0");
@@ -106,7 +116,12 @@ export function buildQuizListUrl(courseId: string): string {
  * @param userId - The user ID
  * @param rubricId - The rubric ID
  */
-export function buildRubricUrl(courseId: string, objectId: string, userId: string, rubricId: string): string {
+export function buildRubricUrl(
+    courseId: string,
+    objectId: string,
+    userId: string,
+    rubricId: string
+): string {
     return RUBRIC_URL.replace("{{COURSE_ID}}", courseId)
         .replace("{{OBJECT_ID}}", objectId)
         .replace("{{USER_ID}}", userId)
@@ -173,7 +188,11 @@ export function buildContentViewUrl(courseId: string, topicId: string): string {
  * @param endpoint - The endpoint name
  * @param params - URL search parameters
  */
-export function buildActivityFeedUrl(courseId: string, endpoint: string, params: URLSearchParams): string {
+export function buildActivityFeedUrl(
+    courseId: string,
+    endpoint: string,
+    params: URLSearchParams
+): string {
     return `${ACTIVITY_FEED_URL.replace("{{COURSE_ID}}", courseId).replace(
         "{{ENDPOINT}}",
         endpoint
@@ -186,4 +205,120 @@ export function buildActivityFeedUrl(courseId: string, endpoint: string, params:
  */
 export function buildActivityFeedCheckUrl(params: URLSearchParams): string {
     return `${ACTIVITY_FEED_CHECK_URL}?${params.toString()}`;
+}
+
+/**
+ * Type definition for a URL pattern with its corresponding extraction and path building logic
+ * 
+ * Each pattern contains:
+ *  - pattern: RegExp or string to match the D2L URL
+ *  - extractParams: Function to extract parameters from the matched URL
+ *  - buildPath: Function to build the internal app route using the extracted parameters
+ */
+export type D2LUrlPattern = {
+    pattern: RegExp | string;
+    extractParams: (match: string) => Record<string, string>;
+    buildPath: (params: Record<string, string>) => string;
+};
+/**
+ * URL patterns for different D2L pages with their corresponding extraction and path building logic
+ *
+ */
+export const D2L_URL_PATTERNS: Record<string, D2LUrlPattern> = {
+    announcement: {
+        pattern: /\/d2l\/p\/le\/news\/(\d+)/,
+        extractParams: (url) => {
+            const courseId = url.replace("/d2l/p/le/news/", "").match(/(\d+)/)?.[0];
+            return { courseId: courseId || "" };
+        },
+        buildPath: (params) => `/courses/${params.courseId}`,
+    },
+    content: {
+        pattern: /\/d2l\/le\/content\/(\d+)\/viewContent\/(\d+)\/View/,
+        extractParams: (url) => {
+            const match = url.replace("/d2l/le/content/", "").match(/(\d+)/g);
+            return {
+                courseId: match?.[0] || "",
+                topicId: match?.[1] || "",
+            };
+        },
+        buildPath: (params) =>
+            `/courses/${params.courseId}/m/${params.moduleId}?topic=${params.topicId}`,
+    },
+    grade: {
+        pattern: /\/d2l\/p\/le\/grades\/(\d+)/,
+        extractParams: (url) => {
+            const courseId = url.replace("/d2l/p/le/grades/", "").match(/(\d+)/)?.[0];
+            return { courseId: courseId || "" };
+        },
+        buildPath: (params) => `/courses/${params.courseId}/grades`,
+    },
+    feedback: {
+        pattern: /\/d2l\/lms\/dropbox\/user\/folder_user_view_feedback\.d2l/,
+        extractParams: (url) => ({
+            courseId: getSearchParam(url, "ou") || "",
+        }),
+        buildPath: (params) => `/courses/${params.courseId}/coursework`,
+    },
+    assignment: {
+        pattern: /\/d2l\/lms\/dropbox\/dropbox\.d2l/,
+        extractParams: (url) => ({
+            courseId: getSearchParam(url, "ou") || "",
+        }),
+        buildPath: (params) => `/courses/${params.courseId}/coursework`,
+    },
+    quiz: {
+        pattern: /\/d2l\/lms\/quizzing\/quizzing\.d2l/,
+        extractParams: (url) => ({
+            courseId: getSearchParam(url, "ou") || "",
+            quizId: getSearchParam(url, "qi") || "",
+        }),
+        buildPath: (params) => `/courses/${params.courseId}/quizzes/${params.quizId}`,
+    },
+    topic: {
+        pattern: /\/d2l\/le\/content\/(\d+)\/viewContent\/(\d+)\/View/,
+        extractParams: (url) => {
+            const match = url.replace("/d2l/le/content/", "").match(/(\d+)/g);
+            return {
+                courseId: match?.[0] || "",
+                topicId: match?.[1] || "",
+            };
+        },
+        buildPath: (params) =>
+            `/courses/${params.courseId}/m/${params.moduleId}?topic=${params.topicId}`,
+    },
+};
+
+/**
+ * Remaps a D2L URL to the corresponding internal app route
+ * @param url The D2L URL to remap
+ * @param type Optional type hint to use specific pattern
+ * @param additionalParams Additional parameters to include in the remapped URL
+ * @returns The remapped URL path
+ */
+export function remapD2LUrl(
+    url: string,
+    type?: string,
+    additionalParams: Record<string, string> = {}
+): string {
+    // If type is provided, use that pattern directly
+    if (type && type in D2L_URL_PATTERNS) {
+        const pattern = D2L_URL_PATTERNS[type];
+        const params = { ...pattern.extractParams(url), ...additionalParams };
+        return pattern.buildPath(params);
+    }
+
+    // Otherwise try to match against all patterns
+    for (const [, pattern] of Object.entries(D2L_URL_PATTERNS)) {
+        if (
+            typeof pattern.pattern === "string"
+                ? url.includes(pattern.pattern)
+                : pattern.pattern.test(url)
+        ) {
+            const params = { ...pattern.extractParams(url), ...additionalParams };
+            return pattern.buildPath(params);
+        }
+    }
+
+    return ""; // Return empty string if no match found
 }

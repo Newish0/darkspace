@@ -1,6 +1,6 @@
 import { getAsyncCached, setAsyncCached } from "@/hooks/async-cached";
 import { CourseContent, getUnstableCourseContent, UnstableModule } from "../api/unstable-module";
-import { buildActivityFeedUrl, buildActivityFeedCheckUrl, buildFullUrl } from "../url";
+import { buildActivityFeedUrl, buildActivityFeedCheckUrl, buildFullUrl, remapD2LUrl } from "../url";
 import { getSearchParam, parseD2LPartial } from "../util";
 import { IModule } from "./course-modules";
 
@@ -369,43 +369,22 @@ async function parseD2LNotifications(htmlString: string): Promise<INotification[
  * @returns The remapped URL.
  */
 async function remapD2LActivityFeedUrl(href: string, type: INotification["type"]) {
-    const numGroupsRegex = /(\d+)/g;
-
-    switch (type) {
-        case "announcement": {
-            // The URL is of the form /d2l/p/le/news/<courseId>
-            const courseId = href.replace("/d2l/p/le/news/", "").match(numGroupsRegex)?.[0];
-            return `/courses/${courseId}`;
-        }
-        case "content": {
-            // The URL is of the form /d2l/le/content/<courseId>/viewContent/<topicId>/View
-            const match = href.replace("/d2l/le/content/", "").match(numGroupsRegex);
-            const courseId = match?.[0];
-            const topicId = match?.[1];
-            if (courseId && topicId) {
-                const modulePath = await getModuleId(courseId, topicId);
-                if (modulePath) return `/courses/${courseId}/m/${modulePath}?topic=${topicId}`;
+    if (type === "content") {
+        // Special handling for content type since it needs moduleId
+        const match = href.replace("/d2l/le/content/", "").match(/(\d+)/g);
+        const courseId = match?.[0];
+        const topicId = match?.[1];
+        
+        if (courseId && topicId) {
+            const moduleId = await getModuleId(courseId, topicId);
+            if (moduleId) {
+                return remapD2LUrl(href, type, { moduleId: moduleId.toString() });
             }
-
-            return `/courses/${courseId}`;
         }
-        case "grade": {
-            // The URL is of the form /d2l/p/le/grades/<courseId>
-            const courseId = href.replace("/d2l/p/le/grades/", "").match(numGroupsRegex)?.[0];
-            return `/courses/${courseId}/grades`;
-        }
-        case "feedback": {
-            // The URL is of the form /d2l/lms/dropbox/user/folder_user_view_feedback.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}
-            const courseId = getSearchParam(href, "ou");
-            return `/courses/${courseId}/coursework`;
-        }
-        case "assignment":
-            // The URL is of the form /d2l/lms/dropbox/dropbox.d2l?ou={{COURSE_ID}}&amp;db={{ASSIGNMENT_ID}}
-            const courseId = getSearchParam(href, "ou");
-            return `/courses/${courseId}/coursework`;
-        default:
-            return "";
+        return `/courses/${courseId}`;
     }
+
+    return remapD2LUrl(href, type);
 }
 
 async function getModuleId(courseId: string, topicId: string): Promise<number | null> {

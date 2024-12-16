@@ -1,6 +1,7 @@
 import ICAL from "ical.js";
 import { getModuleId } from "../api/unstable-module";
 import { getSearchParam } from "../util";
+import { D2L_URL_PATTERNS, remapD2LUrl } from "../url";
 
 // Constants
 const URL_PATTERNS = {
@@ -88,35 +89,35 @@ class CalendarEventBuilder {
         itemUrl: string,
         itemType: ItemType
     ): Promise<Partial<ItemTypeMap[ItemType]>> {
-        const numGroupsRegex = /(\d+)/g;
-
         switch (itemType) {
             case "topic": {
-                const match = itemUrl.replace("/d2l/le/content/", "").match(numGroupsRegex);
-                const courseId = match?.[0];
-                const topicId = match?.[1];
-
-                if (courseId && topicId) {
-                    const moduleId = await getModuleId(courseId, topicId);
+                const params = D2L_URL_PATTERNS.topic.extractParams(itemUrl);
+                if (params.courseId && params.topicId) {
+                    const moduleId = await getModuleId(params.courseId, params.topicId);
                     if (moduleId) {
-                        return { moduleId: moduleId.toString(), topicId, courseId };
+                        return {
+                            moduleId: moduleId.toString(),
+                            topicId: params.topicId,
+                            courseId: params.courseId,
+                        };
                     }
                 }
                 break;
             }
             case "assignment": {
-                const courseId = getSearchParam(itemUrl, "ou");
-                const assignmentId = getSearchParam(itemUrl, "db");
-                if (courseId && assignmentId) {
-                    return { assignmentId, courseId };
+                const params = D2L_URL_PATTERNS.assignment.extractParams(itemUrl);
+                if (params.courseId) {
+                    return {
+                        assignmentId: getSearchParam(itemUrl, "db") || "",
+                        courseId: params.courseId,
+                    };
                 }
                 break;
             }
             case "quiz": {
-                const courseId = getSearchParam(itemUrl, "ou");
-                const quizId = getSearchParam(itemUrl, "qi");
-                if (courseId && quizId) {
-                    return { quizId, courseId };
+                const params = D2L_URL_PATTERNS.quiz.extractParams(itemUrl);
+                if (params.courseId && params.quizId) {
+                    return { quizId: params.quizId, courseId: params.courseId };
                 }
                 break;
             }
@@ -131,9 +132,6 @@ class CalendarEventBuilder {
         const description = icalEvent.description || "";
         const itemUrls = this.extractUrls(description);
 
-        const icalStartDate = icalEvent.startDate.toJSDate();
-        const icalEndDate = icalEvent.endDate.toJSDate();
-
         // Determine item type from URLs
         const itemType = itemUrls.reduce<ItemType>((acc, url) => {
             const type = this.inferItemType(url);
@@ -147,6 +145,10 @@ class CalendarEventBuilder {
             return { ...acc, ...ids };
         }, Promise.resolve({}));
 
+        // Get the event URL by remapping the first item URL if available
+        const eventUrl =
+            itemUrls.length > 0 ? remapD2LUrl(itemUrls[0], itemType, itemIds) : undefined;
+
         const baseEvent: any = {
             name: title,
             courseName: icalEvent.location || "",
@@ -154,19 +156,24 @@ class CalendarEventBuilder {
             itemUrls,
             itemType,
             eventType,
+            eventUrl,
             ...itemIds,
         };
 
         // Add time-specific properties based on event type
         switch (eventType) {
             case "due":
-                return { ...baseEvent, dueDate: icalEndDate };
+                return { ...baseEvent, dueDate: icalEvent.endDate.toJSDate() };
             case "start":
-                return { ...baseEvent, startTime: icalStartDate };
+                return { ...baseEvent, startTime: icalEvent.startDate.toJSDate() };
             case "end":
-                return { ...baseEvent, endTime: icalEndDate };
+                return { ...baseEvent, endTime: icalEvent.endDate.toJSDate() };
             default:
-                return { ...baseEvent, startTime: icalStartDate, endTime: icalEndDate };
+                return {
+                    ...baseEvent,
+                    startTime: icalEvent.startDate.toJSDate(),
+                    endTime: icalEvent.endDate.toJSDate(),
+                };
         }
     }
 }
