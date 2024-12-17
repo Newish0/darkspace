@@ -232,118 +232,107 @@ const GradeCategory: Component<{ category: IGradeCategory; minimal?: boolean }> 
     </Show>
 );
 
+const FinalGradeCard: Component<{ finalGrade: NonNullable<IGradeData["finalGrade"]> }> = (
+    props
+) => {
+    const getPercentage = (score?: string) => {
+        if (!score || !score.includes("/")) return undefined;
+        const [achieved, total] = score.split("/").map((p) => Number(p.trim()));
+        return !isNaN(achieved) && !isNaN(total) ? (achieved / total) * 100 : undefined;
+    };
+
+    return (
+        <Card class="w-full shadow-lg">
+            <CardContent class="p-6">
+                <div class="w-full space-y-4">
+                    <h5 class="font-medium flex items-center">
+                        <Award size={22} class="mr-2 text-primary" />
+                        Final Score
+                    </h5>
+
+                    <div class="flex gap-8 justify-between">
+                        <div class="flex gap-8">
+                            <div class="flex items-center gap-2">
+                                <ProgressCircle
+                                    value={getPercentage(
+                                        props.finalGrade?.calculatedScore?.weightAchieved
+                                    )}
+                                >
+                                    <span class="text-xs font-medium text-slate-700">
+                                        {props.finalGrade.calculatedScore?.weightAchieved ||
+                                            "- / -"}
+                                    </span>
+                                </ProgressCircle>
+                                <div class="flex items-center gap-2">
+                                    <Calculator size={22} />
+                                    Calculated Score
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <ProgressCircle
+                                    value={getPercentage(
+                                        props.finalGrade.adjustedScore?.weightAchieved
+                                    )}
+                                >
+                                    <span class="text-xs font-medium text-slate-700">
+                                        {props.finalGrade.adjustedScore?.weightAchieved || "- / -"}
+                                    </span>
+                                </ProgressCircle>
+                                <div class="flex items-center gap-2">
+                                    <ChartLine size={22} />
+                                    Adjusted Score
+                                </div>
+                            </div>
+                        </div>
+
+                        <Dialog>
+                            <DialogTrigger as={Button<"button">} variant={"default"}>
+                                See breakdown
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Final Grade Calculation Formula</DialogTitle>
+                                    <DialogDescription>
+                                        Only items that contribute to the calculated grade are
+                                        displayed.
+                                    </DialogDescription>
+                                </DialogHeader>
+
+                                <Show
+                                    when={props.finalGrade.categories.length}
+                                    fallback={
+                                        <div class="text-center text-muted-foreground py-8 flex flex-col items-center">
+                                            <AlertCircle
+                                                size={36}
+                                                class="mb-2 text-muted-foreground"
+                                            />
+                                            <p>No grade breakdown available</p>
+                                        </div>
+                                    }
+                                >
+                                    <Accordion multiple={false} collapsible class="w-full">
+                                        <For each={props.finalGrade.categories}>
+                                            {(category) => (
+                                                <GradeCategory category={category} minimal={true} />
+                                            )}
+                                        </For>
+                                    </Accordion>
+                                </Show>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
 const GradeDisplay: Component<{ gradeData: IGradeData }> = (props) => {
     return (
         <div class="space-y-2">
             <Show when={props.gradeData.finalGrade}>
-                {(finalGrade) => {
-                    const getPercentage = (score?: string) => {
-                        if (!score) return undefined;
-                        const parts = score.split("/");
-                        if (parts.length !== 2) return undefined;
-                        const nums = parts.map((p) => Number(p.trim()));
-                        if (nums.some(isNaN)) return undefined;
-                        return (nums[0] / nums[1]) * 100;
-                    };
-                    return (
-                        <Card class="w-full shadow-lg">
-                            <CardContent class="p-6">
-                                <div class="w-full space-y-4">
-                                    <h5 class="font-medium flex items-center">
-                                        <Award size={22} class="mr-2 text-primary" />
-                                        Final Score
-                                    </h5>
-
-                                    <div class="flex gap-8 justify-between">
-                                        <div class="flex gap-8">
-                                            <div class="flex items-center gap-2">
-                                                <ProgressCircle
-                                                    value={getPercentage(
-                                                        finalGrade().calculatedScore?.weightAchieved
-                                                    )}
-                                                >
-                                                    <span class="text-xs font-medium text-slate-700">
-                                                        {finalGrade().calculatedScore
-                                                            ?.weightAchieved || "- / -"}
-                                                    </span>
-                                                </ProgressCircle>
-                                                <div class="flex items-center gap-2">
-                                                    <Calculator size={22} />
-                                                    Calculated Score
-                                                </div>
-                                            </div>
-
-                                            <div class="flex items-center gap-2">
-                                                <ProgressCircle
-                                                    value={getPercentage(
-                                                        finalGrade().adjustedScore?.weightAchieved
-                                                    )}
-                                                >
-                                                    <span class="text-xs font-medium text-slate-700">
-                                                        {finalGrade().adjustedScore
-                                                            ?.weightAchieved || "- / -"}
-                                                    </span>
-                                                </ProgressCircle>
-                                                <div class="flex items-center gap-2">
-                                                    <ChartLine size={22} />
-                                                    Adjusted Score
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <Dialog>
-                                            <DialogTrigger
-                                                as={Button<"button">}
-                                                variant={"default"}
-                                            >
-                                                See breakdown
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>
-                                                        Final Grade Calculation Formula
-                                                    </DialogTitle>
-                                                    <DialogDescription>
-                                                        Only items that contribute to the calculated
-                                                        grade are displayed.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-
-                                                <Show
-                                                    when={finalGrade().categories.length}
-                                                    fallback={
-                                                        <div class="text-center text-muted-foreground py-8 flex flex-col items-center">
-                                                            <AlertCircle
-                                                                size={36}
-                                                                class="mb-2 text-muted-foreground"
-                                                            />
-                                                            <p>No grade breakdown available</p>
-                                                        </div>
-                                                    }
-                                                >
-                                                    <Accordion
-                                                        multiple={false}
-                                                        collapsible
-                                                        class="w-full"
-                                                    >
-                                                        <For each={finalGrade().categories}>
-                                                            {(category) => (
-                                                                <GradeCategory
-                                                                    category={category}
-                                                                    minimal={true}
-                                                                />
-                                                            )}
-                                                        </For>
-                                                    </Accordion>
-                                                </Show>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                }}
+                {(finalGrade) => <FinalGradeCard finalGrade={finalGrade()} />}
             </Show>
 
             <Card class="w-full shadow-lg">
