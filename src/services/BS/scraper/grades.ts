@@ -1,4 +1,9 @@
-import { buildGradesListUrl, buildRubricUrl, buildStatisticUrl } from "../url";
+import {
+    buildFinalGradesListUrl,
+    buildGradesListUrl,
+    buildRubricUrl,
+    buildStatisticUrl,
+} from "../url";
 
 export type IGradeScore = {
     points?: string; // e.g., "27 / 30"
@@ -20,6 +25,11 @@ export type IGradeItem = {
 };
 
 export type IGradeData = {
+    finalGrade?: {
+        calculatedScore?: IGradeScore;
+        adjustedScore?: IGradeScore;
+        categories: IGradeCategory[];
+    };
     categories: IGradeCategory[];
 };
 
@@ -30,6 +40,11 @@ const EXPECTED_GRADE_HEADERS = [
     "Grade",
     "Comments and Assessments",
 ];
+
+const EXPECTED_FINAL_GRADE_HEADERS = ["Grade Item", "Weight Achieved"];
+
+const FINAL_GRADE_CALC_NAME = "Calculated Final Grade";
+const FINAL_GRADE_ADJUSTED_NAME = "Final Adjusted Grade";
 
 function extractInputValue(strOrHtml: string) {
     const tmpEln = document.createElement("div");
@@ -67,7 +82,11 @@ function extractPoints(input: string): [number | undefined, number] {
     return [score, total] as const;
 }
 
-function isCategoryRow(rowTexts: string[]): boolean {
+function isCategoryRow(rowTexts: string[], isFinalScore = false): boolean {
+    if (isFinalScore) {
+        return rowTexts.length === 1;
+    }
+
     if (rowTexts.length !== 4) return false;
 
     return (
@@ -78,7 +97,9 @@ function isCategoryRow(rowTexts: string[]): boolean {
     );
 }
 
-function isTopLevelRow(rowTexts: string[]): boolean {
+function isTopLevelRow(rowTexts: string[], isFinalScore = false): boolean {
+    if (isFinalScore) return rowTexts.length === 2;
+
     return rowTexts.length === 4 || rowTexts.length === 3;
 }
 
@@ -117,16 +138,123 @@ function getStatistic(thElement: HTMLTableCellElement, courseId: string): string
     return buildStatisticUrl(courseId, objectId);
 }
 
-function extractGrades(html: string, courseId: string): IGradeData {
+function extractFinalScore(html: string): IGradeData["finalGrade"] {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
-    const rows = Array.from(doc.querySelectorAll("tr"));
 
-    const gradeData: IGradeData = {
+    // List of rows in the main grades table
+    const mainRows: HTMLTableRowElement[] = Array.from(doc.querySelectorAll(".d2l-table tr"));
+
+    console.log("mainRows", mainRows);
+
+    const headerElements = mainRows.at(0)?.querySelectorAll("th");
+    const headers = Array.from(headerElements || []).map(
+        (header) => header.textContent?.trim() || ""
+    );
+    if (
+        !headers.every((header) => EXPECTED_FINAL_GRADE_HEADERS.includes(header)) ||
+        headers.length !== EXPECTED_FINAL_GRADE_HEADERS.length
+    ) {
+        console.warn(
+            "[scraper.grade.extractGrades] Unexpected grade headers found.",
+            "\n\t Expected headers:",
+            EXPECTED_GRADE_HEADERS,
+            "\n\t Found headers:",
+            headers
+        );
+    }
+
+    const finalGradeData: IGradeData["finalGrade"] = {
+        calculatedScore: undefined,
+        adjustedScore: undefined,
         categories: [],
     };
 
-    const headerElements = rows.at(0)?.querySelectorAll("th");
+    for (const row of mainRows.slice(1)) {
+        const tdElements = Array.from(row.querySelectorAll("td"));
+        const thElement = row.querySelector("th");
+        const tdTexts = tdElements.map((td) => td.textContent?.trim() || "");
+        const cleanedTdTexts = tdTexts.map(removeIsDropped);
+        const name = thElement?.textContent?.trim() || "";
+
+        // Ignore empty rows
+        if (!name && cleanedTdTexts.every((text) => !text)) continue;
+
+        if (name === FINAL_GRADE_CALC_NAME) {
+            const [weightAchieved] = cleanedTdTexts;
+
+            finalGradeData.calculatedScore = {
+                weightAchieved,
+            };
+        } else if (name === FINAL_GRADE_ADJUSTED_NAME) {
+            const [weightAchieved] = cleanedTdTexts;
+
+            finalGradeData.adjustedScore = {
+                weightAchieved,
+            };
+        } else if (isCategoryRow(tdTexts, true)) {
+            const [weightAchieved] = cleanedTdTexts;
+
+            finalGradeData.categories.push({
+                name,
+                items: [],
+                score: {
+                    weightAchieved,
+                },
+            });
+        } else {
+            const [_, weightAchieved] = cleanedTdTexts;
+
+            const currentCategory = finalGradeData.categories.at(-1);
+            currentCategory?.items.push({
+                name,
+                score: {
+                    weightAchieved,
+                },
+            });
+        } // if elses
+    } // for
+
+    return finalGradeData;
+}
+
+function extractGrades(html: string, courseId: string): { hasFinalScore: boolean } & IGradeData {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    // List of rows in the top final grades table
+    const topFinalGradeRows = Array.from(doc.querySelectorAll("table[role='presentation'] tr"));
+
+    // HACK: Find the final calculated grade.
+    //       We actually don't know if this is the calculated or adjusted grade
+    //       because I can't find an example of adjusted grades with no detail
+    //       distribution list.
+    const finalWeight = topFinalGradeRows
+        .find((row) => row.textContent?.includes("/"))
+        ?.textContent?.trim();
+
+    const hasFinalScore = topFinalGradeRows.length > 0;
+
+    // List of rows in the main grades table
+    const mainRows: HTMLTableRowElement[] = Array.from(doc.querySelectorAll(".d2l-table tr"));
+
+    const gradeData: ReturnType<typeof extractGrades> = {
+        hasFinalScore,
+        finalGrade: hasFinalScore
+            ? {
+                  calculatedScore: finalWeight
+                      ? {
+                            weightAchieved: finalWeight,
+                        }
+                      : undefined,
+                  adjustedScore: undefined,
+                  categories: [],
+              }
+            : undefined,
+        categories: [],
+    };
+
+    const headerElements = mainRows.at(0)?.querySelectorAll("th");
     const headers = Array.from(headerElements || []).map(
         (header) => header.textContent?.trim() || ""
     );
@@ -134,12 +262,18 @@ function extractGrades(html: string, courseId: string): IGradeData {
         !headers.every((header) => EXPECTED_GRADE_HEADERS.includes(header)) ||
         headers.length !== EXPECTED_GRADE_HEADERS.length
     ) {
-        console.warn("[scraper.grade.extractGrades] Unexpected grade headers found.");
+        console.warn(
+            "[scraper.grade.extractGrades] Unexpected grade headers found.",
+            "\n\t Expected headers:",
+            EXPECTED_GRADE_HEADERS,
+            "\n\t Found headers:",
+            headers
+        );
     }
 
     const hasWeightAchieved = headers.includes("Weight Achieved");
 
-    for (const row of rows.slice(1)) {
+    for (const row of mainRows.slice(1)) {
         const tdElements = Array.from(row.querySelectorAll("td"));
         const thElement = row.querySelector("th");
 
@@ -218,5 +352,23 @@ export async function getGrades(courseId: string): Promise<IGradeData> {
     }
     const html = await res.text();
 
-    return extractGrades(html, courseId);
+    const { hasFinalScore, ...grades } = extractGrades(html, courseId);
+
+    if (hasFinalScore) {
+        const finalGradeUrl = buildFinalGradesListUrl(courseId);
+
+        const finalGradeRes = await fetch(finalGradeUrl);
+
+        // Get detailed final grades if available
+        if (finalGradeRes.ok) {
+            const finalHtml = await finalGradeRes.text();
+
+            return {
+                ...grades,
+                finalGrade: extractFinalScore(finalHtml),
+            };
+        }
+    }
+
+    return grades;
 }

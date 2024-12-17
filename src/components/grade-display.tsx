@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { IGradeCategory, IGradeData, IGradeItem, IGradeScore } from "@/services/BS/scraper/grades";
-import { AlertCircle, Award, BookOpen } from "lucide-solid";
+import { AlertCircle, Award, BookOpen, Library, Calculator, ChartLine } from "lucide-solid";
 import { Component, ComponentProps, createEffect, For, Match, Show, Switch } from "solid-js";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { Button } from "./ui/button";
@@ -25,6 +25,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "./ui/dialog";
+import { ProgressCircle } from "./ui/progress-circle";
+import { cn } from "@/lib/utils";
 
 const StatisticsModal: Component<{ url: string }> = (props) => {
     const statistics = createAsyncCached(() => getGradeStatistics(props.url), {
@@ -53,7 +55,7 @@ const StatisticsModal: Component<{ url: string }> = (props) => {
                             when={statistics.distributions.length}
                             fallback={
                                 <div class="text-center text-muted-foreground py-8 flex flex-col items-center gap-4">
-                                    <AlertCircle size={36}/>
+                                    <AlertCircle size={36} />
                                     <p>No distributions available</p>
                                 </div>
                             }
@@ -69,9 +71,18 @@ const StatisticsModal: Component<{ url: string }> = (props) => {
 
 const ScoreDisplay: Component<{ score: IGradeScore; statisticUrl?: string }> = (props) => {
     const getPercentage = () => {
-        if (!props.score.percentage) return 0;
-        const percentage = parseInt(props.score.percentage.replace("%", "").trim(), 10);
-        return isNaN(percentage) ? 0 : percentage;
+        if (props.score.percentage) {
+            const percentage = parseInt(props.score.percentage.replace("%", "").trim(), 10);
+            return isNaN(percentage) ? undefined : percentage;
+        } else if (props.score.weightAchieved) {
+            const parts = props.score.weightAchieved.split("/");
+            if (parts.length !== 2) return undefined;
+            const nums = parts.map((p) => Number(p.trim()));
+            if (nums.some(isNaN)) return undefined;
+            return (nums[0] / nums[1]) * 100;
+        } else {
+            return undefined;
+        }
     };
 
     return (
@@ -107,60 +118,74 @@ const ScoreDisplay: Component<{ score: IGradeScore; statisticUrl?: string }> = (
     );
 };
 
-const GradeItem: Component<{ item: IGradeItem }> = (props) => {
+const GradeItem: Component<{ item: IGradeItem; minimal?: boolean }> = (props) => {
     return (
-        <div class="py-2 border-b border-border last:border-b-0 grid grid-cols-2 grid-rows-1 gap-4">
+        <div
+            class={cn(
+                "py-2 border-b border-border last:border-b-0 grid grid-rows-1 gap-4",
+                props.minimal ? "grid-cols-1" : "grid-cols-2"
+            )}
+        >
             <div class="w-full space-y-4">
                 <h4 class="text-sm font-medium flex items-center">
-                    <BookOpen class="w-4 h-4 mr-2 text-primary" />
+                    <BookOpen size={18} class="mr-2 text-primary" />
                     {props.item.name}
                 </h4>
                 <ScoreDisplay score={props.item.score} statisticUrl={props.item.statisticUrl} />
             </div>
-            <div class="flex gap-4">
-                <Separator orientation="vertical"></Separator>
+            <Show when={!props.minimal}>
+                <div class="flex gap-4">
+                    <Separator orientation="vertical"></Separator>
 
-                <div>
-                    <h5 class="font-medium">Comments</h5>
-                    <Show
-                        when={props.item.comments}
-                        fallback={
-                            <p class="text-sm font-light text-muted-foreground mt-1 ml-2">None</p>
-                        }
-                    >
-                        <p class="text-sm font-light text-muted-foreground mt-1 ml-2">
-                            <UnsafeHtml unsafeHtml={props.item.comments ?? ""} class="markdown" />
-                        </p>
-                    </Show>
+                    <div>
+                        <h5 class="font-medium">Comments</h5>
+                        <Show
+                            when={props.item.comments}
+                            fallback={
+                                <p class="text-sm font-light text-muted-foreground mt-1 ml-2">
+                                    None
+                                </p>
+                            }
+                        >
+                            <p class="text-sm font-light text-muted-foreground mt-1 ml-2">
+                                <UnsafeHtml
+                                    unsafeHtml={props.item.comments ?? ""}
+                                    class="markdown"
+                                />
+                            </p>
+                        </Show>
 
-                    <h5 class="font-medium">Rubric</h5>
-                    <Show
-                        when={props.item.rubricUrl}
-                        fallback={
-                            <p class="text-sm font-light text-muted-foreground mt-1 ml-2">None</p>
-                        }
-                    >
-                        {(rubricUrl) => (
-                            <>
-                                <ContentModal>
-                                    <ContentModalTrigger
-                                        as={Button<"button">}
-                                        variant={"link"}
-                                        size={"sm"}
-                                    >
-                                        Open Rubric
-                                    </ContentModalTrigger>
-                                    <ContentModalContent
-                                        url={rubricUrl()}
-                                        contentType="webpage"
-                                        title={`${props.item.name} Rubric`}
-                                    />
-                                </ContentModal>
-                            </>
-                        )}
-                    </Show>
+                        <h5 class="font-medium">Rubric</h5>
+                        <Show
+                            when={props.item.rubricUrl}
+                            fallback={
+                                <p class="text-sm font-light text-muted-foreground mt-1 ml-2">
+                                    None
+                                </p>
+                            }
+                        >
+                            {(rubricUrl) => (
+                                <>
+                                    <ContentModal>
+                                        <ContentModalTrigger
+                                            as={Button<"button">}
+                                            variant={"link"}
+                                            size={"sm"}
+                                        >
+                                            Open Rubric
+                                        </ContentModalTrigger>
+                                        <ContentModalContent
+                                            url={rubricUrl()}
+                                            contentType="webpage"
+                                            title={`${props.item.name} Rubric`}
+                                        />
+                                    </ContentModal>
+                                </>
+                            )}
+                        </Show>
+                    </div>
                 </div>
-            </div>
+            </Show>
         </div>
     );
 };
@@ -176,7 +201,7 @@ const GradeCategory: Component<{ category: IGradeCategory }> = (props) => (
             <AccordionTrigger class="hover:no-underline">
                 <div class="w-full space-y-4">
                     <h5 class="font-medium flex items-center">
-                        <Award class="w-5 h-5 mr-2 text-primary" />
+                        <Library size={22} class="mr-2 text-primary" />
                         {props.category.name}
                     </h5>
                     <Show when={props.category.score}>
@@ -209,25 +234,137 @@ const GradeCategory: Component<{ category: IGradeCategory }> = (props) => (
 
 const GradeDisplay: Component<{ gradeData: IGradeData }> = (props) => {
     return (
-        <Card class="w-full shadow-lg">
-            <CardContent class="p-6">
-                <Accordion multiple={false} collapsible class="w-full">
-                    <Switch>
-                        <Match when={props.gradeData.categories.length > 0}>
+        <div class="space-y-2">
+            <Show when={props.gradeData.finalGrade}>
+                {(finalGrade) => {
+                    const getPercentage = (score?: string) => {
+                        if (!score) return undefined;
+                        const parts = score.split("/");
+                        if (parts.length !== 2) return undefined;
+                        const nums = parts.map((p) => Number(p.trim()));
+                        if (nums.some(isNaN)) return undefined;
+                        return (nums[0] / nums[1]) * 100;
+                    };
+                    return (
+                        <Card class="w-full shadow-lg">
+                            <CardContent class="p-6">
+                                <div class="w-full space-y-4">
+                                    <h5 class="font-medium flex items-center">
+                                        <Award size={22} class="mr-2 text-primary" />
+                                        Final Score
+                                    </h5>
+
+                                    <div class="flex gap-8 justify-between">
+                                        <div class="flex gap-8">
+                                            <div class="flex items-center gap-2">
+                                                <ProgressCircle
+                                                    value={getPercentage(
+                                                        finalGrade().calculatedScore?.weightAchieved
+                                                    )}
+                                                >
+                                                    <span class="text-xs font-medium text-slate-700">
+                                                        {finalGrade().calculatedScore
+                                                            ?.weightAchieved || "- / -"}
+                                                    </span>
+                                                </ProgressCircle>
+                                                <div class="flex items-center gap-2">
+                                                    <Calculator size={22} />
+                                                    Calculated Score
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-2">
+                                                <ProgressCircle
+                                                    value={getPercentage(
+                                                        finalGrade().adjustedScore?.weightAchieved
+                                                    )}
+                                                >
+                                                    <span class="text-xs font-medium text-slate-700">
+                                                        {finalGrade().adjustedScore
+                                                            ?.weightAchieved || "- / -"}
+                                                    </span>
+                                                </ProgressCircle>
+                                                <div class="flex items-center gap-2">
+                                                    <ChartLine size={22} />
+                                                    Adjusted Score
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <Dialog>
+                                            <DialogTrigger
+                                                as={Button<"button">}
+                                                variant={"default"}
+                                            >
+                                                See breakdown
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>
+                                                        Final Grade Calculation Formula
+                                                    </DialogTitle>
+                                                    <DialogDescription>
+                                                        Only items that contribute to the calculated
+                                                        grade are displayed.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+
+                                                <Show
+                                                    when={finalGrade().categories.length}
+                                                    fallback={
+                                                        <div class="text-center text-muted-foreground py-8 flex flex-col items-center">
+                                                            <AlertCircle
+                                                                size={36}
+                                                                class="mb-2 text-muted-foreground"
+                                                            />
+                                                            <p>No grade breakdown available</p>
+                                                        </div>
+                                                    }
+                                                >
+                                                    <Accordion
+                                                        multiple={false}
+                                                        collapsible
+                                                        class="w-full"
+                                                    >
+                                                        <For each={finalGrade().categories}>
+                                                            {(category) => (
+                                                                <GradeCategory
+                                                                    category={category}
+                                                                />
+                                                            )}
+                                                        </For>
+                                                    </Accordion>
+                                                </Show>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                }}
+            </Show>
+
+            <Card class="w-full shadow-lg">
+                <CardContent class="p-6">
+                    <Show
+                        when={props.gradeData.categories.length}
+                        fallback={
+                            <div class="text-center text-muted-foreground py-8 flex flex-col items-center">
+                                <AlertCircle size={48} class="mb-4 text-muted-foreground" />
+                                <p>No grade categories available</p>
+                            </div>
+                        }
+                    >
+                        <Accordion multiple={false} collapsible class="w-full">
                             <For each={props.gradeData.categories}>
                                 {(category) => <GradeCategory category={category} />}
                             </For>
-                        </Match>
-                        <Match when={props.gradeData.categories.length === 0}>
-                            <div class="text-center text-muted-foreground py-8 flex flex-col items-center">
-                                <AlertCircle class="w-12 h-12 mb-4 text-muted-foreground" />
-                                <p>No grade categories available</p>
-                            </div>
-                        </Match>
-                    </Switch>
-                </Accordion>
-            </CardContent>
-        </Card>
+                        </Accordion>
+                    </Show>
+                </CardContent>
+            </Card>
+        </div>
     );
 };
 

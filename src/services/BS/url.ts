@@ -14,6 +14,7 @@ const QUIZ_LIST_URL = `${BASE_URL}/d2l/lms/quizzing/user/quizzes_list.d2l?ou={{C
 const RUBRIC_URL = `${BASE_URL}/d2l/lms/grades/my_grades/activities_dialog.d2l?ou={{COURSE_ID}}&objectId={{OBJECT_ID}}&userId={{USER_ID}}&rubricId={{RUBRIC_ID}}`;
 const STATISTICS_URL = `${BASE_URL}/d2l/lms/grades/my_grades/statistics_dialog.d2l?ou={{COURSE_ID}}&objectId={{OBJECT_ID}}`;
 const GRADES_LIST_URL = `${BASE_URL}/d2l/lms/grades/my_grades/main.d2l?ou={{COURSE_ID}}`;
+const FINAL_GRADES_LIST_URL = `${BASE_URL}/d2l/lms/grades/general/grade_list_dialog_view.d2l?ou={{COURSE_ID}}&mode=4&d2l_body_type=5`;
 
 // Course Content URLs
 const COURSE_MODULE_URL = `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/Home`;
@@ -147,6 +148,14 @@ export function buildStatisticUrl(courseId: string, objectId: string): string {
  */
 export function buildGradesListUrl(courseId: string): string {
     return GRADES_LIST_URL.replace("{{COURSE_ID}}", courseId);
+}
+
+/**
+ * Builds the URL for viewing the final grades list
+ * @param courseId - The course ID
+ */
+export function buildFinalGradesListUrl(courseId: string): string {
+    return FINAL_GRADES_LIST_URL.replace("{{COURSE_ID}}", courseId);
 }
 
 /**
