@@ -190,12 +190,12 @@ const GradeItem: Component<{ item: IGradeItem; minimal?: boolean }> = (props) =>
     );
 };
 
-const GradeCategory: Component<{ category: IGradeCategory }> = (props) => (
+const GradeCategory: Component<{ category: IGradeCategory; minimal?: boolean }> = (props) => (
     // Display category as if it is a grade item if there are no items in the category and not an category with no score.
     // This is because some standalone grade items are displayed as categories on BS.
     <Show
         when={props.category.items.length || !props.category.score}
-        fallback={<GradeItem item={props.category} />}
+        fallback={<GradeItem item={props.category} minimal={props.minimal} />}
     >
         <AccordionItem value={props.category.name} class="border-b border-border last:border-b-0">
             <AccordionTrigger class="hover:no-underline">
@@ -214,7 +214,7 @@ const GradeCategory: Component<{ category: IGradeCategory }> = (props) => (
                     <Switch>
                         <Match when={props.category.items.length > 0}>
                             <For each={props.category.items}>
-                                {(item) => <GradeItem item={item} />}
+                                {(item) => <GradeItem item={item} minimal={props.minimal} />}
                             </For>
                         </Match>
                         <Match when={props.category.items.length === 0}>
@@ -330,6 +330,7 @@ const GradeDisplay: Component<{ gradeData: IGradeData }> = (props) => {
                                                             {(category) => (
                                                                 <GradeCategory
                                                                     category={category}
+                                                                    minimal={true}
                                                                 />
                                                             )}
                                                         </For>
