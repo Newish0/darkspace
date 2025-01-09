@@ -71,6 +71,15 @@ const ModuleContentList = (props: ModuleContentListProps) => {
         toast.success("Link copied to clipboard");
     };
 
+    const getFileType = (providedType: string | undefined, url: string) => {
+        const extension = url.split(".").pop();
+        if (providedType === "File" && extension) {
+            return `${extension.toUpperCase()} File`;
+        }
+
+        return providedType || "Unknown Type";
+    };
+
     createEffect(() => {
         if (props.openedTopicId) {
             const element = document.getElementById(props.openedTopicId);
@@ -93,7 +102,7 @@ const ModuleContentList = (props: ModuleContentListProps) => {
                             </CardHeader>
                             <CardContent>
                                 <p class="text-sm text-muted-foreground">
-                                    Type: {item.type || "Unknown"}
+                                    Type: {getFileType(item.type, item.url)}
                                 </p>
                             </CardContent>
                             <CardFooter class="flex flex-wrap mt-auto gap-1">
