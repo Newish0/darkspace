@@ -4,6 +4,8 @@ import ModuleContentList from "@/components/module-content-list";
 import UnsafeHtml from "@/components/unsafe-html";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getModuleContent } from "@/services/BS/scraper/module-content";
+import { remapD2LUrl } from "@/services/BS/url";
+import { remapHtmlUrls } from "@/utils/html";
 import { useParams, useSearchParams } from "@solidjs/router";
 import { createEffect, Match, Show, Switch } from "solid-js";
 
@@ -34,18 +36,21 @@ const Module = () => {
                         <div class="markdown">
                             <Switch>
                                 <Match when={moduleContent()?.description?.html}>
-                                    <UnsafeHtml
-                                        unsafeHtml={moduleContent()!.description!.html!}
-                                        config={{
-                                            ADD_TAGS: ["iframe"],
-                                            ADD_ATTR: [
-                                                "allow",
-                                                "allowfullscreen",
-                                                "frameborder",
-                                                "scrolling",
-                                            ],
-                                        }}
-                                    />
+                                    {(html) => (
+                                        <UnsafeHtml
+                                            unsafeHtml={remapHtmlUrls(html(), remapD2LUrl)}
+                                            config={{
+                                                ADD_TAGS: ["iframe"],
+                                                ADD_ATTR: [
+                                                    "allow",
+                                                    "allowfullscreen",
+                                                    "frameborder",
+                                                    "scrolling",
+                                                    "target",
+                                                ],
+                                            }}
+                                        />
+                                    )}
                                 </Match>
                                 <Match when={moduleContent()?.description?.text}>
                                     <p>{moduleContent()!.description!.text!}</p>

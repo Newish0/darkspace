@@ -27,6 +27,8 @@ import {
 } from "./ui/dialog";
 import { ProgressCircle } from "./ui/progress-circle";
 import { cn } from "@/lib/utils";
+import { remapHtmlUrls } from "@/utils/html";
+import { remapD2LUrl } from "@/services/BS/url";
 
 const StatisticsModal: Component<{ url: string }> = (props) => {
     const statistics = createAsyncCached(() => getGradeStatistics(props.url), {
@@ -149,7 +151,13 @@ const GradeItem: Component<{ item: IGradeItem; minimal?: boolean }> = (props) =>
                         >
                             <p class="text-sm font-light text-muted-foreground mt-1 ml-2">
                                 <UnsafeHtml
-                                    unsafeHtml={props.item.comments ?? ""}
+                                    unsafeHtml={remapHtmlUrls(
+                                        props.item.comments ?? "",
+                                        remapD2LUrl
+                                    )}
+                                    config={{
+                                        ADD_ATTR: ["target"],
+                                    }}
                                     class="markdown"
                                 />
                             </p>

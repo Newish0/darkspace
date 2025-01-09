@@ -9,6 +9,8 @@ import { createResource, Show } from "solid-js";
 import UnsafeHtml from "./unsafe-html";
 import { A } from "@solidjs/router";
 import { IClass, isClassActuallyActive } from "@/services/BS/api/enrollment";
+import { remapHtmlUrls } from "@/utils/html";
+import { remapD2LUrl } from "@/services/BS/url";
 
 export default function CourseCard({ course }: { course: IClass }) {
     const [bannerImg] = createResource(() => getBannerImageUrl(course.id, course.imgId));
@@ -57,7 +59,12 @@ export default function CourseCard({ course }: { course: IClass }) {
             </CardHeader>
             <CardContent>
                 <p class="text-sm mb-4">
-                    <UnsafeHtml unsafeHtml={course.description} />
+                    <UnsafeHtml
+                        unsafeHtml={remapHtmlUrls(course.description, remapD2LUrl)}
+                        config={{
+                            ADD_ATTR: ["target"],
+                        }}
+                    />
                 </p>
                 <div class="flex items-center space-x-4 text-sm text-muted-foreground">
                     <div class="flex items-center">

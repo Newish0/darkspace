@@ -17,6 +17,8 @@ import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
 import UpcomingDisplay from "./upcoming-display";
+import { remapHtmlUrls } from "@/utils/html";
+import { remapD2LUrl } from "@/services/BS/url";
 
 export default function CourseHome({
     courseId,
@@ -146,7 +148,13 @@ function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }
                                 </div>
                             </div>
                             <Separator class="my-2" />
-                            <UnsafeHtml unsafeHtml={a.html} class="markdown overflow-auto" />
+                            <UnsafeHtml
+                                unsafeHtml={remapHtmlUrls(a.html, remapD2LUrl)}
+                                config={{
+                                    ADD_ATTR: ["target"],
+                                }}
+                                class="markdown overflow-auto"
+                            />
                         </div>
                     )}
                 </For>
