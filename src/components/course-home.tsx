@@ -1,10 +1,12 @@
 import PageWrapper from "@/components/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
+import { useCourseName } from "@/hooks/use-course-name";
 import { getCourseAnnouncements, IAnnouncement } from "@/services/BS/scraper/announcements";
 import { getCourseModules } from "@/services/BS/scraper/course-modules";
 import { makePersisted } from "@solid-primitives/storage";
 import { A } from "@solidjs/router";
-import { CalendarIcon } from "lucide-solid";
+import { formatDate } from "date-fns";
+import { CalendarIcon, MessageSquareXIcon } from "lucide-solid";
 import { createSignal, For, JSX, Show } from "solid-js";
 import ControlledSuspense from "./controlled-suspense";
 import CourseTabs from "./course-tabs";
@@ -15,8 +17,6 @@ import { Resizable, ResizableHandle, ResizablePanel } from "./ui/resizable";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
 import UpcomingDisplay from "./upcoming-display";
-import { useCourseName } from "@/hooks/use-course-name";
-import { formatDate } from "date-fns";
 
 export default function CourseHome({
     courseId,
@@ -122,6 +122,13 @@ function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }
     return (
         <>
             <h2 class="text-xl font-bold border-b px-4 py-2">Announcements</h2>
+
+            <Show when={!announcements || announcements.length === 0}>
+                <div class="text-center text-muted-foreground py-8 flex flex-col items-center">
+                    <MessageSquareXIcon size={48} class="mb-4 text-muted-foreground" />
+                    <p>No announcements yet!</p>
+                </div>
+            </Show>
 
             <div class="h-full flex-shrink-1 overflow-auto p-4 space-y-4">
                 <For each={announcements}>
