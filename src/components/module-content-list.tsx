@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getOfficeFilePreviewUrl } from "@/services/BS/scraper/aws-office-file-preview";
 import { IModuleTopic } from "@/services/BS/scraper/module-content";
@@ -10,7 +17,9 @@ import { toast } from "solid-sonner";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import ControlledSuspense from "./controlled-suspense";
 import { Skeleton } from "./ui/skeleton";
-import { buildContentDownloadUrl } from "@/services/BS/url";
+import { buildContentDownloadUrl, remapD2LUrl } from "@/services/BS/url";
+import DescriptionRenderer from "./description-renderer";
+import { remapHtmlUrls } from "@/utils/html";
 
 const TopicModalWithTrigger = (props: {
     topic: IModuleTopic;
@@ -100,9 +109,27 @@ const ModuleContentList = (props: ModuleContentListProps) => {
                                     {item.name || "Unnamed Item"}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent class="space-y-2">
                                 <p class="text-sm text-muted-foreground">
                                     Type: {getFileType(item.type, item.url)}
+                                </p>
+
+                                {/* Also show topic description (empty if no description) */}
+                                <p class="text-sm">
+                                    <DescriptionRenderer
+                                        description={item.description}
+                                        config={{
+                                            ADD_TAGS: ["iframe"],
+                                            ADD_ATTR: [
+                                                "allow",
+                                                "allowfullscreen",
+                                                "frameborder",
+                                                "scrolling",
+                                                "target",
+                                            ],
+                                        }}
+                                        remapFunc={(html) => remapHtmlUrls(html, remapD2LUrl)}
+                                    />
                                 </p>
                             </CardContent>
                             <CardFooter class="flex flex-wrap mt-auto gap-1">

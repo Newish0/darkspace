@@ -9,6 +9,10 @@ export interface IModuleTopic {
     type?: "File" | "Link" | "ContentService" | string;
     downloadable?: boolean;
     url: string;
+    description?: {
+        text?: string;
+        html?: string;
+    };
 }
 
 export interface IModuleDetails {
@@ -59,6 +63,8 @@ async function getModuleContentFromD2LPartial(
             const linkElement: HTMLAnchorElement | null = item.querySelector("[id^=d2l_content_]");
             const typeElement = item.querySelector(".d2l-textblock.d2l-body-small");
             const id = linkElement?.id.replace("d2l_content_", "").split("_").at(1);
+
+            // TODO: Add topic description scraping
 
             if (linkElement && typeElement && id) {
                 return {
@@ -138,12 +144,16 @@ export async function getModuleContent(
                     url = recombinedUrl;
                 }
 
-                const topic = {
+                const topic: IModuleTopic = {
                     name: t.Title,
                     type: t.TypeIdentifier, // OR t.Url.split(".").at(-1) || ""; // TODO: infer from extension
                     url,
                     id: t.TopicId.toString(),
                     downloadable: t.TypeIdentifier === "File", // TODO: handle other types
+                    description: {
+                        html: t.Description.Html,
+                        text: t.Description.Text,
+                    },
                 };
                 return topic;
             }) ?? [],

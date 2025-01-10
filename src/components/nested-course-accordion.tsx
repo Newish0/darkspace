@@ -32,6 +32,8 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
                         {module.name}
                     </AccordionTrigger>
                     <AccordionContent class="pl-4">
+                        {/* Add an extra module called "Module Content" or "Module Description" to the accordion
+                        when the module itself has topics or a description. This will allow users to view those details. */}
                         <Show
                             when={
                                 module.hasTopics ||
@@ -48,6 +50,7 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
                             </A>
                         </Show>
 
+                        {/* Recursively render child modules */}
                         <ModuleAccordion modules={module.children!} courseId={props.courseId} />
                     </AccordionContent>
                 </AccordionItem>

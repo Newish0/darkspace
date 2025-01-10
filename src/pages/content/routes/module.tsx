@@ -1,5 +1,6 @@
 import ControlledSuspense from "@/components/controlled-suspense";
 import CourseHome from "@/components/course-home";
+import DescriptionRenderer from "@/components/description-renderer";
 import ModuleContentList from "@/components/module-content-list";
 import UnsafeHtml from "@/components/unsafe-html";
 import { createAsyncCached } from "@/hooks/async-cached";
@@ -33,30 +34,21 @@ const Module = () => {
                     </h2>
 
                     <div class="overflow-auto px-4 py-2 space-y-4">
-                        <div class="markdown">
-                            <Switch>
-                                <Match when={moduleContent()?.description?.html}>
-                                    {(html) => (
-                                        <UnsafeHtml
-                                            unsafeHtml={remapHtmlUrls(html(), remapD2LUrl)}
-                                            config={{
-                                                ADD_TAGS: ["iframe"],
-                                                ADD_ATTR: [
-                                                    "allow",
-                                                    "allowfullscreen",
-                                                    "frameborder",
-                                                    "scrolling",
-                                                    "target",
-                                                ],
-                                            }}
-                                        />
-                                    )}
-                                </Match>
-                                <Match when={moduleContent()?.description?.text}>
-                                    <p>{moduleContent()!.description!.text!}</p>
-                                </Match>
-                            </Switch>
-                        </div>
+                        {/* Render the module's description as HTML or text */}
+                        <DescriptionRenderer
+                            description={moduleContent()?.description}
+                            config={{
+                                ADD_TAGS: ["iframe"],
+                                ADD_ATTR: [
+                                    "allow",
+                                    "allowfullscreen",
+                                    "frameborder",
+                                    "scrolling",
+                                    "target",
+                                ],
+                            }}
+                            remapFunc={(html) => remapHtmlUrls(html, remapD2LUrl)}
+                        />
 
                         <div class="">
                             <ModuleContentList
