@@ -1,6 +1,6 @@
 import { getUnstableCourseContent, UnstableModule } from "@/services/BS/api/unstable-module";
 import { htmlToDocument } from "@/services/BS/util";
-import { buildCourseModuleUrl } from '../url';
+import { buildCourseModuleUrl } from "../url";
 
 // Types
 export interface IModule {
@@ -12,6 +12,8 @@ export interface IModule {
     };
     hasTopics?: boolean;
     children?: IModule[];
+    startDateTime?: Date;
+    endDateTime?: Date;
 }
 
 // Constants
@@ -39,6 +41,10 @@ function extractModuleInfo(element: Element): IModule {
     const module: IModule = {
         name: idElement?.querySelector("div")?.textContent || "",
         moduleId: idElement ? idElement.id.replace(SELECTORS.MODULE.ITEM_ID_PATTERN, "") : "",
+
+        // TODO: Add logic for getting module start date time and end date time.
+        //       Ensure this is even needed for the additional modules before implementation
+        //       since `extractModuleInfo` scraping method is only used by `getAdditionalModules`
     };
 
     // Check for child modules
@@ -83,9 +89,7 @@ function getAdditionalModules(doc: Document): IModule[] {
 // }
 
 export async function getCourseModules(courseId: string): Promise<IModule[]> {
-    const html = await fetch(buildCourseModuleUrl(courseId)).then(
-        (res) => res.text()
-    );
+    const html = await fetch(buildCourseModuleUrl(courseId)).then((res) => res.text());
     const doc = htmlToDocument(html);
 
     const additionalModules = getAdditionalModules(doc);
@@ -106,6 +110,8 @@ export async function getCourseModules(courseId: string): Promise<IModule[]> {
             hasTopics: um.Topics?.length > 0,
             moduleId: um.ModuleId.toString(),
             children: um.Modules.map(unstableModuleToIModule),
+            startDateTime: um.StartDateTime ? new Date(um.StartDateTime) : undefined,
+            endDateTime: um.EndDateTime ? new Date(um.EndDateTime) : undefined,
         };
     };
 

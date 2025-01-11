@@ -9,6 +9,9 @@ const DescriptionRenderer: Component<{
     };
     remapFunc?: (html: string) => string;
     config?: ComponentProps<typeof UnsafeHtml>["config"];
+
+    /* If true, show both html and text. Otherwise, prefer HTML over text. (Fallback to text when no HTML) */
+    showBothHtmlAndText?: boolean;
 }> = (props) => {
     return (
         <>
@@ -22,7 +25,9 @@ const DescriptionRenderer: Component<{
                         />
                     )}
                 </Show>
-                <Show when={props.description?.text}>{(text) => <p>{text()}</p>}</Show>
+                <Show when={props.showBothHtmlAndText && props.description?.text}>
+                    {(text) => <p>{text()}</p>}
+                </Show>
             </div>
         </>
     );

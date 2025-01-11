@@ -4,10 +4,12 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 import { IModule } from "@/services/BS/scraper/course-modules";
 import { makePersisted } from "@solid-primitives/storage";
 import { A } from "@solidjs/router";
-import { For, Match, Show, Switch, createSignal } from "solid-js";
+import { formatDate } from "date-fns";
+import { Component, For, Match, Show, Switch, createSignal } from "solid-js";
 
 const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
     const [openItems, setOpenItems] = makePersisted(createSignal<string[]>([]), {
@@ -29,7 +31,14 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
             <Match when={module.children && module.children.length}>
                 <AccordionItem value={module.moduleId} class="border-none px-2">
                     <AccordionTrigger onClick={() => toggleItem(module.moduleId)} class="text-left">
-                        {module.name}
+                        <div class="flex gap-2 items-center">
+                            <div> {module.name}</div>
+
+                            <ModuleStartEndDateDisplay
+                                startDateTime={module.startDateTime}
+                                endDateTime={module.endDateTime}
+                            />
+                        </div>
                     </AccordionTrigger>
                     <AccordionContent class="pl-4">
                         {/* Add an extra module called "Module Content" or "Module Description" to the accordion
@@ -58,10 +67,17 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
             <Match when={!module.children || !module.children.length}>
                 <A
                     href={`/courses/${props.courseId}/m/${module.moduleId}`}
-                    class={NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES}
+                    class={cn(NESTED_COURSE_ACCORDION_ROOT_ITEM_STYLE_CLASSES)}
                     activeClass="bg-muted"
                 >
-                    {module.name}
+                    <div class="flex gap-2 items-center">
+                        <div>{module.name}</div>
+
+                        <ModuleStartEndDateDisplay
+                            startDateTime={module.startDateTime}
+                            endDateTime={module.endDateTime}
+                        />
+                    </div>
                 </A>
             </Match>
         </Switch>
@@ -71,6 +87,32 @@ const ModuleAccordion = (props: { modules: IModule[]; courseId: string }) => {
         <Accordion multiple={true} value={openItems()} class="w-full">
             <For each={props.modules}>{renderModule}</For>
         </Accordion>
+    );
+};
+
+const ModuleStartEndDateDisplay: Component<Pick<IModule, "startDateTime" | "endDateTime">> = (
+    props
+) => {
+    /* Show module start and end date if it exist  */
+    return (
+        <div class="text-xs font-light text-muted-foreground">
+            <Show when={props.startDateTime || props.endDateTime}>
+                <span class="pl-1 pr-2">⋅</span>
+            </Show>
+            <Switch>
+                <Match when={props.startDateTime && props.endDateTime}>
+                    {formatDate(props.startDateTime!, "MMM d") +
+                        " to " +
+                        formatDate(props.endDateTime!, "MMM d")}
+                </Match>
+                <Match when={props.startDateTime}>
+                    Starts {formatDate(props.startDateTime!, "MMM d")}
+                </Match>
+                <Match when={props.endDateTime}>
+                    Ends {formatDate(props.endDateTime!, "MMM d")}
+                </Match>
+            </Switch>
+        </div>
     );
 };
 

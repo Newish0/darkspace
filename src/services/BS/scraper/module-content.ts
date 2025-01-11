@@ -23,6 +23,8 @@ export interface IModuleDetails {
         text?: string;
         html?: string;
     };
+    startDateTime?: Date;
+    endDateTime?: Date;
 }
 
 // Constants
@@ -58,7 +60,7 @@ async function getModuleContentFromD2LPartial(
     const listItems = doc.querySelectorAll("li.d2l-datalist-item");
 
     // Extract data from each list item
-    const topics = Array.from(listItems)
+    const topics: IModuleTopic[] = Array.from(listItems)
         .map((item) => {
             const linkElement: HTMLAnchorElement | null = item.querySelector("[id^=d2l_content_]");
             const typeElement = item.querySelector(".d2l-textblock.d2l-body-small");
@@ -89,6 +91,8 @@ async function getModuleContentFromD2LPartial(
         description: {
             html: html || undefined,
         },
+
+        // TODO: Add scraping logic for start date time and end date time
     };
 }
 
@@ -161,5 +165,7 @@ export async function getModuleContent(
             text: um.Description.Text,
             html: um.Description.Html,
         },
+        startDateTime: um.StartDateTime ? new Date(um.StartDateTime) : undefined,
+        endDateTime: um.EndDateTime ? new Date(um.EndDateTime) : undefined,
     };
 }
