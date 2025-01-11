@@ -11,7 +11,7 @@
 [![Made with SolidJS](https://img.shields.io/badge/Made%20with-SolidJS-2C4F7C?logo=solid&logoColor=white&style=for-the-badge)](https://www.solidjs.com/)
 [![Vite](https://img.shields.io/badge/Vite-B73BFE?logo=vite&logoColor=FFD62E&style=for-the-badge)](https://vitejs.dev/)
 
-Darkspace is a modern, user-friendly Chrome/Firefox extension that provides an alternative frontend for Brightspace, reimagining how students interact with their learning management system. Built with performance and aesthetics in mind, it offers a refreshing take on the traditional Brightspace interface.
+Darkspace is a modern, user-friendly Chrome/Firefox extension that provides an alternative frontend for Brightspace, reimagining how students interact with their learning management system. Built with sanity in mind, it offers a streamlined navigation scheme with much improved performance and aesthetics.
 
 ## ✨ Features
 
