@@ -5,6 +5,7 @@ import viteCss from "@/styles/global.css?inline";
 
 import favIcon from "@/../public/favicon.ico";
 import browser from "webextension-polyfill";
+import { remapD2LUrl } from "@/services/BS/url";
 
 console.debug("[Darkspace] START", performance.now());
 
@@ -64,8 +65,7 @@ function init() {
 }
 
 const EXCLUSION_RULES = [
-    () => window.location.pathname.indexOf("/content/") == 0, // Don't run in content pages
-    () => window.location.pathname.indexOf("/d2l/lms/") == 0, // Don't run in course work (quizzes & assignments)
+    () => remapD2LUrl(window.location.pathname) === "", // Don't run if we don't have a Darkspace equivalent page
     () => window.self !== window.top, // Don't run in an iframe
 ];
 

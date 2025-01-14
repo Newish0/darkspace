@@ -244,6 +244,38 @@ export type D2LUrlPattern = {
  *
  */
 export const D2L_URL_PATTERNS: Record<string, D2LUrlPattern> = {
+    /**
+     * The home page of Brightspace 
+     */
+    bsHome: {
+        pattern: /\/d2l\/home\/?$/,
+        extractParams: (url) => ({}),
+        buildPath: (params) => `/`,
+    },
+
+    /**
+     * The home page of a course.
+     */
+    courseHome: {
+        pattern: /\/d2l\/home\/(\d+)/,
+        extractParams: (url) => {
+            const courseId = url.replace("/d2l/home/", "").match(/(\d+)/)?.[0];
+            return { courseId: courseId || "" };
+        },
+        buildPath: (params) => `/courses/${params.courseId}`,
+    },
+
+    /**
+     * The `Content` page of a course.
+     */
+    courseContent: {
+        pattern: /\/d2l\/le\/content\/(\d+)\/Home/,
+        extractParams: (url) => {
+            const courseId = url.replace("/d2l/le/content/", "").match(/(\d+)/g)?.[0];
+            return { courseId: courseId || "" };
+        },
+        buildPath: (params) => `/courses/${params.courseId}`,
+    },
     announcement: {
         pattern: /\/d2l\/p\/le\/news\/(\d+)/,
         extractParams: (url) => {
