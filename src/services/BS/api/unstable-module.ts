@@ -80,13 +80,38 @@ export type CourseContent = {
     Modules: UnstableModule[];
 };
 
-const UNSTABLE_COURSE_CONTENT_URL = `${BASE_URL}/d2l/api/le/unstable/{{COURSE_ID}}/content/toc?loadDescription=true`;
+interface TocQueryParams {
+    /* Include detailed descriptions for modules, submodules & topics. */
+    loadDescription?: boolean;
 
-export const getUnstableCourseContent = query(async (courseId: string): Promise<CourseContent> => {
-    const response = await fetch(UNSTABLE_COURSE_CONTENT_URL.replace("{{COURSE_ID}}", courseId));
-    const data = await response.json();
-    return data;
-}, "unstableCourseContentByCourseId");
+    /* If true, retrieve all modules, including those that are inactive or scheduled for future dates. */
+    ignoreDateRestrictions?: boolean;
+}
+
+const DEFAULT_TOC_QUERY_PARAMS: TocQueryParams = {
+    ignoreDateRestrictions: true,
+    loadDescription: true,
+};
+
+const UNSTABLE_COURSE_CONTENT_URL = `${BASE_URL}/d2l/api/le/unstable/{{COURSE_ID}}/content/toc`;
+
+export const getUnstableCourseContent = query(
+    async (
+        courseId: string,
+        params: TocQueryParams = DEFAULT_TOC_QUERY_PARAMS
+    ): Promise<CourseContent> => {
+        const searchParams = new URLSearchParams();
+        for (const [k, v] of Object.entries(params)) searchParams.set(k, v);
+
+        const url =
+            UNSTABLE_COURSE_CONTENT_URL.replace("{{COURSE_ID}}", courseId) + "?" + searchParams;
+
+        const response = await fetch(url);
+        const data = await response.json();
+        return data;
+    },
+    "unstableCourseContentByCourseId"
+);
 
 export async function getModuleId(courseId: string, topicId: string): Promise<number | null> {
     // Try cache first then fetch and cache
