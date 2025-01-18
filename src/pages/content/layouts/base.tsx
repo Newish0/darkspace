@@ -17,7 +17,7 @@ import { createAsyncCached } from "@/hooks/async-cached";
 import { usePersistentNav } from "@/hooks/persistent-nav";
 import { cn } from "@/lib/utils";
 import { getEnrollments, isClassActuallyActive } from "@/services/BS/api/enrollment";
-import { remapD2LUrl } from "@/services/BS/url";
+import { matchD2LUrl, remapD2LUrl } from "@/services/BS/url";
 import { Github, LayoutDashboard, Library, Menu } from "lucide-solid";
 import { createSignal, For } from "solid-js";
 
@@ -146,7 +146,8 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
      */
     const redirectToDarkspacePage = () => {
         const dsUrl = remapD2LUrl(window.location.pathname);
-        if (dsUrl) {
+        const isLikelyDsNonRootPage = window.location.hash && window.location.hash !== "#/";
+        if (dsUrl && !isLikelyDsNonRootPage) {
             navigate(dsUrl);
         }
     };

@@ -235,108 +235,157 @@ export function buildActivityFeedCheckUrl(params: URLSearchParams): string {
  *  - buildPath: Function to build the internal app route using the extracted parameters
  */
 export type D2LUrlPattern = {
-    pattern: RegExp | string;
+    pattern: RegExp;
     extractParams: (match: string) => Record<string, string>;
     buildPath: (params: Record<string, string>) => string;
 };
+
 /**
- * URL patterns for different D2L pages with their corresponding extraction and path building logic
+ * Helper function to clean URL before matching
+ * Removes query parameters and hash fragments for pattern matching
+ */
+const cleanUrlForMatching = (url: string): string => {
+    return url.split(/[?#]/)[0];
+};
+
+export type D2LUrlPatternType =
+    | "content"
+    | "topic"
+    | "courseContent"
+    | "quiz"
+    | "assignment"
+    | "feedback"
+    | "grade"
+    | "announcement"
+    | "courseHome"
+    | "bsHome";
+
+/**
+ * URL patterns for different D2L pages with mutually exclusive matching
+ * Ordered from most specific to most general patterns.
  *
  */
-export const D2L_URL_PATTERNS: Record<string, D2LUrlPattern> = {
+export const D2L_URL_PATTERNS: Record<D2LUrlPatternType, D2LUrlPattern> = {
     /**
-     * The home page of Brightspace 
+     * Specific content/topic view
+     * Example: bright.uvic.ca/d2l/le/content/214416/viewContent/1740213/View
      */
-    bsHome: {
-        pattern: /\/d2l\/home\/?$/,
-        extractParams: (url) => ({}),
-        buildPath: (params) => `/`,
-    },
-
-    /**
-     * The home page of a course.
-     */
-    courseHome: {
-        pattern: /\/d2l\/home\/(\d+)/,
-        extractParams: (url) => {
-            const courseId = url.replace("/d2l/home/", "").match(/(\d+)/)?.[0];
-            return { courseId: courseId || "" };
-        },
-        buildPath: (params) => `/courses/${params.courseId}`,
-    },
-
-    /**
-     * The `Content` page of a course.
-     */
-    courseContent: {
-        pattern: /\/d2l\/le\/content\/(\d+)\/Home/,
-        extractParams: (url) => {
-            const courseId = url.replace("/d2l/le/content/", "").match(/(\d+)/g)?.[0];
-            return { courseId: courseId || "" };
-        },
-        buildPath: (params) => `/courses/${params.courseId}`,
-    },
-    announcement: {
-        pattern: /\/d2l\/p\/le\/news\/(\d+)/,
-        extractParams: (url) => {
-            const courseId = url.replace("/d2l/p/le/news/", "").match(/(\d+)/)?.[0];
-            return { courseId: courseId || "" };
-        },
-        buildPath: (params) => `/courses/${params.courseId}`,
-    },
     content: {
-        pattern: /\/d2l\/le\/content\/(\d+)\/viewContent\/(\d+)\/View/,
+        pattern: /^\/d2l\/le\/content\/(\d+)\/viewContent\/(\d+)\/View/,
         extractParams: (url) => {
-            const match = url.replace("/d2l/le/content/", "").match(/(\d+)/g);
+            const match = cleanUrlForMatching(url).match(
+                /\/d2l\/le\/content\/(\d+)\/viewContent\/(\d+)\/View/
+            );
             return {
-                courseId: match?.[0] || "",
-                topicId: match?.[1] || "",
+                courseId: match?.[1] || "",
+                topicId: match?.[2] || "",
             };
         },
         buildPath: (params) =>
             `/courses/${params.courseId}/m/${params.moduleId}?topic=${params.topicId}`,
     },
-    grade: {
-        pattern: /\/d2l\/p\/le\/grades\/(\d+)/,
+
+    /* Alias for `D2L_URL_PATTERNS.content` */
+    get topic() {
+        return this.content;
+    },
+
+    /**
+     * Course content home
+     * Example: bright.uvic.ca/d2l/le/content/214416/Home
+     */
+    courseContent: {
+        pattern: /^\/d2l\/le\/content\/(\d+)\/Home/,
         extractParams: (url) => {
-            const courseId = url.replace("/d2l/p/le/grades/", "").match(/(\d+)/)?.[0];
-            return { courseId: courseId || "" };
+            const match = cleanUrlForMatching(url).match(/\/d2l\/le\/content\/(\d+)\/Home/);
+            return { courseId: match?.[1] || "" };
         },
-        buildPath: (params) => `/courses/${params.courseId}/grades`,
+        buildPath: (params) => `/courses/${params.courseId}`,
     },
-    feedback: {
-        pattern: /\/d2l\/lms\/dropbox\/user\/folder_user_view_feedback\.d2l/,
-        extractParams: (url) => ({
-            courseId: getSearchParam(url, "ou") || "",
-        }),
-        buildPath: (params) => `/courses/${params.courseId}/coursework`,
-    },
-    assignment: {
-        pattern: /\/d2l\/lms\/dropbox\/dropbox\.d2l/,
-        extractParams: (url) => ({
-            courseId: getSearchParam(url, "ou") || "",
-        }),
-        buildPath: (params) => `/courses/${params.courseId}/coursework`,
-    },
+
+    /**
+     * Quiz pages
+     * Example: bright.uvic.ca/d2l/lms/quizzing/user/quizzes_list.d2l?ou=214416
+     */
     quiz: {
-        pattern: /\/d2l\/lms\/quizzing\/quizzing\.d2l/,
+        pattern: /^\/d2l\/lms\/quizzing\/quizzing\.d2l/,
         extractParams: (url) => ({
             courseId: getSearchParam(url, "ou") || "",
             quizId: getSearchParam(url, "qi") || "",
         }),
         buildPath: (params) => `/courses/${params.courseId}/quizzes/${params.quizId}`,
     },
-    topic: {
-        pattern: /\/d2l\/le\/content\/(\d+)\/viewContent\/(\d+)\/View/,
+
+    /**
+     * Assignment submission pages
+     * Example: bright.uvic.ca/d2l/lms/dropbox/user/folders_list.d2l?ou=214416
+     */
+    assignment: {
+        pattern: /^\/d2l\/lms\/dropbox\/dropbox\.d2l/,
+        extractParams: (url) => ({
+            courseId: getSearchParam(url, "ou") || "",
+        }),
+        buildPath: (params) => `/courses/${params.courseId}/coursework`,
+    },
+
+    /**
+     * Assignment feedback pages
+     */
+    feedback: {
+        pattern: /^\/d2l\/lms\/dropbox\/user\/folder_user_view_feedback\.d2l/,
+        extractParams: (url) => ({
+            courseId: getSearchParam(url, "ou") || "",
+        }),
+        buildPath: (params) => `/courses/${params.courseId}/coursework`,
+    },
+
+    /**
+     * Course grades
+     * Example: bright.uvic.ca/d2l/lms/grades/my_grades/main.d2l?ou=214416
+     */
+    grade: {
+        pattern: /^\/d2l\/p\/le\/grades\/(\d+)/,
         extractParams: (url) => {
-            const match = url.replace("/d2l/le/content/", "").match(/(\d+)/g);
-            return {
-                courseId: match?.[0] || "",
-                topicId: match?.[1] || "",
-            };
+            const match = cleanUrlForMatching(url).match(/\/d2l\/p\/le\/grades\/(\d+)/);
+            return { courseId: match?.[1] || "" };
         },
-        buildPath: (params) =>
-            `/courses/${params.courseId}/m/${params.moduleId}?topic=${params.topicId}`,
+        buildPath: (params) => `/courses/${params.courseId}/grades`,
+    },
+
+    /**
+     * Course announcements
+     * Example: bright.uvic.ca/d2l/lms/news/main.d2l?ou=214416
+     */
+    announcement: {
+        pattern: /^\/d2l\/p\/le\/news\/(\d+)/,
+        extractParams: (url) => {
+            const match = cleanUrlForMatching(url).match(/\/d2l\/p\/le\/news\/(\d+)/);
+            return { courseId: match?.[1] || "" };
+        },
+        buildPath: (params) => `/courses/${params.courseId}`,
+    },
+
+    /**
+     * Course home page
+     * Example: bright.uvic.ca/d2l/home/214416
+     */
+    courseHome: {
+        pattern: /^\/d2l\/home\/(\d+)/,
+        extractParams: (url) => {
+            const match = cleanUrlForMatching(url).match(/\/d2l\/home\/(\d+)/);
+            return { courseId: match?.[1] || "" };
+        },
+        buildPath: (params) => `/courses/${params.courseId}`,
+    },
+
+    /**
+     * Brightspace home page
+     * Example: bright.uvic.ca/d2l/home
+     */
+    bsHome: {
+        pattern: /^\/d2l\/home(?!\/)/, // negative lookahead to avoid matching courseHome
+        extractParams: () => ({}),
+        buildPath: () => `/`,
     },
 };
 
@@ -354,7 +403,9 @@ export function remapD2LUrl(
 ): string {
     // If type is provided, use that pattern directly
     if (type && type in D2L_URL_PATTERNS) {
-        const pattern = D2L_URL_PATTERNS[type];
+        const patternType = type as D2LUrlPatternType; // `type` was asserted by if statement to be `D2LUrlPatternType`
+
+        const pattern = D2L_URL_PATTERNS[patternType];
         const params = { ...pattern.extractParams(url), ...additionalParams };
         return pattern.buildPath(params);
     }
@@ -372,4 +423,25 @@ export function remapD2LUrl(
     }
 
     return ""; // Return empty string if no match found
+}
+
+/**
+ * Helper function to match D2L URLs and extract parameters
+ */
+export function matchD2LUrl(url: string): null | {
+    type: D2LUrlPatternType;
+    params: Record<string, string>;
+} {
+    // Remove any leading/trailing whitespace
+    const cleanUrl = url.trim();
+
+    for (const [key, pattern] of Object.entries(D2L_URL_PATTERNS)) {
+        if (pattern.pattern.test(cleanUrl)) {
+            return {
+                type: key as D2LUrlPatternType,
+                params: pattern.extractParams(cleanUrl),
+            };
+        }
+    }
+    return null;
 }
