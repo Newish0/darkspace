@@ -1,4 +1,4 @@
-import { A, RouteSectionProps, useMatch } from "@solidjs/router";
+import { A, RouteSectionProps, useMatch, useNavigate } from "@solidjs/router";
 import { Component, ErrorBoundary, Show } from "solid-js";
 
 import ControlledSuspense from "@/components/controlled-suspense";
@@ -17,6 +17,7 @@ import { createAsyncCached } from "@/hooks/async-cached";
 import { usePersistentNav } from "@/hooks/persistent-nav";
 import { cn } from "@/lib/utils";
 import { getEnrollments, isClassActuallyActive } from "@/services/BS/api/enrollment";
+import { matchD2LUrl, remapD2LUrl } from "@/services/BS/url";
 import { Github, LayoutDashboard, Library, Menu } from "lucide-solid";
 import { createSignal, For } from "solid-js";
 
@@ -135,6 +136,23 @@ function NavContent() {
 }
 
 const Layout: Component<RouteSectionProps<unknown>> = (props) => {
+    const navigate = useNavigate();
+    /**
+     * If we find an equivalent Darkspace page for the current Brightspace page
+     * user is viewing, we will redirect to that page.
+     *
+     * NOTE: The redirecting must be done within the SolidJS Router. Therefore,
+     *       this is done inside of the RootLayout component instead of the App component.
+     */
+    const redirectToDarkspacePage = () => {
+        const dsUrl = remapD2LUrl(window.location.pathname);
+        const isLikelyDsNonRootPage = window.location.hash && window.location.hash !== "#/";
+        if (dsUrl && !isLikelyDsNonRootPage) {
+            navigate(dsUrl);
+        }
+    };
+    redirectToDarkspacePage();
+
     return (
         <div class="flex h-screen overflow-hidden">
             {/* Desktop view */}

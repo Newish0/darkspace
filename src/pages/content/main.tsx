@@ -43,6 +43,12 @@ const routes: RouteDefinition = {
     ],
 };
 
+/**
+ * The main Darkspace App component.
+ * Do global initialization that does not need to be inside the SolidJS Router here.
+ *
+ * NOTE: See the RootLayout component for initialization that concerns the SolidJS Router.
+ */
 const App = () => {
     const storageManager = createLocalStorageManager("vite-ui-theme");
 
