@@ -337,7 +337,7 @@ async function parseD2LNotifications(htmlString: string): Promise<INotification[
                 type,
                 title: titleText,
                 course: extractCourseName(courseText),
-                link: await remapD2LActivityFeedUrl(link.getAttribute("href") || "", type),
+                link: remapD2LUrl(link.getAttribute("href") || "", type),
 
                 // No need to use timezone here as `data-date` is Unix timestamp
                 timestamp: new Date(
@@ -360,63 +360,4 @@ async function parseD2LNotifications(htmlString: string): Promise<INotification[
     );
 
     return notifications.filter((notification): notification is INotification => !!notification);
-}
-
-/**
- * Remap the D2L activity feed URL to a URL that is more consistent with this app's routing.
- * @param href The URL to remap.
- * @param type The type of notification this is for.
- * @returns The remapped URL.
- */
-async function remapD2LActivityFeedUrl(href: string, type: INotification["type"]) {
-    if (type === "content") {
-        // Special handling for content type since it needs moduleId
-        const match = href.replace("/d2l/le/content/", "").match(/(\d+)/g);
-        const courseId = match?.[0];
-        const topicId = match?.[1];
-        
-        if (courseId && topicId) {
-            const moduleId = await getModuleId(courseId, topicId);
-            if (moduleId) {
-                return remapD2LUrl(href, type, { moduleId: moduleId.toString() });
-            }
-        }
-        return `/courses/${courseId}`;
-    }
-
-    return remapD2LUrl(href, type);
-}
-
-async function getModuleId(courseId: string, topicId: string): Promise<number | null> {
-    // Try cache first then fetch and cache
-    let toc = await getAsyncCached<CourseContent>(["toc", courseId]);
-    if (!toc) toc = await getUnstableCourseContent(courseId);
-    if (toc) setAsyncCached(["toc", courseId], toc);
-
-    const recursiveFindModule = (module: UnstableModule): number | null => {
-        // Check if the current module contains the topic
-        if (module.Topics.some((topic) => topic.TopicId.toString() === topicId)) {
-            return module.ModuleId;
-        }
-
-        // Search through all nested modules
-        for (const nextModule of module.Modules) {
-            const result = recursiveFindModule(nextModule);
-            if (result !== null) {
-                return result;
-            }
-        }
-
-        return null;
-    };
-
-    // Search through all top-level modules
-    for (const module of toc.Modules) {
-        const result = recursiveFindModule(module);
-        if (result !== null) {
-            return result;
-        }
-    }
-
-    return null;
 }

@@ -27,7 +27,10 @@ const routes: RouteDefinition = {
             path: "/courses/:courseId/m/:moduleId",
             component: lazy(() => import("./routes/module")),
         },
-
+        {
+            path: "/courses/:courseId/t/:topicId",
+            component: lazy(() => import("./routes/topic")),
+        },
         {
             path: "/courses/:courseId/coursework",
             component: lazy(() => import("./routes/course-coursework")),

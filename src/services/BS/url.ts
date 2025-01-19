@@ -281,8 +281,15 @@ export const D2L_URL_PATTERNS: Record<D2LUrlPatternType, D2LUrlPattern> = {
                 topicId: match?.[2] || "",
             };
         },
-        buildPath: (params) =>
-            `/courses/${params.courseId}/m/${params.moduleId}?topic=${params.topicId}`,
+        buildPath: (params) => {
+            // Go directly to the actual Darkspace topic page or go to the proxy topic page
+            // for a redirect upon getting the required info asynchronously.
+            if (params.courseId && params.moduleId && params.topicId) {
+                return `/courses/${params.courseId}/m/${params.moduleId}?topic=${params.topicId}`;
+            } else {
+                return `/courses/${params.courseId}/t/${params.topicId}`;
+            }
+        },
     },
 
     /* Alias for `D2L_URL_PATTERNS.content` */
