@@ -43,6 +43,10 @@ const routes: RouteDefinition = {
             path: "/courses/:courseId/others",
             component: lazy(() => import("./routes/others")),
         },
+        {
+            path: "*404",
+            component: lazy(() => import("./routes/not-found")),
+        },
     ],
 };
 
