@@ -206,6 +206,11 @@ function extractQuizSubmissionsUrl(row: Element, quizInfo: IQuizInfo): void {
     }
 }
 
+/**
+ * Must be called after `extractAttempts`
+ * @param row
+ * @param quizInfo
+ */
 function determineStatus(row: Element, quizInfo: IQuizInfo): void {
     const feedbackCell = row.querySelector(SELECTORS.QUIZ.FEEDBACK_CELL);
     const attemptsCell = row.querySelector(SELECTORS.QUIZ.ATTEMPTS_CELL);
@@ -229,6 +234,11 @@ function determineStatus(row: Element, quizInfo: IQuizInfo): void {
         } else {
             quizInfo.status = "not-started";
         }
+    }
+
+    /* HACK: Fixes completed quizzes but with pending grades */
+    if (quizInfo.status === "not-started" && (quizInfo.attempts ?? 0) > 0) {
+        quizInfo.status = "completed";
     }
 }
 
