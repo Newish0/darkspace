@@ -1,4 +1,4 @@
-import { buildAssignmentSubmitUrl } from '../url';
+import { buildAssignmentHistoryUrl } from "../url";
 
 interface ISubmissionFile {
     filename: string;
@@ -119,9 +119,11 @@ export async function getAssignmentInfo(
     assignmentId: string,
     groupId?: string
 ): Promise<IAssignmentInfo> {
-    const submitUrl = buildAssignmentSubmitUrl(courseId, assignmentId, groupId);
+    const historyUrl = buildAssignmentHistoryUrl(courseId, assignmentId, groupId);
 
-    const res = await fetch(submitUrl);
+    console.log(historyUrl);
+
+    const res = await fetch(historyUrl);
     if (!res.ok) {
         throw new Error(`Failed to fetch assignment info: ${res.statusText}`);
     }

@@ -5,6 +5,7 @@ export const BASE_URL = "https://bright.uvic.ca";
 // Assignment URLs
 const ASSIGNMENT_SUBMIT_URL = `${BASE_URL}/d2l/lms/dropbox/user/folder_submit_files.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}`;
 const ASSIGNMENT_FEEDBACK_URL = `${BASE_URL}/d2l/lms/dropbox/user/folder_user_view_feedback.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}`;
+const ASSIGNMENT_HISTORY_URL = `${BASE_URL}/d2l/lms/dropbox/user/folders_history.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}`;
 
 // Quiz URLs
 const QUIZ_SUMMARY_URL = `${BASE_URL}/d2l/lms/quizzing/user/quiz_summary.d2l?qi={{QUIZ_ID}}&ou={{COURSE_ID}}`;
@@ -58,6 +59,22 @@ const ACTIVITY_FEED_URL = `${BASE_URL}/d2l/NavigationArea/{{COURSE_ID}}/Activity
  */
 export function buildFullUrl(path: string): string {
     return new URL(path, BASE_URL).href;
+}
+
+/**
+ * Builds the URL for seeing submission history of an assignment
+ * @param courseId - The course ID
+ * @param assignmentId - The assignment ID
+ * @param groupId - Optional group ID, defaults to "0" for individual assignments
+ */
+export function buildAssignmentHistoryUrl(
+    courseId: string,
+    assignmentId: string,
+    groupId?: string
+): string {
+    return ASSIGNMENT_HISTORY_URL.replace("{{ASSIGNMENT_ID}}", assignmentId)
+        .replace("{{COURSE_ID}}", courseId)
+        .replace("{{GROUP_ID}}", groupId || "0");
 }
 
 /**
