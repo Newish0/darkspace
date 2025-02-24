@@ -1,7 +1,6 @@
 import PageWrapper from "@/components/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { useCourseName } from "@/hooks/use-course-name";
-import { getCourseAnnouncements, IAnnouncement } from "@/services/BS/scraper/announcements";
 import { getCourseModules } from "@/services/BS/scraper/course-modules";
 import { makePersisted } from "@solid-primitives/storage";
 import { A } from "@solidjs/router";
@@ -19,6 +18,8 @@ import UnsafeHtml from "./unsafe-html";
 import UpcomingDisplay from "./upcoming-display";
 import { remapHtmlUrls } from "@/utils/html";
 import { remapD2LUrl } from "@/services/BS/url";
+import { getNewsItems, NewsItem } from "@/services/BS/api/news";
+import NewsDisplay from "./news-display";
 
 export default function CourseHome({
     courseId,
@@ -35,7 +36,7 @@ export default function CourseHome({
         keys: () => ["course-modules", courseId],
     });
 
-    const courseAnnouncements = createAsyncCached(() => getCourseAnnouncements(courseId), {
+    const courseAnnouncements = createAsyncCached(() => getNewsItems(courseId), {
         keys: () => ["announcements", courseId],
     });
 
@@ -100,7 +101,10 @@ export default function CourseHome({
                                     fallback={<p>Loading...</p>}
                                 >
                                     <Show when={courseAnnouncements()}>
-                                        <AnnouncementList announcements={courseAnnouncements()} />
+                                        <AnnouncementList
+                                            announcements={courseAnnouncements()}
+                                            courseId={courseId}
+                                        />
                                     </Show>
                                 </ControlledSuspense>
                             }
@@ -120,12 +124,12 @@ export default function CourseHome({
     );
 }
 
-function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }) {
+function AnnouncementList(props: { courseId: string; announcements?: NewsItem[] }) {
     return (
         <>
             <h2 class="text-xl font-bold border-b px-4 py-2">Announcements</h2>
 
-            <Show when={!announcements || announcements.length === 0}>
+            <Show when={!props.announcements || props.announcements.length === 0}>
                 <div class="text-center text-muted-foreground py-8 flex flex-col items-center">
                     <MessageSquareXIcon size={48} class="mb-4 text-muted-foreground" />
                     <p>No announcements yet!</p>
@@ -133,28 +137,10 @@ function AnnouncementList({ announcements }: { announcements?: IAnnouncement[] }
             </Show>
 
             <div class="h-full flex-shrink-1 overflow-auto p-4 space-y-4">
-                <For each={announcements}>
+                <For each={props.announcements}>
                     {(a) => (
                         <div class="rounded-lg border p-4">
-                            <div class="flex flex-wrap justify-between items-center">
-                                <h3 class="text-xl font-medium">{a.title}</h3>
-                                <div class="flex items-center text-sm text-muted-foreground">
-                                    <CalendarIcon class="mr-1 h-4 w-4" />
-                                    <span>
-                                        {a.dateTime
-                                            ? formatDate(a.dateTime, "MMM d, yyyy h:mm a")
-                                            : "Unknown"}
-                                    </span>
-                                </div>
-                            </div>
-                            <Separator class="my-2" />
-                            <UnsafeHtml
-                                unsafeHtml={remapHtmlUrls(a.html, remapD2LUrl)}
-                                config={{
-                                    ADD_ATTR: ["target"],
-                                }}
-                                class="markdown overflow-auto"
-                            />
+                            <NewsDisplay news={a} orgUnitId={props.courseId} />
                         </div>
                     )}
                 </For>

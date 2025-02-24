@@ -5,9 +5,9 @@ import { getAssignments, IAssignment } from "@/services/BS/scraper/assignment";
 import { getGrades, IGradeData } from "@/services/BS/scraper/grades";
 import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
 import { CourseContent, getUnstableCourseContent } from "./BS/api/unstable-module";
-import { getCourseAnnouncements, IAnnouncement } from "./BS/scraper/announcements";
 import { getCourseModules, IModule } from "./BS/scraper/course-modules";
 import { D2LActivityFeedFetcher } from "./BS/scraper/notification";
+import { getNewsItems, NewsItem } from "./BS/api/news";
 
 export const initPreloadContentOnNotification = (courseId: string) => {
     const fetcher = D2LActivityFeedFetcher.create(courseId, 0);
@@ -30,7 +30,7 @@ export const initPreloadContentOnNotification = (courseId: string) => {
 export const preloadCourseContent = async (courseId: string) => {
     const modules = await getCourseModules(courseId);
     setAsyncCached(["course-modules", courseId], modules);
-    const announcements = await getCourseAnnouncements(courseId);
+    const announcements = await getNewsItems(courseId);
     setAsyncCached(["announcements", courseId], announcements);
 
     const assignments = await getAssignments(courseId);
@@ -67,7 +67,7 @@ export const preloadAllContent = async (progressCallback?: (progress: number) =>
 export type CachedContent = {
     course: IClass;
     modules: IModule[] | null;
-    announcements: IAnnouncement[] | null;
+    announcements: NewsItem[] | null;
     assignments: IAssignment[] | null;
     quizzes: IQuizInfo[] | null;
     grades: IGradeData | null;
@@ -81,7 +81,7 @@ export const getCachedContent = async (): Promise<CachedContent[]> => {
         enrollments?.map(async (course) => ({
             course: course,
             modules: await getAsyncCached<IModule[]>(["course-modules", course.id]),
-            announcements: await getAsyncCached<IAnnouncement[]>(["announcements", course.id]),
+            announcements: await getAsyncCached<NewsItem[]>(["announcements", course.id]),
             assignments: await getAsyncCached<IAssignment[]>(["assignments", course.id]),
             quizzes: await getAsyncCached<IQuizInfo[]>(["quizzes", course.id]),
             grades: await getAsyncCached<IGradeData>(["grades", course.id]),

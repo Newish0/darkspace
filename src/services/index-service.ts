@@ -76,10 +76,10 @@ export async function getDocsFromCachedContent(contents: CachedContent[]) {
         for (const announcement of content.announcements || []) {
             docs.push({
                 id: idCount++,
-                name: content.course.name + ": " + (announcement.title || "Unknown Announcement"),
-                description: htmlToString(announcement.html),
+                name: content.course.name + ": " + (announcement.Title || "Unknown Announcement"),
+                description: htmlToString(announcement.Body.Html || announcement.Body.Text || ""),
                 dsUrl: `/courses/${content.course.id}`,
-                date: new Date().toString(),
+                date: announcement.CreatedDate || new Date().toString(),
                 type: "announcement",
             });
         }
