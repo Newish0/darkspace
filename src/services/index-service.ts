@@ -79,7 +79,7 @@ export async function getDocsFromCachedContent(contents: CachedContent[]) {
                 name: content.course.name + ": " + (announcement.Title || "Unknown Announcement"),
                 description: htmlToString(announcement.Body.Html || announcement.Body.Text || ""),
                 dsUrl: `/courses/${content.course.id}`,
-                date: announcement.CreatedDate || new Date().toString(),
+                date: announcement.StartDate || new Date().toString(),
                 type: "announcement",
             });
         }
