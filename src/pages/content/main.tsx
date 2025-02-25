@@ -20,17 +20,24 @@ const routes: RouteDefinition = {
             component: lazy(() => import("./routes/home")),
         },
         {
-            path: "/courses/:courseId",
-            component: lazy(() => import("./routes/course")),
-        },
-        {
-            path: "/courses/:courseId/m/:moduleId",
-            component: lazy(() => import("./routes/module")),
+            path: "/courses",
+            component: lazy(() => import("./routes/courses-page-wrapper")),
+            children: [
+                {
+                    path: "/:courseId",
+                    component: lazy(() => import("./routes/course")),
+                },
+                {
+                    path: "/:courseId/m/:moduleId",
+                    component: lazy(() => import("./routes/module")),
+                },
+            ],
         },
         {
             path: "/courses/:courseId/t/:topicId",
             component: lazy(() => import("./routes/topic")),
         },
+
         {
             path: "/courses/:courseId/coursework",
             component: lazy(() => import("./routes/course-coursework")),
