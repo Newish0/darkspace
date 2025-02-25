@@ -20,6 +20,7 @@ import { Skeleton } from "./ui/skeleton";
 import { buildContentDownloadUrl, remapD2LUrl } from "@/services/BS/url";
 import DescriptionRenderer from "./description-renderer";
 import { remapHtmlUrls } from "@/utils/html";
+import { saveFileFromUrl } from "@/utils/file";
 
 const TopicModalWithTrigger = (props: {
     topic: IModuleTopic;
@@ -66,13 +67,6 @@ interface ModuleContentListProps {
 }
 
 const ModuleContentList = (props: ModuleContentListProps) => {
-    const handleDownload = (url: string, filename: string) => {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = url.split("/").pop() || filename;
-        a.click();
-    };
-
     const handleCopyLink = (url: string) => {
         navigator.clipboard.writeText(url);
 
@@ -155,7 +149,7 @@ const ModuleContentList = (props: ModuleContentListProps) => {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() =>
-                                            handleDownload(
+                                            saveFileFromUrl(
                                                 buildContentDownloadUrl(props.courseId, item.id),
                                                 item.name || `topic-${item.id}`
                                             )

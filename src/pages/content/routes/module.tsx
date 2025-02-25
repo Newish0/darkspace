@@ -2,9 +2,11 @@ import ControlledSuspense from "@/components/controlled-suspense";
 import DescriptionRenderer from "@/components/description-renderer";
 import ModuleContentList from "@/components/module-content-list";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getModuleContent } from "@/services/BS/scraper/module-content";
-import { remapD2LUrl } from "@/services/BS/url";
+import { buildContentDownloadUrl, remapD2LUrl } from "@/services/BS/url";
+import { saveFileFromUrl } from "@/utils/file";
 import { remapHtmlUrls } from "@/utils/html";
 import { useParams, useSearchParams } from "@solidjs/router";
 import { Show } from "solid-js";
@@ -20,14 +22,38 @@ const Module = () => {
         }
     );
 
+    const downloadableTopics = () => moduleContent()?.topics.filter((t) => t.downloadable);
+
+    const handleDownloadAll = () => {
+        for (const t of downloadableTopics() || []) {
+            saveFileFromUrl(
+                buildContentDownloadUrl(params.courseId, t.id),
+                t.name || `topic-${t.id}`
+            );
+        }
+    };
+
     return (
         <ControlledSuspense hasContent={!!moduleContent()} fallback={<div>Loading...</div>}>
             <h2 class="text-xl font-bold border-b px-4 py-2 flex justify-between items-center">
                 {moduleContent()?.name}
 
-                {/* <Show when={moduleContent()?.topics.filter((t) => t.downloadable).length}>
-                    <Button variant="link">Download all</Button>
-                </Show> */}
+                <Show when={downloadableTopics()?.length}>
+                    <Tooltip>
+                        <TooltipTrigger
+                            as={Button<"button">}
+                            variant="link"
+                            size={"sm"}
+                            class="h-7 font-medium text-sm"
+                            onClick={handleDownloadAll}
+                        >
+                            Download all
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{moduleContent()?.topics.length} files</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </Show>
             </h2>
 
             <div class="overflow-auto px-4 py-2 space-y-4">
