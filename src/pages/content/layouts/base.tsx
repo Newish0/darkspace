@@ -20,6 +20,8 @@ import { getEnrollments, isClassActuallyActive } from "@/services/BS/api/enrollm
 import { matchD2LUrl, remapD2LUrl } from "@/services/BS/url";
 import { Github, LayoutDashboard, Library, Menu } from "lucide-solid";
 import { createSignal, For } from "solid-js";
+import { GreetingModal } from "@/components/greeting-modal";
+import { useUserMeta } from "@/hooks/user-meta";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
 
@@ -153,6 +155,19 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
     };
     redirectToDarkspacePage();
 
+    /**
+     * For driving the greeting modal. This is used to determine if the user has
+     * already seen the greeting modal in this version of the app.
+     */
+    const [userMeta, setUserMeta] = useUserMeta();
+    const handleGreetingModalClose = (preloaded?: boolean) => {
+        setUserMeta((userMeta) => ({
+            ...userMeta,
+            lastUsedVersion: __APP_ENV__.VERSION, // update last used version since user acknowledged
+            preloadedContent: preloaded ?? false,
+        }));
+    };
+
     return (
         <div class="flex h-screen overflow-hidden">
             {/* Desktop view */}
@@ -193,6 +208,18 @@ const Layout: Component<RouteSectionProps<unknown>> = (props) => {
                         }
                     >
                         {props.children}
+
+                        <Show
+                            when={
+                                !userMeta().preloadedContent ||
+                                userMeta().lastUsedVersion !== __APP_ENV__.VERSION
+                            }
+                        >
+                            <GreetingModal
+                                isFirstTime={!userMeta().lastUsedVersion}
+                                onClose={handleGreetingModalClose}
+                            />
+                        </Show>
                     </ErrorBoundary>
                 </main>
             </div>

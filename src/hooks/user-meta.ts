@@ -2,14 +2,14 @@ import { makePersisted } from "@solid-primitives/storage";
 import { createSignal } from "solid-js";
 
 interface UserMeta {
-    isFirstTimeUser: boolean;
+    lastUsedVersion?: string;
     preloadedContent: boolean;
 }
 
 export function useUserMeta() {
     const [userMeta, setUserMeta] = makePersisted(
         createSignal<UserMeta>({
-            isFirstTimeUser: true,
+            lastUsedVersion: undefined, // default
             preloadedContent: false,
         }),
         {

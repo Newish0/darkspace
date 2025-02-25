@@ -10,15 +10,6 @@ import { For, Show } from "solid-js";
 export default function Home() {
     const enrollments = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
 
-    const [userMeta, setUserMeta] = useUserMeta();
-
-    const handleGreetingModalClose = (preloaded?: boolean) => {
-        setUserMeta({
-            isFirstTimeUser: false,
-            preloadedContent: preloaded ?? false,
-        });
-    };
-
     return (
         <PageWrapper title="Dashboard" allowBack={false}>
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
@@ -26,10 +17,6 @@ export default function Home() {
                     <For each={enrollments()}>{(c) => <CourseCard course={c} />}</For>
                 </ControlledSuspense>
             </div>
-
-            <Show when={userMeta().isFirstTimeUser}>
-                <GreetingModal onClose={handleGreetingModalClose} />
-            </Show>
         </PageWrapper>
     );
 }

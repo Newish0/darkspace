@@ -14,6 +14,7 @@ import { Progress } from "./ui/progress";
 import { preloadAllContent } from "@/services/content-service";
 
 interface GreetingModalProps {
+    isFirstTime: boolean;
     onClose: (preloaded?: boolean) => void;
 }
 
@@ -38,17 +39,32 @@ export function GreetingModal(props: GreetingModalProps) {
 
     const handleOpenChange = (isOpen: boolean, preloaded?: boolean) => {
         setIsOpen(isOpen);
-        if (!isOpen) props.onClose();
+        if (!isOpen) props.onClose(preloaded);
     };
 
     return (
-        <Dialog open={isOpen()} onOpenChange={handleOpenChange}>
+        <Dialog open={isOpen()} onOpenChange={handleOpenChange} >
             <DialogContent class="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Welcome Darkspace!</DialogTitle>
+                    <DialogTitle>
+                        {props.isFirstTime
+                            ? "Welcome to Darkspace!"
+                            : `Thanks for updating to Darkspace ${__APP_ENV__.VERSION}!`}
+                    </DialogTitle>
                     <DialogDescription>
-                        Would you like to preload all content? This will take a couple of minutes
-                        but will improve your browsing experience.
+                        {props.isFirstTime ? (
+                            <>
+                                To improve your experience, Darkspace needs to preload all content.
+                                This will take a couple of minutes, but will only happen once.
+                            </>
+                        ) : (
+                            <>
+                                To ensure you have the latest content, Darkspace needs to preload
+                                all content. This will take a couple of minutes, but will only
+                                happen once for this version.
+                            </>
+                        )}
+
                         <Show when={isLoading()}>
                             <Progress class="mt-4" value={progress()} maxValue={1} />
                         </Show>
@@ -58,9 +74,6 @@ export function GreetingModal(props: GreetingModalProps) {
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                        No, thanks
-                    </Button>
                     <Button onClick={handlePreload} disabled={isLoading()}>
                         <Show when={isLoading()} fallback="Yes, preload content">
                             <Loader2 class="mr-2 h-4 w-4 animate-spin" />
