@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { IAssignment } from "@/services/BS/scraper/assignment";
-import { buildAssignmentSubmitUrl, buildAssignmentFeedbackUrl} from "@/services/BS/url";
+import { buildAssignmentSubmitUrl, buildAssignmentFeedbackUrl } from "@/services/BS/url";
 import { format, isPast } from "date-fns";
 import {
     AlertCircle,
@@ -31,6 +31,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 interface AssignmentItemProps {
     assignment: IAssignment;
     courseId: string;
+    defaultModalOpen?: boolean;
 }
 
 // Status Icons Component
@@ -56,14 +57,16 @@ const ActionButton: Component<{
     assignmentName?: string;
     groupId?: string;
     courseId: string;
+    defaultModalOpen?: boolean;
 }> = (props) => {
     const AssignmentModal = (props: {
         triggerContent: JSX.Element;
         url?: string;
         title: string;
         variant: ComponentProps<typeof Button>["variant"];
+        defaultOpen?: boolean;
     }) => (
-        <ContentModal>
+        <ContentModal defaultOpen={props.defaultOpen}>
             <ContentModalTrigger as={Button<"button">} variant={props.variant} size="sm">
                 {props.triggerContent}
             </ContentModalTrigger>
@@ -91,6 +94,7 @@ const ActionButton: Component<{
                             )
                         }
                         title={props.assignmentName || "Assignment"}
+                        defaultOpen={props.defaultModalOpen}
                     />
                 </Match>
                 <Match when={props.status === "not-submitted" && !props.isPastEndDate}>
@@ -110,6 +114,7 @@ const ActionButton: Component<{
                             )
                         }
                         title={props.assignmentName || "Assignment"}
+                        defaultOpen={props.defaultModalOpen}
                     />
                 </Match>
                 <Match when={props.status === "returned"}>
@@ -129,6 +134,7 @@ const ActionButton: Component<{
                             )
                         }
                         title={(props.assignmentName || "Assignment") + " Feedback"}
+                        defaultOpen={props.defaultModalOpen}
                     />
                 </Match>
             </Switch>
@@ -312,6 +318,7 @@ const AssignmentItem: Component<AssignmentItemProps> = (props) => {
                             courseId={props.courseId}
                             status={props.assignment.status}
                             isPastEndDate={isPastEndDate()}
+                            defaultModalOpen={props.defaultModalOpen}
                         />
                         <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen())}>
                             <Show when={isOpen()} fallback={<ChevronDown class="h-4 w-4" />}>

@@ -7,12 +7,14 @@ import { createAsyncCached } from "@/hooks/async-cached";
 import { useCourseName } from "@/hooks/use-course-name";
 import { getAssignments } from "@/services/BS/scraper/assignment";
 import { getQuizzes } from "@/services/BS/scraper/quizzes";
-import { useParams } from "@solidjs/router";
+import { useParams, useSearchParams } from "@solidjs/router";
 import { AlertCircle } from "lucide-solid";
 import { For, Show } from "solid-js";
 
 const CourseCoursework = () => {
     const params = useParams<{ courseId: string }>();
+    const [searchParams] = useSearchParams();
+
     const quizzes = createAsyncCached(() => getQuizzes(params.courseId), {
         keys: () => ["quizzes", params.courseId],
     });
@@ -25,7 +27,17 @@ const CourseCoursework = () => {
         const items = [
             assignments()?.map((assignment) => ({
                 dueDate: new Date(assignment.dueDate ?? ""),
-                eln: <AssignmentItem assignment={assignment} courseId={params.courseId} />,
+                eln: (
+                    <AssignmentItem
+                        assignment={assignment}
+                        courseId={params.courseId}
+                        defaultModalOpen={
+                            (Array.isArray(searchParams.id)
+                                ? searchParams.id?.at(0)
+                                : searchParams.id) === assignment.id
+                        }
+                    />
+                ),
             })),
             quizzes()?.map((quiz) => ({
                 dueDate: new Date(quiz.dueDate ?? ""),

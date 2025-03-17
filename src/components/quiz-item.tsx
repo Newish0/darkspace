@@ -30,6 +30,7 @@ import { ContentModal, ContentModalContent, ContentModalTrigger } from "./conten
 interface QuizItemProps {
     quiz: IQuizInfo;
     courseId: string;
+    defaultModalOpen?: boolean;
 }
 
 // Status Icon Component
@@ -55,17 +56,19 @@ const ActionButton: Component<{
     quizId?: string;
     quizName?: string;
     courseId: string;
+    defaultModalOpen?: boolean;
 }> = (props) => {
-    const QuizModal = ({
-        triggerContent,
-        variant,
-    }: {
+    const QuizModal = (props: {
         triggerContent: JSX.Element;
         variant: ComponentProps<typeof Button>["variant"];
+        defaultOpen?: boolean;
+        quizId: string;
+        quizName?: string;
+        courseId: string;
     }) => (
-        <ContentModal>
-            <ContentModalTrigger as={Button<"button">} variant={variant} size="sm">
-                {triggerContent}
+        <ContentModal defaultOpen={props.defaultOpen}>
+            <ContentModalTrigger as={Button<"button">} variant={props.variant} size="sm">
+                {props.triggerContent}
             </ContentModalTrigger>
             <ContentModalContent
                 url={buildQuizSummaryUrl(props.quizId!, props.courseId)}
@@ -87,6 +90,10 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="default"
+                            quizId={props.quizId!}
+                            quizName={props.quizName}
+                            courseId={props.courseId}
+                            defaultOpen={props.defaultModalOpen}
                         />
                     </Match>
                     <Match when={props.status === "retry-in-progress"}>
@@ -97,6 +104,10 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="default"
+                            quizId={props.quizId!}
+                            quizName={props.quizName}
+                            courseId={props.courseId}
+                            defaultOpen={props.defaultModalOpen}
                         />
                     </Match>
                     <Match when={props.status === "completed"}>
@@ -107,6 +118,10 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="link"
+                            quizId={props.quizId!}
+                            quizName={props.quizName}
+                            courseId={props.courseId}
+                            defaultOpen={props.defaultModalOpen}
                         />
                     </Match>
 
@@ -118,6 +133,10 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="link"
+                            quizId={props.quizId!}
+                            quizName={props.quizName}
+                            courseId={props.courseId}
+                            defaultOpen={props.defaultModalOpen}
                         />
                     </Match>
                     <Match when={props.status !== "completed"}>
@@ -128,6 +147,10 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="outline"
+                            quizId={props.quizId!}
+                            quizName={props.quizName}
+                            courseId={props.courseId}
+                            defaultOpen={props.defaultModalOpen}
                         />
                     </Match>
                 </Switch>
@@ -295,6 +318,7 @@ const QuizItem: Component<QuizItemProps> = (props) => {
                             courseId={props.courseId}
                             quizId={props.quiz.id}
                             quizName={props.quiz.name}
+                            defaultModalOpen={props.defaultModalOpen}
                         />
                         <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen())}>
                             <Show when={isOpen()} fallback={<ChevronDown class="h-4 w-4" />}>
