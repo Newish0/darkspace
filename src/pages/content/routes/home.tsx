@@ -1,11 +1,9 @@
 import ControlledSuspense from "@/components/controlled-suspense";
 import CourseCard from "@/components/course-card";
-import { GreetingModal } from "@/components/greeting-modal";
 import PageWrapper from "@/components/page-wrapper";
 import { createAsyncCached } from "@/hooks/async-cached";
-import { useUserMeta } from "@/hooks/user-meta";
 import { getEnrollments } from "@/services/BS/api/enrollment";
-import { For, Show } from "solid-js";
+import { For } from "solid-js";
 
 export default function Home() {
     const enrollments = createAsyncCached(() => getEnrollments(), { keys: () => ["enrollments"] });
