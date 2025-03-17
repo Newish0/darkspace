@@ -78,6 +78,13 @@ const ActionButton: Component<{
         </ContentModal>
     );
 
+    const commonModalProps = {
+        quizId: props.quizId!,
+        quizName: props.quizName,
+        courseId: props.courseId,
+        defaultOpen: props.defaultModalOpen,
+    } as const;
+
     return (
         <>
             <Show when={!props.isPastEndDate}>
@@ -90,10 +97,7 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="default"
-                            quizId={props.quizId!}
-                            quizName={props.quizName}
-                            courseId={props.courseId}
-                            defaultOpen={props.defaultModalOpen}
+                            {...commonModalProps}
                         />
                     </Match>
                     <Match when={props.status === "retry-in-progress"}>
@@ -104,10 +108,7 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="default"
-                            quizId={props.quizId!}
-                            quizName={props.quizName}
-                            courseId={props.courseId}
-                            defaultOpen={props.defaultModalOpen}
+                            {...commonModalProps}
                         />
                     </Match>
                     <Match when={props.status === "completed"}>
@@ -118,10 +119,7 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="link"
-                            quizId={props.quizId!}
-                            quizName={props.quizName}
-                            courseId={props.courseId}
-                            defaultOpen={props.defaultModalOpen}
+                            {...commonModalProps}
                         />
                     </Match>
 
@@ -133,10 +131,7 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="link"
-                            quizId={props.quizId!}
-                            quizName={props.quizName}
-                            courseId={props.courseId}
-                            defaultOpen={props.defaultModalOpen}
+                            {...commonModalProps}
                         />
                     </Match>
                     <Match when={props.status !== "completed"}>
@@ -147,10 +142,7 @@ const ActionButton: Component<{
                                 </>
                             }
                             variant="outline"
-                            quizId={props.quizId!}
-                            quizName={props.quizName}
-                            courseId={props.courseId}
-                            defaultOpen={props.defaultModalOpen}
+                            {...commonModalProps}
                         />
                     </Match>
                 </Switch>

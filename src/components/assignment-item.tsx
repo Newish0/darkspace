@@ -74,6 +74,22 @@ const ActionButton: Component<{
         </ContentModal>
     );
 
+    const nonFeedbackModalCommonProps = {
+        url:
+            props.assignmentId &&
+            buildAssignmentSubmitUrl(props.courseId, props.assignmentId, props.groupId),
+        title: props.assignmentName || "Assignment",
+        defaultOpen: props.defaultModalOpen,
+    };
+
+    const feedbackModalCommonProps = {
+        url:
+            props.assignmentId &&
+            buildAssignmentFeedbackUrl(props.courseId, props.assignmentId, props.groupId),
+        title: (props.assignmentName || "Assignment") + " Feedback",
+        defaultOpen: props.defaultModalOpen,
+    };
+
     return (
         <>
             <Switch>
@@ -85,16 +101,7 @@ const ActionButton: Component<{
                             </>
                         }
                         variant="link"
-                        url={
-                            props.assignmentId &&
-                            buildAssignmentSubmitUrl(
-                                props.courseId,
-                                props.assignmentId,
-                                props.groupId
-                            )
-                        }
-                        title={props.assignmentName || "Assignment"}
-                        defaultOpen={props.defaultModalOpen}
+                        {...nonFeedbackModalCommonProps}
                     />
                 </Match>
                 <Match when={props.status === "not-submitted" && !props.isPastEndDate}>
@@ -105,16 +112,7 @@ const ActionButton: Component<{
                             </>
                         }
                         variant="outline"
-                        url={
-                            props.assignmentId &&
-                            buildAssignmentSubmitUrl(
-                                props.courseId,
-                                props.assignmentId,
-                                props.groupId
-                            )
-                        }
-                        title={props.assignmentName || "Assignment"}
-                        defaultOpen={props.defaultModalOpen}
+                        {...nonFeedbackModalCommonProps}
                     />
                 </Match>
                 <Match when={props.status === "returned"}>
@@ -125,16 +123,7 @@ const ActionButton: Component<{
                             </>
                         }
                         variant="default"
-                        url={
-                            props.assignmentId &&
-                            buildAssignmentFeedbackUrl(
-                                props.courseId,
-                                props.assignmentId,
-                                props.groupId
-                            )
-                        }
-                        title={(props.assignmentName || "Assignment") + " Feedback"}
-                        defaultOpen={props.defaultModalOpen}
+                        {...feedbackModalCommonProps}
                     />
                 </Match>
             </Switch>
