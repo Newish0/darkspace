@@ -157,34 +157,42 @@ export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncC
     const [currentKey, setCurrentKey] = createSignal(key());
 
     // Workaround to force recreation of `createAsync`
-    const [useCache, setUseCache] = createSignal(true);
-    const [cachedData, setCachedData] = createSignal<T | undefined>(undefined);
+    const [renderCount, setRenderCount] = createSignal(0);
 
+    // Recreate `createAsync` ONLY when the key changes
     createEffect(() => {
         if (key() !== currentKey()) {
             setCurrentKey(key());
-            setUseCache(true);
+
+            // force re-create createAsync data
+            setRenderCount(renderCount() + 1);
         }
     });
 
+    let lastFetchCachedValue: T | null = null;
     const data = createAsync(
         async () => {
-            // Workaround to force recreation of `createAsync`
-            if (useCache()) {
-                const cachedValue = await asyncCache.get<T>(key());
-                if (cachedValue) {
-                    setCachedData(() => cachedValue);
+            const cachedValue = await asyncCache.get<T>(key());
+            if (cachedValue) {
+                // Schedule actual fetch for next tick for change comparison
+                setTimeout(async () => {
+                    // Get actual value and check if it has changed. Only re-create createAsync if changed
+                    const result = await fn();
+                    if (JSON.stringify(result) !== JSON.stringify(cachedValue)) {
+                        lastFetchCachedValue = result;
+                    }
 
-                    // Schedule actual fetch for next tick
-                    setTimeout(() => setUseCache(false), 0);
-                    return cachedValue;
-                }
+                    // force update createAsync data
+                    setRenderCount(renderCount() + 1);
+                }, 0);
+
+                return cachedValue;
             }
 
-            // Call the function and cache the result
-            const result = await fn();
+            // Reuse the actual value fetched for change comparison if it exists. If not, fetch
+            const result = lastFetchCachedValue ?? (await fn());
 
-            // only cache if result is null, undefined or empty string
+            // Only cache if result is null, undefined or empty string
             if (result !== null && result !== undefined && result !== "") {
                 await asyncCache.set(key(), result);
             }
@@ -193,7 +201,7 @@ export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncC
         },
         {
             name: options.name,
-            initialValue: cachedData(),
+            initialValue: undefined,
             deferStream: options.deferStream,
         }
     );
