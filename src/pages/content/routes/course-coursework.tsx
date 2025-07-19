@@ -13,7 +13,7 @@ import { For, Show } from "solid-js";
 
 const CourseCoursework = () => {
     const params = useParams<{ courseId: string }>();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const quizzes = createAsyncCached(() => getQuizzes(params.courseId), {
         keys: () => ["quizzes", params.courseId],
@@ -23,6 +23,9 @@ const CourseCoursework = () => {
         keys: () => ["assignments", params.courseId],
     });
 
+    const searchParamItemId = () =>
+        Array.isArray(searchParams.id) ? searchParams.id[0] : searchParams.id;
+
     const courseWorkItems = () => {
         const items = [
             assignments()?.map((assignment) => ({
@@ -31,17 +34,45 @@ const CourseCoursework = () => {
                     <AssignmentItem
                         assignment={assignment}
                         courseId={params.courseId}
-                        defaultModalOpen={
-                            (Array.isArray(searchParams.id)
-                                ? searchParams.id?.at(0)
-                                : searchParams.id) === assignment.id
-                        }
+                        defaultModalOpen={searchParamItemId() === assignment.id}
+                        onModalOpenChange={(isOpen) => {
+                            if (isOpen) {
+                                setSearchParams({
+                                    ...searchParams,
+                                    id: assignment.id,
+                                });
+                            } else {
+                                setSearchParams({
+                                    ...searchParams,
+                                    id: undefined,
+                                });
+                            }
+                        }}
                     />
                 ),
             })),
             quizzes()?.map((quiz) => ({
                 dueDate: new Date(quiz.dueDate ?? ""),
-                eln: <QuizItem quiz={quiz} courseId={params.courseId} />,
+                eln: (
+                    <QuizItem
+                        quiz={quiz}
+                        courseId={params.courseId}
+                        defaultModalOpen={searchParamItemId() === quiz.id}
+                        onModalOpenChange={(isOpen) => {
+                            if (isOpen) {
+                                setSearchParams({
+                                    ...searchParams,
+                                    id: quiz.id,
+                                });
+                            } else {
+                                setSearchParams({
+                                    ...searchParams,
+                                    id: undefined,
+                                });
+                            }
+                        }}
+                    />
+                ),
             })),
         ].flat();
 

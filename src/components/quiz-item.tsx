@@ -21,6 +21,7 @@ import {
     Clock,
     HelpCircle,
     Link2,
+    Link2Icon,
     Play,
     RotateCcw,
 } from "lucide-solid";
@@ -31,6 +32,7 @@ interface QuizItemProps {
     quiz: IQuizInfo;
     courseId: string;
     defaultModalOpen?: boolean;
+    onModalOpenChange?: (open: boolean) => void;
 }
 
 // Status Icon Component
@@ -57,6 +59,7 @@ const ActionButton: Component<{
     quizName?: string;
     courseId: string;
     defaultModalOpen?: boolean;
+    onModalOpenChange?: (open: boolean) => void;
 }> = (props) => {
     const QuizModal = (props: {
         triggerContent: JSX.Element;
@@ -65,8 +68,9 @@ const ActionButton: Component<{
         quizId: string;
         quizName?: string;
         courseId: string;
+        onModalOpenChange?: (open: boolean) => void;
     }) => (
-        <ContentModal defaultOpen={props.defaultOpen}>
+        <ContentModal defaultOpen={props.defaultOpen} onOpenChange={props.onModalOpenChange}>
             <ContentModalTrigger as={Button<"button">} variant={props.variant} size="sm">
                 {props.triggerContent}
             </ContentModalTrigger>
@@ -79,15 +83,29 @@ const ActionButton: Component<{
     );
 
     const commonModalProps = {
-        quizId: props.quizId!,
+        quizId: props.quizId!, // HACK: quizId should required; else disable button
         quizName: props.quizName,
         courseId: props.courseId,
         defaultOpen: props.defaultModalOpen,
+        onModalOpenChange: props.onModalOpenChange,
     } as const;
 
     return (
         <>
-            <Show when={!props.isPastEndDate}>
+            <Show
+                when={!props.isPastEndDate}
+                fallback={
+                    <QuizModal
+                        triggerContent={
+                            <>
+                                <Link2Icon class="mr-2 h-4 w-4" /> View Quiz
+                            </>
+                        }
+                        variant="default"
+                        {...commonModalProps}
+                    />
+                }
+            >
                 <Switch>
                     <Match when={props.status === "in-progress"}>
                         <QuizModal
@@ -311,6 +329,7 @@ const QuizItem: Component<QuizItemProps> = (props) => {
                             quizId={props.quiz.id}
                             quizName={props.quiz.name}
                             defaultModalOpen={props.defaultModalOpen}
+                            onModalOpenChange={props.onModalOpenChange}
                         />
                         <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen())}>
                             <Show when={isOpen()} fallback={<ChevronDown class="h-4 w-4" />}>

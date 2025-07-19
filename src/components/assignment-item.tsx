@@ -32,6 +32,7 @@ interface AssignmentItemProps {
     assignment: IAssignment;
     courseId: string;
     defaultModalOpen?: boolean;
+    onModalOpenChange?: (open: boolean) => void;
 }
 
 // Status Icons Component
@@ -58,6 +59,7 @@ const ActionButton: Component<{
     groupId?: string;
     courseId: string;
     defaultModalOpen?: boolean;
+    onModalOpenChange?: (open: boolean) => void;
 }> = (props) => {
     const AssignmentModal = (props: {
         triggerContent: JSX.Element;
@@ -65,8 +67,9 @@ const ActionButton: Component<{
         title: string;
         variant: ComponentProps<typeof Button>["variant"];
         defaultOpen?: boolean;
+        onModalOpenChange?: (open: boolean) => void;
     }) => (
-        <ContentModal defaultOpen={props.defaultOpen}>
+        <ContentModal defaultOpen={props.defaultOpen} onOpenChange={props.onModalOpenChange}>
             <ContentModalTrigger as={Button<"button">} variant={props.variant} size="sm">
                 {props.triggerContent}
             </ContentModalTrigger>
@@ -80,6 +83,7 @@ const ActionButton: Component<{
             buildAssignmentSubmitUrl(props.courseId, props.assignmentId, props.groupId),
         title: props.assignmentName || "Assignment",
         defaultOpen: props.defaultModalOpen,
+        onModalOpenChange: props.onModalOpenChange,
     };
 
     const feedbackModalCommonProps = {
@@ -88,6 +92,7 @@ const ActionButton: Component<{
             buildAssignmentFeedbackUrl(props.courseId, props.assignmentId, props.groupId),
         title: (props.assignmentName || "Assignment") + " Feedback",
         defaultOpen: props.defaultModalOpen,
+        onModalOpenChange: props.onModalOpenChange,
     };
 
     return (
@@ -308,6 +313,7 @@ const AssignmentItem: Component<AssignmentItemProps> = (props) => {
                             status={props.assignment.status}
                             isPastEndDate={isPastEndDate()}
                             defaultModalOpen={props.defaultModalOpen}
+                            onModalOpenChange={props.onModalOpenChange}
                         />
                         <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen())}>
                             <Show when={isOpen()} fallback={<ChevronDown class="h-4 w-4" />}>
