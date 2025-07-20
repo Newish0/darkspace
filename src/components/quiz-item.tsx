@@ -212,7 +212,7 @@ const QuizDetails: Component<{ quiz: IQuizInfo }> = (props) => (
                         <li class="flex items-center">
                             <Calendar class="mr-2 h-4 w-4" />
                             {item.label}:{" "}
-                            {item.date ? formatDate(item.date, "MMM d, yyyy h:mm a") : "Unknown"}
+                            {item.date ? formatDate(item.date, "PPp") : "Unknown"}
                         </li>
                     </Show>
                 )}

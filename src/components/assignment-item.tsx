@@ -77,22 +77,24 @@ const ActionButton: Component<{
         </ContentModal>
     );
 
-    const nonFeedbackModalCommonProps = {
-        url:
-            props.assignmentId &&
-            buildAssignmentSubmitUrl(props.courseId, props.assignmentId, props.groupId),
-        title: props.assignmentName || "Assignment",
+    const modalCommonProps = {
         defaultOpen: props.defaultModalOpen,
         onModalOpenChange: props.onModalOpenChange,
     };
 
-    const feedbackModalCommonProps = {
+    const nonFeedbackModalProps = {
+        url:
+            props.assignmentId &&
+            buildAssignmentSubmitUrl(props.courseId, props.assignmentId, props.groupId),
+        title: props.assignmentName || "Assignment",
+    };
+
+    const feedbackModalProps = {
         url:
             props.assignmentId &&
             buildAssignmentFeedbackUrl(props.courseId, props.assignmentId, props.groupId),
         title: (props.assignmentName || "Assignment") + " Feedback",
         defaultOpen: props.defaultModalOpen,
-        onModalOpenChange: props.onModalOpenChange,
     };
 
     return (
@@ -106,7 +108,8 @@ const ActionButton: Component<{
                             </>
                         }
                         variant="link"
-                        {...nonFeedbackModalCommonProps}
+                        {...modalCommonProps}
+                        {...nonFeedbackModalProps}
                     />
                 </Match>
                 <Match when={props.status === "not-submitted" && !props.isPastEndDate}>
@@ -117,7 +120,8 @@ const ActionButton: Component<{
                             </>
                         }
                         variant="outline"
-                        {...nonFeedbackModalCommonProps}
+                        {...modalCommonProps}
+                        {...nonFeedbackModalProps}
                     />
                 </Match>
                 <Match when={props.status === "returned"}>
@@ -128,7 +132,8 @@ const ActionButton: Component<{
                             </>
                         }
                         variant="default"
-                        {...feedbackModalCommonProps}
+                        {...modalCommonProps}
+                        {...feedbackModalProps}
                     />
                 </Match>
             </Switch>

@@ -51,7 +51,7 @@ export default function NewsDisplay(props: { orgUnitId: string; news: NewsItem }
                     <CalendarIcon class="mr-1 h-4 w-4" />
                     <span>
                         {props.news.StartDate
-                            ? formatDate(props.news.StartDate, "MMM d, yyyy h:mm a")
+                            ? formatDate(props.news.StartDate, "PPp")
                             : "Unknown"}
                     </span>
                 </div>
