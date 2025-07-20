@@ -2,7 +2,7 @@ import { createAsyncCached } from "@/hooks/async-cached";
 import { getAssignments, IAssignment } from "@/services/BS/scraper/assignment";
 import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
 import { format as formatDate, isPast } from "date-fns";
-import { Component, createEffect, For, Match, Show, Switch } from "solid-js";
+import { Component, createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,18 @@ import {
     CheckCircleIcon,
     ClockIcon,
     XCircleIcon,
+    FilterXIcon,
 } from "lucide-solid";
+import { Button } from "./ui/button";
+
+import {
+    ContextMenu,
+    ContextMenuCheckboxItem,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuTrigger,
+} from "~/components/ui/context-menu";
 
 interface UpcomingItemProps {
     type: "assignment" | "quiz" | "calendar";
@@ -39,11 +50,10 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
     const dueDate = (): string | undefined => {
         if (props.type === "quiz" || props.type === "assignment") {
             const item = props.item as IAssignment | IQuizInfo;
-            return item.dueDate ? formatDate(item.dueDate, "MMM d, yyyy h:mm a") : "Unknown";
+            return item.dueDate ? formatDate(item.dueDate, "PPp") : "Unknown";
         } else if (props.type === "calendar") {
             const event = props.item as CalendarEvent;
-            if (event.eventType === "due")
-                return event.dueDate && formatDate(event.dueDate, "MMM d, yyyy h:mm a");
+            if (event.eventType === "due") return event.dueDate && formatDate(event.dueDate, "PPp");
         }
     };
 
@@ -206,6 +216,8 @@ interface UpcomingDisplayProps {
 }
 
 export default function UpcomingDisplay(props: UpcomingDisplayProps) {
+    const [showPast, setShowPast] = createSignal(false);
+
     const quizzes = createAsyncCached(() => getQuizzes(props.courseId), {
         keys: () => ["quizzes", props.courseId],
     });
@@ -218,7 +230,7 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
         keys: () => ["calendar-events", props.courseId],
     });
 
-    const upcoming = () => {
+    const allItems = () => {
         const assignmentItems =
             assignments()?.map((assignment) => ({
                 item: assignment,
@@ -247,8 +259,12 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
                 return new Date(aDate || "").getTime() - new Date(bDate || "").getTime();
             });
 
-        // Only show future items
-        return items.filter((item) => {
+        return items as Omit<UpcomingItemProps, "courseId">[];
+    };
+
+    // Filter down to only show future items or overdue items
+    const upcomingItems = () =>
+        allItems().filter((item) => {
             // Only show calendar events that are due in the future
             if (item.type === "calendar") {
                 const event = item.item as CalendarEvent;
@@ -263,24 +279,34 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
             return (
                 (assignmentOrQuiz.status !== "submitted" &&
                     assignmentOrQuiz.endDate &&
-                    !isPast(new Date(assignmentOrQuiz.endDate))) ||
-                !isPast(new Date(assignmentOrQuiz?.dueDate ?? ""))
+                    !isPast(assignmentOrQuiz.endDate)) ||
+                !isPast(assignmentOrQuiz?.dueDate ?? "")
             );
-        }) as Omit<UpcomingItemProps, "courseId">[]; // Need to be careful here with type since we are using `as`
-    };
+        });
 
     return (
-        <>
-            <div class="flex items-center text-base border-b">
-                <h2 class="text-xl font-bold px-4 py-2">Upcoming</h2>
-                <Badge variant={"secondary"}>{upcoming().length}</Badge>
-            </div>
+        <ContextMenu>
+            <ContextMenuTrigger class="h-full">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center text-base border-b">
+                        <h2 class="text-xl font-bold px-4 py-2">Upcoming</h2>
+                        <Badge variant={"secondary"}>{upcomingItems().length}</Badge>
+                    </div>
+                </div>
 
-            <div class="p-4 space-y-2 overflow-auto h-full">
-                <For each={upcoming()}>
-                    {(upcoming) => <UpcomingItem {...upcoming} courseId={props.courseId} />}
-                </For>
-            </div>
-        </>
+                <div class="p-4 space-y-2 overflow-auto h-full">
+                    <For each={showPast() ? allItems() : upcomingItems()}>
+                        {(upcoming, index) => (
+                            <UpcomingItem {...upcoming} courseId={props.courseId} />
+                        )}
+                    </For>
+                </div>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+                <ContextMenuCheckboxItem checked={showPast()} onChange={setShowPast}>
+                    Show Past
+                </ContextMenuCheckboxItem>
+            </ContextMenuContent>
+        </ContextMenu>
     );
 }
