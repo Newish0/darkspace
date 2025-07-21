@@ -2,18 +2,31 @@ import ControlledSuspense from "@/components/controlled-suspense";
 import DescriptionRenderer from "@/components/description-renderer";
 import ModuleContentList from "@/components/module-content-list";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { getModuleContent } from "@/services/BS/scraper/module-content";
 import { buildContentDownloadUrl, remapD2LUrl } from "@/services/BS/url";
 import { saveFileFromUrl } from "@/utils/file";
 import { remapHtmlUrls } from "@/utils/html";
+import { makePersisted } from "@solid-primitives/storage";
 import { useParams, useSearchParams } from "@solidjs/router";
-import { Show } from "solid-js";
+import { Grid3x3Icon, Rows2Icon } from "lucide-solid";
+import { createSignal, Show } from "solid-js";
 
 const Module = () => {
     const params = useParams();
     const [searchParams] = useSearchParams();
+
+    // FIXME: Key not reactive to page changes ==> stays with last layout used
+    const layoutPersistentKey = () =>
+        `course-${params.courseId}-module-${params.moduleId}-content-layout`;
+    const [moduleContentListLayout, setModuleContentListLayout] = makePersisted(
+        createSignal<"grid" | "list">("grid"),
+        {
+            name: layoutPersistentKey(),
+        }
+    );
 
     const moduleContent = createAsyncCached(
         () => getModuleContent(params.courseId, params.moduleId),
@@ -73,6 +86,20 @@ const Module = () => {
                     remapFunc={(html) => remapHtmlUrls(html, remapD2LUrl)}
                 />
 
+                <div class="flex justify-end mt-4 pb-2 border-b border-border">
+                    <ToggleGroup
+                        value={moduleContentListLayout()}
+                        onChange={setModuleContentListLayout}
+                    >
+                        <ToggleGroupItem value="grid" size="sm">
+                            <Grid3x3Icon class="w-4 h-4" />
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="list" size="sm">
+                            <Rows2Icon class="w-4 h-4" />
+                        </ToggleGroupItem>
+                    </ToggleGroup>
+                </div>
+
                 <div class="">
                     <ModuleContentList
                         items={moduleContent()?.topics}
@@ -82,6 +109,7 @@ const Module = () => {
                                 ? searchParams.topic?.at(0)
                                 : searchParams.topic
                         }
+                        layout={moduleContentListLayout()}
                     />
                 </div>
             </div>

@@ -21,6 +21,7 @@ import { buildContentDownloadUrl, remapD2LUrl } from "@/services/BS/url";
 import DescriptionRenderer from "./description-renderer";
 import { remapHtmlUrls } from "@/utils/html";
 import { saveFileFromUrl } from "@/utils/file";
+import { cn } from "@/lib/utils";
 
 const TopicModalWithTrigger = (props: {
     topic: IModuleTopic;
@@ -64,6 +65,7 @@ interface ModuleContentListProps {
     items?: IModuleTopic[];
     courseId: string;
     openedTopicId?: string;
+    layout?: "grid" | "list";
 }
 
 const ModuleContentList = (props: ModuleContentListProps) => {
@@ -94,7 +96,12 @@ const ModuleContentList = (props: ModuleContentListProps) => {
 
     return (
         <>
-            <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            <div
+                class={cn(
+                    "grid gap-2",
+                    props.layout === "list" ? "grid-cols-1" : "md:grid-cols-2 lg:grid-cols-3"
+                )}
+            >
                 <For each={props.items}>
                     {(item) => (
                         <Card class="flex flex-col">
