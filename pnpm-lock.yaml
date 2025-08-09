@@ -79,8 +79,8 @@ importers:
         version: 6.0.1
     devDependencies:
       '@crxjs/vite-plugin':
-        specifier: 2.0.0-beta.28
-        version: 2.0.0-beta.28
+        specifier: 2.1.0
+        version: 2.1.0
       '@types/dompurify':
         specifier: ^3.0.5
         version: 3.0.5
@@ -266,8 +266,8 @@ packages:
     peerDependencies:
       solid-js: ^1.8
 
-  '@crxjs/vite-plugin@2.0.0-beta.28':
-    resolution: {integrity: sha512-JUoB1431PvruQqVpxvJ5j6qh0NNx5sXafAXo+VltORtJQrS6wprI5QK4k6PLKV+WacsFuPLveM2ydBCEopU49w==}
+  '@crxjs/vite-plugin@2.1.0':
+    resolution: {integrity: sha512-7PkVsg9ar/QyXJvi9aHekrpWpxf6xHOH6bDQPfLbwsyAGzzmDrI5naXsJeNvQw6WPyHexQRk8gSwXmjfOyMmIg==}
 
   '@date-fns/tz@1.2.0':
     resolution: {integrity: sha512-LBrd7MiJZ9McsOgxqWX7AaxrDjcFVjWH/tIKJd7pnR7McaslGYOP1QmmiBXdJH/H/yLCT+rcQ7FaPBUxRGUtrg==}
@@ -1354,8 +1354,14 @@ packages:
     resolution: {integrity: sha512-Xa4Nw17FS9ApQFJ9umLiJS4orGjm7ZzwUrwamcGQuHSzDyth9boKDaycYdDcZDuqYATXw4HFXgaqWTctW/v1HA==}
     engines: {node: '>=16 || 14 >=14.18'}
 
+  pathe@2.0.3:
+    resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
+
   picocolors@1.1.0:
     resolution: {integrity: sha512-TQ92mBOW0l3LeMeyLV6mzy/kWr8lkd/hp3mTg7wYK7zJhuBStmGMBG0BdeDZS/dZx1IukaX6Bk11zcln25o1Aw==}
+
+  picocolors@1.1.1:
+    resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
@@ -2024,7 +2030,7 @@ snapshots:
       '@floating-ui/dom': 1.6.11
       solid-js: 1.9.4
 
-  '@crxjs/vite-plugin@2.0.0-beta.28':
+  '@crxjs/vite-plugin@2.1.0':
     dependencies:
       '@rollup/pluginutils': 4.2.1
       '@webcomponents/custom-elements': 1.6.0
@@ -2037,7 +2043,8 @@ snapshots:
       fs-extra: 10.1.0
       jsesc: 3.0.2
       magic-string: 0.30.12
-      picocolors: 1.1.0
+      pathe: 2.0.3
+      picocolors: 1.1.1
       react-refresh: 0.13.0
       rollup: 2.79.2
       rxjs: 7.5.7
@@ -3067,7 +3074,11 @@ snapshots:
       lru-cache: 10.4.3
       minipass: 7.1.2
 
+  pathe@2.0.3: {}
+
   picocolors@1.1.0: {}
+
+  picocolors@1.1.1: {}
 
   picomatch@2.3.1: {}
 
