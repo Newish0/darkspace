@@ -2,6 +2,8 @@ import { getSearchParam } from "./util";
 
 export const BASE_URL = "https://bright.uvic.ca";
 
+// Misc
+
 // Assignment URLs
 const ASSIGNMENT_SUBMIT_URL = `${BASE_URL}/d2l/lms/dropbox/user/folder_submit_files.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}`;
 const ASSIGNMENT_FEEDBACK_URL = `${BASE_URL}/d2l/lms/dropbox/user/folder_user_view_feedback.d2l?db={{ASSIGNMENT_ID}}&grpid={{GROUP_ID}}&ou={{COURSE_ID}}`;
@@ -12,7 +14,7 @@ const QUIZ_SUMMARY_URL = `${BASE_URL}/d2l/lms/quizzing/user/quiz_summary.d2l?qi=
 const QUIZ_LIST_URL = `${BASE_URL}/d2l/lms/quizzing/user/quizzes_list.d2l?ou={{COURSE_ID}}`;
 
 // Grade URLs
-const RUBRIC_URL = `${BASE_URL}/d2l/lms/grades/my_grades/activities_dialog.d2l?ou={{COURSE_ID}}&objectId={{OBJECT_ID}}&userId={{USER_ID}}&rubricId={{RUBRIC_ID}}`;
+const RUBRIC_URL = `${BASE_URL}/d2l/lms/grades/my_grades/activities_dialog.d2l?ou={{COURSE_ID}}&objectId={{OBJECT_ID}}`;
 const STATISTICS_URL = `${BASE_URL}/d2l/lms/grades/my_grades/statistics_dialog.d2l?ou={{COURSE_ID}}&objectId={{OBJECT_ID}}`;
 const GRADES_LIST_URL = `${BASE_URL}/d2l/lms/grades/my_grades/main.d2l?ou={{COURSE_ID}}`;
 const FINAL_GRADES_LIST_URL = `${BASE_URL}/d2l/lms/grades/general/grade_list_dialog_view.d2l?ou={{COURSE_ID}}&mode=4&d2l_body_type=5`;
@@ -167,13 +169,9 @@ export function buildQuizListUrl(courseId: string): string {
 export function buildRubricUrl(
     courseId: string,
     objectId: string,
-    userId: string,
-    rubricId: string
 ): string {
     return RUBRIC_URL.replace("{{COURSE_ID}}", courseId)
         .replace("{{OBJECT_ID}}", objectId)
-        .replace("{{USER_ID}}", userId)
-        .replace("{{RUBRIC_ID}}", rubricId);
 }
 
 /**

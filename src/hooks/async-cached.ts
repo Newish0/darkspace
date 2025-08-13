@@ -1,5 +1,5 @@
 import { createAsync } from "@solidjs/router";
-import { createEffect, createSignal } from "solid-js";
+import { createEffect, createSignal, onMount } from "solid-js";
 
 class AsyncCache {
     private readonly DB_NAME = "async-cache";
@@ -154,49 +154,29 @@ export function setAsyncCached<T>(keys: string[], value: T) {
 export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncCachedOptions) {
     const key = () => getKey(options.keys());
 
-    const [currentKey, setCurrentKey] = createSignal(key());
+    const [cachedData, setCachedData] = createSignal<T | null>(null);
 
-    // Workaround to force recreation of `createAsync`
-    const [renderCount, setRenderCount] = createSignal(0);
+    // FIXME:
 
-    // Recreate `createAsync` ONLY when the key changes
-    createEffect(() => {
-        if (key() !== currentKey()) {
-            setCurrentKey(key());
-
-            // force re-create createAsync data
-            setRenderCount(renderCount() + 1);
-        }
+    // Load cache whenever key changes
+    onMount(() => {
+        (async () => {
+            const cached = await asyncCache.get<T>(key());
+            if (cached) {
+                setCachedData(() => cached);
+            }
+        })();
     });
 
-    let lastFetchCachedValue: T | null = null;
-    const data = createAsync(
+    const latestData = createAsync(
         async () => {
-            const cachedValue = await asyncCache.get<T>(key());
-            if (cachedValue) {
-                // Schedule actual fetch for next tick for change comparison
-                setTimeout(async () => {
-                    // Get actual value and check if it has changed. Only re-create createAsync if changed
-                    const result = await fn();
-                    if (JSON.stringify(result) !== JSON.stringify(cachedValue)) {
-                        lastFetchCachedValue = result;
-                    }
+            // Get actual value and check if it has changed. Only re-create createAsync if changed
+            const result = await fn();
 
-                    // force update createAsync data
-                    setRenderCount(renderCount() + 1);
-                }, 0);
-
-                return cachedValue;
+            if (!cachedData() || JSON.stringify(result) !== JSON.stringify(cachedData())) {
+                await asyncCache.set<T>(key(), result);
+                setCachedData(null); // Force latestData to be shown instead of cachedData
             }
-
-            // Reuse the actual value fetched for change comparison if it exists. If not, fetch
-            const result = lastFetchCachedValue ?? (await fn());
-
-            // Only cache if result is null, undefined or empty string
-            if (result !== null && result !== undefined && result !== "") {
-                await asyncCache.set(key(), result);
-            }
-
             return result;
         },
         {
@@ -206,5 +186,5 @@ export function createAsyncCached<T>(fn: () => Promise<T>, options: CreateAsyncC
         }
     );
 
-    return data;
+    return () => cachedData() ?? latestData();
 }
