@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, Award, BookOpen, Library, Calculator, ChartLine } from "lucide-solid";
-import { Component, For, Match, Show, Suspense, Switch } from "solid-js";
+import { Component, createSignal, For, Match, Show, Suspense, Switch } from "solid-js";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
@@ -34,6 +34,8 @@ import {
     isComputableGradeValue,
     isNumericGradeObject,
 } from "@/services/BS/api/dtos/grades";
+import { makePersisted } from "@solid-primitives/storage";
+import NormalizedTextContrast from "./normalized-text-contrast";
 
 /* ---------- Base Types ---------- */
 
@@ -65,12 +67,6 @@ export type GradeCategory = {
 function isGradeCategory(value: any): value is GradeCategory {
     return value && typeof value === "object" && "childGrades" in value && "id" in value;
 }
-
-// type FinalGradeType = {
-//     calculatedScore?: GradeScore | null;
-//     adjustedScore?: GradeScore | null;
-//     categories: GradeCategoryType[];
-// };
 
 /* ---------- Components ---------- */
 
@@ -126,19 +122,20 @@ type ScoreDisplayProps = {
     gradeObjectId: string;
     displayedGrade: string;
     points?: {
-        numerator: number;
-        denominator: number;
+        numerator: number | null;
+        denominator: number | null;
     };
     weight?: {
-        numerator: number;
-        denominator: number;
+        numerator: number | null;
+        denominator: number | null;
     };
     isDropped?: boolean;
 };
 const ScoreDisplay: Component<ScoreDisplayProps> = (props) => {
     const getPercentage = (): number | undefined => {
         if (!props.points) return undefined;
-        if (props.points.denominator === 0) return undefined;
+        if (props.points.denominator === null || props.points.denominator === 0) return undefined;
+        if (props.points.numerator === null) return undefined;
         return (props.points.numerator / props.points.denominator) * 100;
     };
 
@@ -151,25 +148,27 @@ const ScoreDisplay: Component<ScoreDisplayProps> = (props) => {
                     <Switch>
                         <Match when={props.points && props.points.denominator}>
                             <p class="font-medium">
-                                {props.points?.numerator.toFixed(2)} /{" "}
-                                {props.points?.denominator.toFixed(2)}
+                                {props.points?.numerator?.toFixed(2) ?? "-"}
+                                {" / "}
+                                {props.points?.denominator?.toFixed(2) ?? "-"}
                             </p>
                         </Match>
                         <Match when={props.points}>
-                            <p class="font-medium">{props.points?.numerator.toFixed(2)}</p>
+                            <p class="font-medium">{props.points?.numerator?.toFixed(2) ?? "-"}</p>
                         </Match>
                     </Switch>
 
                     <Switch>
                         <Match when={props.weight && props.weight.denominator}>
                             <p class="text-muted-foreground text-xs">
-                                Weight: {props.weight?.numerator.toFixed(2)} /{" "}
-                                {props.weight?.denominator.toFixed(2)}
+                                Weight: {props.weight?.numerator?.toFixed(2) ?? "-"}
+                                {" / "}
+                                {props.weight?.denominator?.toFixed(2) ?? "-"}
                             </p>
                         </Match>
                         <Match when={props.weight}>
                             <p class="text-muted-foreground text-xs">
-                                Weight: {props.weight?.numerator.toFixed(2)}
+                                Weight: {props.weight?.numerator?.toFixed(2) ?? "-"}
                             </p>
                         </Match>
                     </Switch>
@@ -220,6 +219,18 @@ const GradeItemDisplay: Component<GradeItemDisplayProps> = (props) => {
                 <h4 class="text-sm font-medium flex items-center">
                     <BookOpen size={18} class="mr-2 text-primary" />
                     {props.grade.name}
+
+                    <Show when={props.grade.isBonus}>
+                        <Badge variant="secondary" class="ml-2">
+                            Bonus
+                        </Badge>
+                    </Show>
+
+                    <Show when={props.grade.excludeFromFinalGrade}>
+                        <Badge variant="destructive" class="ml-2">
+                            Excluded
+                        </Badge>
+                    </Show>
                 </h4>
                 <Show
                     when={
@@ -239,12 +250,12 @@ const GradeItemDisplay: Component<GradeItemDisplayProps> = (props) => {
                             gradeObjectId={props.grade.id}
                             displayedGrade={gradeValue().DisplayedGrade}
                             points={{
-                                numerator: gradeValue().PointsNumerator || 0,
-                                denominator: gradeValue().PointsDenominator || 0,
+                                numerator: gradeValue().PointsNumerator,
+                                denominator: gradeValue().PointsDenominator,
                             }}
                             weight={{
-                                numerator: gradeValue().WeightedNumerator || 0,
-                                denominator: gradeValue().WeightedDenominator || 0,
+                                numerator: gradeValue().WeightedNumerator,
+                                denominator: gradeValue().WeightedDenominator,
                             }}
                             isDropped={false} // TODO: add drop check logic
                         />
@@ -268,11 +279,16 @@ const GradeItemDisplay: Component<GradeItemDisplayProps> = (props) => {
                             >
                                 {(htmlOrText) => (
                                     <p class="text-sm font-light text-muted-foreground mt-1 ml-2">
-                                        <UnsafeHtml
-                                            unsafeHtml={remapHtmlUrls(htmlOrText(), remapD2LUrl)}
-                                            config={{ ADD_ATTR: ["target"] }}
-                                            class="markdown"
-                                        />
+                                        <NormalizedTextContrast>
+                                            <UnsafeHtml
+                                                unsafeHtml={remapHtmlUrls(
+                                                    htmlOrText(),
+                                                    remapD2LUrl
+                                                )}
+                                                config={{ ADD_ATTR: ["target"] }}
+                                                class="markdown"
+                                            />
+                                        </NormalizedTextContrast>
                                     </p>
                                 )}
                             </Show>
@@ -318,10 +334,27 @@ const GradeCategoryAccordionItem: Component<GradeCategoryAccordionItemProps> = (
     <AccordionItem value={props.category.id} class="border-b border-border last:border-b-0">
         <AccordionTrigger class="hover:no-underline">
             <div class="w-full space-y-4">
-                <h5 class="font-medium flex items-center">
-                    <Library size={22} class="mr-2 text-primary" />
-                    {props.category.name}
-                </h5>
+                <div class="flex justify-start gap-2 items-center">
+                    <h5 class="font-medium flex items-center">
+                        <Library size={22} class="mr-2 text-primary" />
+                        {props.category.name}
+                    </h5>
+                    <Show when={props.category.numberOfHighestToDrop}>
+                        {(n) => (
+                            <Badge variant={"destructive"} class="text-xs">
+                                Drop highest {n()}
+                            </Badge>
+                        )}
+                    </Show>
+                    <Show when={props.category.numberOfLowestToDrop}>
+                        {(n) => (
+                            <Badge variant={"destructive"} class="text-xs">
+                                Drop lowest {n()}
+                            </Badge>
+                        )}
+                    </Show>
+                </div>
+
                 {/* <Show when={props.gradeCategory.score}>{(s) => <ScoreDisplay {...s()!} />}</Show> */}
             </div>
         </AccordionTrigger>
@@ -346,12 +379,12 @@ type FinalGradeCardProps = {
     orgUnitId: string;
     displayedGrade: string;
     points?: {
-        numerator: number;
-        denominator: number;
+        numerator: number | null;
+        denominator: number | null;
     };
     weight?: {
-        numerator: number;
-        denominator: number;
+        numerator: number | null;
+        denominator: number | null;
     };
     comments?: string;
     finalGradeItems: (GradeItem | GradeCategory)[];
@@ -359,14 +392,18 @@ type FinalGradeCardProps = {
 const FinalGradeCard: Component<FinalGradeCardProps> = (props) => {
     const getPercentage = (): number | undefined => {
         if (!props.points) return undefined;
-        if (props.points.denominator === 0) return undefined;
+        if (props.points.denominator === null || props.points.denominator === 0) return undefined;
+        if (props.points.numerator === null) return undefined;
         return (props.points.numerator / props.points.denominator) * 100;
     };
 
     const weightAchievedText = (): string | undefined => {
         if (!props.weight) return "- / -";
-        if (props.weight.denominator === 0) return `${props.weight.numerator.toFixed(2)} / -`;
-        return `${props.weight.numerator.toFixed(2)} / ${props.weight.denominator.toFixed(2)}`;
+        return (
+            (props.weight.numerator?.toFixed(2) ?? "-") +
+            " / " +
+            (props.weight.denominator?.toFixed(2) ?? "-")
+        );
     };
 
     return (
@@ -458,6 +495,13 @@ type GradeDisplayProps = {
     orgUnitId: string;
 };
 const GradeDisplay: Component<GradeDisplayProps> = (props) => {
+    const [openGradeCategories, setOpenGradeCategories] = makePersisted(
+        createSignal<string[]>(props.items.filter(isGradeCategory).map((c) => c.id)),
+        {
+            name: `course-${props.orgUnitId}-open-grade-categories`,
+        }
+    );
+
     const finalGrade = createAsyncCached(
         async () => {
             const result = await gradesService.getMyFinalGradeValue(props.orgUnitId);
@@ -497,12 +541,12 @@ const GradeDisplay: Component<GradeDisplayProps> = (props) => {
                             orgUnitId={props.orgUnitId}
                             displayedGrade={fg().DisplayedGrade}
                             points={{
-                                denominator: fg().PointsDenominator || 0,
-                                numerator: fg().PointsNumerator || 0,
+                                denominator: fg().PointsDenominator,
+                                numerator: fg().PointsNumerator,
                             }}
                             weight={{
-                                denominator: fg().WeightedDenominator || 0,
-                                numerator: fg().WeightedNumerator || 0,
+                                denominator: fg().WeightedDenominator,
+                                numerator: fg().WeightedNumerator,
                             }}
                             comments={fg().Comments.Html || fg().Comments.Text}
                             finalGradeItems={finalGradeItems()}
@@ -522,7 +566,13 @@ const GradeDisplay: Component<GradeDisplayProps> = (props) => {
                             </div>
                         }
                     >
-                        <Accordion multiple={true} collapsible class="w-full">
+                        <Accordion
+                            multiple={true}
+                            collapsible
+                            value={openGradeCategories()}
+                            onChange={setOpenGradeCategories}
+                            class="w-full"
+                        >
                             <For each={props.items}>
                                 {(gradeOrCategory) =>
                                     isGradeCategory(gradeOrCategory) ? (

@@ -1,5 +1,6 @@
 import { Component, ComponentProps, Show } from "solid-js";
 import UnsafeHtml from "./unsafe-html";
+import NormalizedTextContrast from "./normalized-text-contrast";
 
 /** Renders the given html and/or text with remapping */
 const DescriptionRenderer: Component<{
@@ -19,10 +20,12 @@ const DescriptionRenderer: Component<{
             <div class="markdown">
                 <Show when={props.description?.html}>
                     {(html) => (
-                        <UnsafeHtml
-                            unsafeHtml={props.remapFunc ? props.remapFunc(html()) : html()}
-                            config={props.config}
-                        />
+                        <NormalizedTextContrast>
+                            <UnsafeHtml
+                                unsafeHtml={props.remapFunc ? props.remapFunc(html()) : html()}
+                                config={props.config}
+                            />
+                        </NormalizedTextContrast>
                     )}
                 </Show>
                 <Show when={props.showBothHtmlAndText && props.description?.text}>

@@ -10,6 +10,7 @@ import { formatFileSize } from "@/utils/format";
 import { Badge } from "./ui/badge";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import { Button } from "./ui/button";
+import NormalizedTextContrast from "./normalized-text-contrast";
 
 function FileAttachment(props: {
     orgUnitId: string;
@@ -50,20 +51,20 @@ export default function NewsDisplay(props: { orgUnitId: string; news: NewsItem }
                 <div class="flex items-center text-sm text-muted-foreground">
                     <CalendarIcon class="mr-1 h-4 w-4" />
                     <span>
-                        {props.news.StartDate
-                            ? formatDate(props.news.StartDate, "PPp")
-                            : "Unknown"}
+                        {props.news.StartDate ? formatDate(props.news.StartDate, "PPp") : "Unknown"}
                     </span>
                 </div>
             </div>
             <Separator class="my-2" />
-            <UnsafeHtml
-                unsafeHtml={remapHtmlUrls(props.news.Body.Html, remapD2LUrl)}
-                config={{
-                    ADD_ATTR: ["target"],
-                }}
-                class="markdown overflow-auto"
-            />
+            <NormalizedTextContrast>
+                <UnsafeHtml
+                    unsafeHtml={remapHtmlUrls(props.news.Body.Html, remapD2LUrl)}
+                    config={{
+                        ADD_ATTR: ["target"],
+                    }}
+                    class="markdown overflow-auto"
+                />
+            </NormalizedTextContrast>
 
             <div class="flex gap-1 mt-2">
                 <For each={props.news.Attachments}>
