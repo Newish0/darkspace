@@ -1,43 +1,95 @@
-import { buildNewsUrl } from "../url";
+// NewsService.ts
 
-// Type for D2L ID
-type D2LID = number;
+import { NewsItem } from "./dtos/news";
+import { ApiError } from "./dtos/api";
+import { Result, ok, err } from "neverthrow";
+import { D2lApiService } from "./d2l-api-service";
 
-// Type for File attachment
-export interface FileAttachment {
-    FileId: D2LID;
-    FileName: string;
-    Size: number; // Changed from FileSize to Size based on actual response
-}
+export class NewsService extends D2lApiService {
+    /**
+     * Fetch all news items for a given org unit.
+     */
+    public async getNewsItems(orgUnitId: string): Promise<Result<NewsItem[], ApiError>> {
+        try {
+            const url = this.urlBuilder.buildNewsUrl(orgUnitId);
+            const res = await fetch(url);
 
-// Type for Rich Text
-interface RichText {
-    Text: string;
-    Html: string;
-}
+            if (!res.ok) {
+                return err({
+                    status: res.status,
+                    statusText: res.statusText,
+                    message: "Failed to fetch news items",
+                });
+            }
 
-// Main News Item interface
-export interface NewsItem {
-    Id: D2LID;
-    IsHidden: boolean;
-    Attachments: FileAttachment[];
-    Title: string;
-    Body: RichText;
-    StartDate: string | null; // UTCDateTime
-    EndDate: string | null; // UTCDateTime
-    IsGlobal: boolean;
-    IsPublished: boolean;
-    ShowOnlyInCourseOfferings: boolean;
-}
-
-export async function getNewsItems(orgUnitId: string, leVersion = "1.9"): Promise<NewsItem[]> {
-    const url = buildNewsUrl(orgUnitId, leVersion);
-
-    const res = await fetch(url);
-    if (!res.ok) {
-        throw new Error(`Failed to fetch news: ${res.statusText}`);
+            const data: NewsItem[] = await res.json();
+            return ok(data);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+            return err({
+                message: `Failed to fetch news items: ${errorMessage}`,
+            });
+        }
     }
-    const data = await res.json();
 
-    return data;
+    /**
+     * Fetch a single news item by ID.
+     */
+    public async getNewsItem(
+        orgUnitId: string,
+        newsId: string
+    ): Promise<Result<NewsItem, ApiError>> {
+        try {
+            const url = this.urlBuilder.buildNewsItemUrl(orgUnitId, newsId);
+            const res = await fetch(url);
+
+            if (!res.ok) {
+                return err({
+                    status: res.status,
+                    statusText: res.statusText,
+                    message: `Failed to fetch news item with ID ${newsId}`,
+                });
+            }
+
+            const data: NewsItem = await res.json();
+            return ok(data);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+            return err({
+                message: `Failed to fetch news item ${newsId}: ${errorMessage}`,
+            });
+        }
+    }
+
+    /**
+     * Fetch a news attachment by ID.
+     */
+    public async getNewsAttachment(
+        orgUnitId: string,
+        newsId: string,
+        attachmentId: string
+    ): Promise<Result<Blob, ApiError>> {
+        try {
+            const url = this.urlBuilder.buildNewsItemAttachmentUrl(orgUnitId, newsId, attachmentId);
+            const res = await fetch(url);
+
+            if (!res.ok) {
+                return err({
+                    status: res.status,
+                    statusText: res.statusText,
+                    message: `Failed to fetch news attachment for news item with ID ${newsId}`,
+                });
+            }
+
+            const data: Blob = await res.blob();
+            return ok(data);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+            return err({
+                message: `Failed to fetch news attachment for news item ${newsId}: ${errorMessage}`,
+            });
+        }
+    }
 }
+
+export const newsService = new NewsService();

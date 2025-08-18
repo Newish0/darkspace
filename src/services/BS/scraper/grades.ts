@@ -122,7 +122,7 @@ function getFeedback(row: HTMLTableRowElement, courseId: string) {
     const numbers = rubricOnClick?.match(/\d+/g);
     if (numbers && numbers.length === 3) {
         const [objectId, userId, rubricId] = numbers;
-        rubricUrl = buildRubricUrl(courseId, objectId, userId, rubricId);
+        rubricUrl = buildRubricUrl(courseId, objectId);
     }
 
     return { comments, rubricUrl } as const;

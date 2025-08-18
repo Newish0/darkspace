@@ -7,7 +7,8 @@ import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
 import { CourseContent, getUnstableCourseContent } from "./BS/api/unstable-module";
 import { getCourseModules, IModule } from "./BS/scraper/course-modules";
 import { D2LActivityFeedFetcher } from "./BS/scraper/notification";
-import { getNewsItems, NewsItem } from "./BS/api/news";
+import { newsService } from "./BS/api/news";
+import { NewsItem } from "./BS/api/dtos/news";
 
 export const initPreloadContentOnNotification = (courseId: string) => {
     const fetcher = D2LActivityFeedFetcher.create(courseId, 0);
@@ -30,7 +31,7 @@ export const initPreloadContentOnNotification = (courseId: string) => {
 export const preloadCourseContent = async (courseId: string) => {
     const modules = await getCourseModules(courseId);
     setAsyncCached(["course-modules", courseId], modules);
-    const announcements = await getNewsItems(courseId);
+    const announcements = await newsService.getNewsItems(courseId);
     setAsyncCached(["announcements", courseId], announcements);
 
     const assignments = await getAssignments(courseId);

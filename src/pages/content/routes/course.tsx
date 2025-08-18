@@ -2,7 +2,9 @@ import ControlledSuspense from "@/components/controlled-suspense";
 import CourseHome from "@/components/course-home";
 import NewsDisplay from "@/components/news-display";
 import { createAsyncCached } from "@/hooks/async-cached";
-import { getNewsItems, NewsItem } from "@/services/BS/api/news";
+import { NewsItem } from "@/services/BS/api/dtos/news";
+import { newsService } from "@/services/BS/api/news";
+import { asThrowable } from "@/utils/error";
 import { useParams } from "@solidjs/router";
 import { MessageSquareXIcon } from "lucide-solid";
 import { For, Show } from "solid-js";
@@ -10,9 +12,12 @@ import { For, Show } from "solid-js";
 const Course = () => {
     const params = useParams();
 
-    const courseAnnouncements = createAsyncCached(() => getNewsItems(params.courseId), {
-        keys: () => ["announcements", params.courseId],
-    });
+    const courseAnnouncements = createAsyncCached(
+        () => asThrowable(newsService.getNewsItems(params.courseId)),
+        {
+            keys: () => ["announcements", params.courseId],
+        }
+    );
 
     return (
         <>

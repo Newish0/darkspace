@@ -1,3 +1,5 @@
+import { D2lApiService } from "./d2l-api-service";
+import { ApiError } from "./dtos/api";
 import {
     BaseGradeObjectCategory,
     GradeObject,
@@ -5,35 +7,11 @@ import {
     GradeValue,
     isGradeObject,
 } from "./dtos/grades";
-import { urlBuilder as defaultUrlBuilder } from "./url-builder";
-import { Result, ok, err, ResultAsync } from "neverthrow";
+import { Result, ok, err } from "neverthrow";
 
 type GradeObjectWithMyGradeValue = GradeObject & { MyGradeValue: GradeValue | null };
 
-type ApiResponseError = {
-    status: number;
-    statusText: string;
-    message: string;
-    data?: unknown;
-};
-
-type UnknownError = {
-    message: string;
-};
-
-type ApiError = ApiResponseError | UnknownError;
-
-function isApiResponseError(error: ApiError): error is ApiResponseError {
-    return "status" in error && "statusText" in error && "message" in error;
-}
-
-export class GradesService {
-    private urlBuilder = defaultUrlBuilder;
-
-    public constructor(urlBuilder = defaultUrlBuilder) {
-        this.urlBuilder = urlBuilder;
-    }
-
+export class GradesService extends D2lApiService {
     /**
      * Gets all grades, grouped into a category object if grade is in a category (ID is not 0)
      */
@@ -49,8 +27,6 @@ export class GradesService {
 
         const grades = gradesResult.value;
         const categories: GradeObjectCategory[] = categoriesResult.unwrapOr([]);
-
-        console.log("categories", categories);
 
         const categorizedGrades: (GradeObjectCategory | GradeObject)[] = [];
         for (const grade of grades) {
@@ -84,8 +60,6 @@ export class GradesService {
                         WeightDistributionType: null,
                     };
 
-                    console.log("category", category);
-
                     categorizedGrades.push({
                         ...category,
                         Grades: [grade],
@@ -93,8 +67,6 @@ export class GradesService {
                 }
             }
         }
-
-        console.log(categorizedGrades);
 
         return ok(categorizedGrades);
     }

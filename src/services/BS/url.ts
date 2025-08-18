@@ -30,35 +30,6 @@ const CONTENT_DOWNLOAD_URL = `${BASE_URL}/d2l/le/content/{{COURSE_ID}}/topics/fi
 const CALENDAR_SUB_URL = `${BASE_URL}/d2l/le/calendar/6606/subscribe/subscribeDialogLaunch?subscriptionOptionId=-1`;
 const CALENDAR_FEED_URL = `${BASE_URL}/d2l/le/calendar/feed/user/feed.ics?token={{TOKEN}}`;
 
-// News URLs
-const NEWS_URL = `${BASE_URL}/d2l/api/le/{{LE_VERSION}}/{{ORG_UNIT_ID}}/news/`;
-const NEWS_ITEM_URL = `${BASE_URL}/d2l/api/le/{{LE_VERSION}}/{{ORG_UNIT_ID}}/news/{{NEWS_ID}}`;
-const NEWS_ITEM_ATTACHMENT_URL = `${BASE_URL}/d2l/api/le/{{LE_VERSION}}/{{ORG_UNIT_ID}}/news/{{NEWS_ID}}/attachments/{{ATTACHMENT_ID}}`;
-
-/**
- * Build the URL for getting the announcements (news) for a course (Org Unit)
- * @returns The URL
- */
-export function buildNewsUrl(orgUnitId: string, leVersion = "1.9"): string {
-    return NEWS_URL.replace("{{LE_VERSION}}", leVersion).replace("{{ORG_UNIT_ID}}", orgUnitId);
-}
-
-/**
- * Build the URL for getting downloading one of the attachment for a news item
- * @returns the URL
- */
-export function buildNewsItemAttachmentUrl(
-    orgUnitId: string,
-    newsId: string,
-    attachmentId: string,
-    leVersion = "1.9"
-): string {
-    return NEWS_ITEM_ATTACHMENT_URL.replace("{{LE_VERSION}}", leVersion)
-        .replace("{{ORG_UNIT_ID}}", orgUnitId)
-        .replace("{{NEWS_ID}}", newsId)
-        .replace("{{ATTACHMENT_ID}}", attachmentId);
-}
-
 /**
  * Builds the URL for subscribing to the calendar
  */
@@ -166,12 +137,8 @@ export function buildQuizListUrl(courseId: string): string {
  * @param userId - The user ID
  * @param rubricId - The rubric ID
  */
-export function buildRubricUrl(
-    courseId: string,
-    objectId: string,
-): string {
-    return RUBRIC_URL.replace("{{COURSE_ID}}", courseId)
-        .replace("{{OBJECT_ID}}", objectId)
+export function buildRubricUrl(courseId: string, objectId: string): string {
+    return RUBRIC_URL.replace("{{COURSE_ID}}", courseId).replace("{{OBJECT_ID}}", objectId);
 }
 
 /**

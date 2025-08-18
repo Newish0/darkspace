@@ -115,3 +115,9 @@ export type RichText = {
 };
 
 export type RichTextInput = RichText; // We don't care for now.
+
+export type FileAttachment = {
+    FileId: D2LID;
+    FileName: string;
+    Size: number /** Field is `FileSize` in API Documentation but actual response is `Size` (tested for LE 1.85 - 1.9) */;
+};

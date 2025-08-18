@@ -1,16 +1,17 @@
+import { FileAttachment as NewsFileAttachment } from "@/services/BS/api/dtos/common";
+import { NewsItem } from "@/services/BS/api/dtos/news";
+import { urlBuilder } from "@/services/BS/api/url-builder";
+import { remapD2LUrl } from "@/services/BS/url";
+import { formatFileSize } from "@/utils/format";
+import { remapHtmlUrls } from "@/utils/html";
 import { formatDate } from "date-fns";
-import { CalendarIcon, File, Link2 } from "lucide-solid";
+import { CalendarIcon, File } from "lucide-solid";
+import { For, Show } from "solid-js";
+import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
+import NormalizedTextContrast from "./normalized-text-contrast";
+import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
 import UnsafeHtml from "./unsafe-html";
-import { remapHtmlUrls } from "@/utils/html";
-import { NewsItem, FileAttachment as NewsFileAttachment } from "@/services/BS/api/news";
-import { buildNewsItemAttachmentUrl, remapD2LUrl } from "@/services/BS/url";
-import { For, Show } from "solid-js";
-import { formatFileSize } from "@/utils/format";
-import { Badge } from "./ui/badge";
-import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
-import { Button } from "./ui/button";
-import NormalizedTextContrast from "./normalized-text-contrast";
 
 function FileAttachment(props: {
     orgUnitId: string;
@@ -18,7 +19,7 @@ function FileAttachment(props: {
     attachment: NewsFileAttachment;
 }) {
     const attachmentUrl = () =>
-        buildNewsItemAttachmentUrl(
+        urlBuilder.buildNewsItemAttachmentUrl(
             props.orgUnitId,
             props.newsId,
             props.attachment.FileId.toString()
