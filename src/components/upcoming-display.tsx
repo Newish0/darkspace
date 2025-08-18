@@ -28,6 +28,7 @@ import {
     ContextMenuSeparator,
     ContextMenuTrigger,
 } from "~/components/ui/context-menu";
+import { makePersisted } from "@solid-primitives/storage";
 
 interface UpcomingItemProps {
     type: "assignment" | "quiz" | "calendar";
@@ -216,7 +217,13 @@ interface UpcomingDisplayProps {
 }
 
 export default function UpcomingDisplay(props: UpcomingDisplayProps) {
-    const [showPast, setShowPast] = createSignal(false);
+    const [showPast, setShowPast] = makePersisted(createSignal(false), {
+        name: `course-${props.courseId}-show-past`,
+    });
+    const [hideMatchedCalenderEvents, setHideMatchedCalenderEvents] = makePersisted(
+        createSignal(true),
+        { name: `course-${props.courseId}-hide-matched-calendar-events` }
+    );
 
     const quizzes = createAsyncCached(() => getQuizzes(props.courseId), {
         keys: () => ["quizzes", props.courseId],
@@ -246,6 +253,15 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
 
                 // Only topics and unknown because assignments and quizzes are handled above
                 ?.filter((event) => event.itemType === "topic" || event.itemType === "unknown")
+
+                // Ignore events that have the same name as some assignment or quiz if hideMatchedCalenderEvents is true
+                ?.filter((event) => {
+                    if (!hideMatchedCalenderEvents()) return true;
+
+                    const hasAssignment = assignmentItems.some((a) => a.item.name === event.name);
+                    const hasQuiz = quizItems.some((q) => q.item.name === event.name);
+                    return !(hasAssignment || hasQuiz);
+                })
 
                 // convert to upcoming item
                 .map((event) => ({ item: event, type: "calendar" })) ?? [];
@@ -305,6 +321,12 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
             <ContextMenuContent>
                 <ContextMenuCheckboxItem checked={showPast()} onChange={setShowPast}>
                     Show Past
+                </ContextMenuCheckboxItem>
+                <ContextMenuCheckboxItem
+                    checked={hideMatchedCalenderEvents()}
+                    onChange={setHideMatchedCalenderEvents}
+                >
+                    Hide Matched Calendar Events
                 </ContextMenuCheckboxItem>
             </ContextMenuContent>
         </ContextMenu>
