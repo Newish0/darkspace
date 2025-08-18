@@ -5,7 +5,7 @@ import { remapD2LUrl } from "@/services/BS/url";
 import { formatFileSize } from "@/utils/format";
 import { remapHtmlUrls } from "@/utils/html";
 import { formatDate } from "date-fns";
-import { CalendarIcon, File } from "lucide-solid";
+import { CalendarIcon, File, PinIcon } from "lucide-solid";
 import { For, Show } from "solid-js";
 import { ContentModal, ContentModalContent, ContentModalTrigger } from "./content-modal";
 import NormalizedTextContrast from "./normalized-text-contrast";
@@ -48,7 +48,15 @@ export default function NewsDisplay(props: { orgUnitId: string; news: NewsItem }
     return (
         <>
             <div class="flex flex-wrap justify-between items-center">
-                <h3 class="text-xl font-medium">{props.news.Title}</h3>
+                <h3 class="text-xl font-medium">
+                    <Show when={props.news.IsPinned}>
+                        <Badge class="mr-2 p-1">
+                            <PinIcon class="w-4 h-4" />
+                        </Badge>
+                    </Show>
+
+                    {props.news.Title}
+                </h3>
                 <div class="flex items-center text-sm text-muted-foreground">
                     <CalendarIcon class="mr-1 h-4 w-4" />
                     <span>

@@ -34,6 +34,15 @@ const Course = () => {
 };
 
 function AnnouncementList(props: { courseId: string; announcements?: NewsItem[] }) {
+    const pinned = () =>
+        props.announcements
+            ?.filter((a) => a.IsPinned)
+            .toSorted((a, b) => b.PinnedDate?.localeCompare(a.PinnedDate ?? "") ?? 0) ?? [];
+
+    const unpinned = () => props.announcements?.filter((a) => !a.IsPinned) ?? [];
+
+    const sorted = () => [...pinned(), ...unpinned()];
+
     return (
         <>
             <h2 class="text-xl font-bold border-b px-4 py-2">Announcements</h2>
@@ -46,7 +55,7 @@ function AnnouncementList(props: { courseId: string; announcements?: NewsItem[] 
             </Show>
 
             <div class="h-full flex-shrink-1 overflow-auto p-4 space-y-4">
-                <For each={props.announcements}>
+                <For each={sorted()}>
                     {(a) => (
                         <div class="rounded-lg border p-4">
                             <NewsDisplay news={a} orgUnitId={props.courseId} />
