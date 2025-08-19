@@ -54,5 +54,12 @@ export default defineConfig({
 
     build: {
         target: "es2022",
+        
+        rollupOptions: {
+            input: {
+                // Standalone custom pages 
+                planner: "src/pages/planner/index.html", 
+            },
+        },
     },
 });

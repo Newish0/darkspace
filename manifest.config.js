@@ -5,6 +5,12 @@ export default defineManifest({
     manifest_version: 3,
     name: pkg.displayName,
     version: pkg.version,
+    permissions: [
+        "cookies",
+    ],
+    host_permissions: [
+        "https://banner.uvic.ca/*"
+    ],
     icons: {
         "16": "icon/16.png",
         "32": "icon/32.png",

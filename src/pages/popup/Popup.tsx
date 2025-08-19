@@ -6,7 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
 
-const iconUrl = browser.runtime.getURL(icon);
+const coursePlannerUrl = browser.runtime.getURL("src/pages/planner/index.html");
 
 export default function Popup() {
     const storageManager = createLocalStorageManager("vite-ui-theme");
@@ -25,6 +25,10 @@ export default function Popup() {
                             Brightspace reimagined; an alternative frontend built with sanity in
                             mind.
                         </p>
+                    </div>
+
+                    <div>
+                        <a href={coursePlannerUrl}>Course Planner</a>
                     </div>
 
                     <div class="flex items-center justify-between mt-4 pt-2 border-t border-border">
