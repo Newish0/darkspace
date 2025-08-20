@@ -80,27 +80,21 @@ function NavContent() {
                                             fallback={<p>Loading...</p>}
                                         >
                                             <For each={filteredEnrollments()}>
-                                                {(course) => {
-                                                    const href = `/courses/${course.id}`;
-                                                    const match = useMatch(() => href);
-                                                    return (
-                                                        <Tooltip openDelay={1000}>
-                                                            <TooltipTrigger
-                                                                as={"a"}
-                                                                href={href}
-                                                                class={cn(
-                                                                    "block text-sm p-2 rounded-md truncate",
-                                                                    match() ? "bg-muted" : ""
-                                                                )}
-                                                            >
-                                                                {course.name}
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                {course.name}
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    );
-                                                }}
+                                                {(course) => (
+                                                    <Tooltip openDelay={1000}>
+                                                        <TooltipTrigger
+                                                            as={A}
+                                                            href={`/courses/${course.id}`}
+                                                            class="block text-sm p-2 rounded-md truncate"
+                                                            activeClass="bg-muted"
+                                                        >
+                                                            {course.name}
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            {course.name}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                )}
                                             </For>
 
                                             <Show when={!showAllCourses()}>
