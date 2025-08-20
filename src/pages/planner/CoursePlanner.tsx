@@ -5,10 +5,9 @@ import browser from "webextension-polyfill";
 import { buttonVariants } from "@/components/ui/button";
 import { CourseScraper } from "@/services/course-scraper";
 import { ExtensionFetchHttpClient } from "@/services/course-scraper/ExtensionFetchHttpClient";
+import { CourseScheduler } from "@/components/course-planner/course-scheduler";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
-
-const iconUrl = browser.runtime.getURL(icon);
 
 export default function CoursePlanner() {
     const storageManager = createLocalStorageManager("vite-ui-theme");
@@ -19,9 +18,7 @@ export default function CoursePlanner() {
         <>
             <ColorModeScript storageType={storageManager.type} />
             <ColorModeProvider storageManager={storageManager}>
-                <div class="bg-background text-foreground p-4 w-72 rounded-lg shadow-lg">
-                    PLANNER
-                </div>
+                <CourseScheduler />
             </ColorModeProvider>
         </>
     );

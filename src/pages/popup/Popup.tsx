@@ -27,8 +27,14 @@ export default function Popup() {
                         </p>
                     </div>
 
-                    <div>
-                        <a href={coursePlannerUrl}>Course Planner</a>
+                    <div class="space-y-2 w-full my-4">
+                        <a
+                            href={coursePlannerUrl}
+                            target="_blank"
+                            class="block p-2 w-full rounded-md bg-background text-foreground hover:bg-accent"
+                        >
+                            Course Planner
+                        </a>
                     </div>
 
                     <div class="flex items-center justify-between mt-4 pt-2 border-t border-border">
