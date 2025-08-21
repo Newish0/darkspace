@@ -1,24 +1,36 @@
 import { ColorModeProvider, ColorModeScript, createLocalStorageManager } from "@kobalte/core";
-import { Separator } from "@/components/ui/separator";
-import icon from "@/../public/icon/128.png";
-import browser from "webextension-polyfill";
-import { buttonVariants } from "@/components/ui/button";
-import { CourseScraper } from "@/services/course-scraper";
-import { ExtensionFetchHttpClient } from "@/services/course-scraper/ExtensionFetchHttpClient";
-import { CourseScheduler } from "@/components/course-planner/course-scheduler";
+
+import { HashRouter, RouteDefinition } from "@solidjs/router";
+
+import RootLayout from "./RootLayout";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
 
+const routes: RouteDefinition = {
+    path: "/",
+    component: RootLayout,
+    // children: [
+    //     {
+    //         path: "/",
+    //         component: lazy(() => import("./routes/home")),
+    //     },
+    // ],
+};
+
 export default function CoursePlanner() {
-    const storageManager = createLocalStorageManager("vite-ui-theme");
-    const scraper = new CourseScraper(new ExtensionFetchHttpClient());
-    scraper.scrapeCourses("202509").then((courses) => console.log(courses));
+    const storageManager = createLocalStorageManager("darkspace-ui-theme");
+
+    // const [courses] = createResource(async () => {
+    //     const scraper = new CourseScraper(new ExtensionFetchHttpClient());
+    //     return await scraper.scrapeCourses("202509");
+    // });
 
     return (
         <>
             <ColorModeScript storageType={storageManager.type} />
             <ColorModeProvider storageManager={storageManager}>
-                <CourseScheduler />
+                {/* <CourseScheduler courses={courses() || []} /> */}
+                <HashRouter>{routes}</HashRouter>
             </ColorModeProvider>
         </>
     );

@@ -9,7 +9,7 @@ const VERSION = __APP_ENV__.VERSION || "unknown";
 const coursePlannerUrl = browser.runtime.getURL("src/pages/planner/index.html");
 
 export default function Popup() {
-    const storageManager = createLocalStorageManager("vite-ui-theme");
+    const storageManager = createLocalStorageManager("darkspace-ui-theme");
     return (
         <>
             <ColorModeScript storageType={storageManager.type} />

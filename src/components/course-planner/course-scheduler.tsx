@@ -13,15 +13,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Filter, Calendar, Clock, Users, MapPin, Plus, Minus, Info } from "lucide-solid";
-import { mockCourses } from "@/lib/mock-data";
 import { SchedulePreview } from "@/components/course-planner/schedule-preview";
 import { OptimalScheduleDialog } from "@/components/course-planner/optimal-schedule-dialog";
 import { CourseDetailsModal } from "@/components/course-planner/course-details-modal";
 import { TextField, TextFieldInput } from "@/components/ui/text-field";
 import { ICourse, IMeetingTime } from "@/services/course-scraper/types";
 import { Label } from "../ui/label";
+import { cn } from "@/lib/utils";
 
-export function CourseScheduler() {
+export function CourseScheduler(props: { courses: ICourse[] }) {
     const [searchTerm, setSearchTerm] = createSignal("");
     const [selectedSubject, setSelectedSubject] = createSignal<string>("all");
     const [selectedCreditHours, setSelectedCreditHours] = createSignal<string>("all");
@@ -35,21 +35,21 @@ export function CourseScheduler() {
 
     // Get unique subjects for filter
     const subjects = createMemo(() => {
-        const subjectSet = new Set(mockCourses.map((course) => course.subject));
+        const subjectSet = new Set(props.courses.map((course) => course.subject));
         return Array.from(subjectSet).sort();
     });
 
     // Get unique instruction methods for filter
     const instructionMethods = createMemo(() => {
         const methodSet = new Set(
-            mockCourses.map((course) => course.instructionalMethodDescription)
+            props.courses.map((course) => course.instructionalMethodDescription)
         );
         return Array.from(methodSet).sort();
     });
 
     // Filter and sort courses
     const filteredCourses = createMemo(() => {
-        const filtered = mockCourses.filter((course) => {
+        const filtered = props.courses.filter((course) => {
             const search = searchTerm().toLowerCase();
             const matchesSearch =
                 course.courseTitle.toLowerCase().includes(search) ||
@@ -236,7 +236,7 @@ export function CourseScheduler() {
                             </span>
                             <OptimalScheduleDialog
                                 onScheduleGenerated={setSelectedCourses}
-                                availableCourses={mockCourses}
+                                availableCourses={props.courses}
                             />
                         </CardTitle>
                     </CardHeader>
@@ -349,8 +349,7 @@ interface CourseCardProps {
 }
 
 function CourseCard(props: CourseCardProps) {
-    const { course, isSelected, onAdd, onRemove, onShowDetails } = props;
-    const faculty = course.faculty[0];
+    const faculty = props.course.faculty[0];
 
     const formatTime = (time: string | null) => {
         if (!time) return "TBA";
@@ -385,50 +384,51 @@ function CourseCard(props: CourseCardProps) {
 
     return (
         <Card
-            class={`transition-all duration-200 hover:shadow-md ${
-                isSelected ? "ring-2 ring-primary" : ""
-            }`}
+            class={cn(
+                "transition-all duration-200 hover:shadow-md",
+                props.isSelected ? "ring-2 ring-primary" : ""
+            )}
         >
             <CardContent class="p-4">
                 <div class="flex items-start justify-between">
                     <div class="flex-1 space-y-2">
                         <div class="flex items-center gap-2 flex-wrap">
                             <Badge variant="outline">
-                                {course.subject} {course.courseNumber}
+                                {props.course.subject} {props.course.courseNumber}
                             </Badge>
-                            <Badge variant="secondary">Section {course.sequenceNumber}</Badge>
+                            <Badge variant="secondary">Section {props.course.sequenceNumber}</Badge>
                             <Badge
                                 variant={getScheduleTypeBadgeVariant(
-                                    course.scheduleTypeDescription
+                                    props.course.scheduleTypeDescription
                                 )}
                             >
-                                {course.scheduleTypeDescription}
+                                {props.course.scheduleTypeDescription}
                             </Badge>
                             <Badge
                                 variant={getInstructionMethodBadgeVariant(
-                                    course.instructionalMethodDescription
+                                    props.course.instructionalMethodDescription
                                 )}
                             >
-                                {course.instructionalMethodDescription}
+                                {props.course.instructionalMethodDescription}
                             </Badge>
-                            <Badge variant="secondary">{course.creditHours} credits</Badge>
-                            <Show when={course.seatsAvailable === 0}>
+                            <Badge variant="secondary">{props.course.creditHours} credits</Badge>
+                            <Show when={props.course.seatsAvailable === 0}>
                                 <Badge variant="destructive">Full</Badge>
                             </Show>
-                            <Show when={course.isSectionLinked}>
+                            <Show when={props.course.isSectionLinked}>
                                 <Badge variant="outline">Linked</Badge>
                             </Show>
                         </div>
 
                         <h3
                             class="font-semibold text-lg leading-tight cursor-pointer hover:text-primary"
-                            onClick={onShowDetails}
+                            onClick={props.onShowDetails}
                         >
-                            {course.courseTitle}
+                            {props.course.courseTitle}
                         </h3>
 
                         <div class="space-y-2">
-                            <For each={course.meetingsFaculty}>
+                            <For each={props.course.meetingsFaculty}>
                                 {(meetingFaculty, index) => {
                                     const meetingTime = meetingFaculty.meetingTime;
                                     return (
@@ -495,10 +495,11 @@ function CourseCard(props: CourseCardProps) {
                             </Show>
                             <div class="flex items-center gap-1">
                                 <Users class="h-3 w-3" />
-                                {course.seatsAvailable}/{course.maximumEnrollment} seats
-                                <Show when={course.waitCapacity > 0}>
+                                {props.course.seatsAvailable}/{props.course.maximumEnrollment} seats
+                                <Show when={props.course.waitCapacity > 0}>
                                     <span class="ml-1">
-                                        | Waitlist: {course.waitAvailable}/{course.waitCapacity}
+                                        | Waitlist: {props.course.waitAvailable}/
+                                        {props.course.waitCapacity}
                                     </span>
                                 </Show>
                             </div>
@@ -506,20 +507,20 @@ function CourseCard(props: CourseCardProps) {
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <Button size="sm" variant="ghost" onClick={onShowDetails}>
+                        <Button size="sm" variant="ghost" onClick={props.onShowDetails}>
                             <Info class="h-4 w-4" />
                         </Button>
                         <Button
                             size="sm"
-                            variant={isSelected ? "destructive" : "default"}
-                            onClick={isSelected ? onRemove : onAdd}
-                            disabled={!isSelected && course.seatsAvailable === 0}
+                            variant={props.isSelected ? "destructive" : "default"}
+                            onClick={props.isSelected ? props.onRemove : props.onAdd}
+                            disabled={!props.isSelected && props.course.seatsAvailable === 0}
                         >
                             <Switch>
-                                <Match when={isSelected}>
+                                <Match when={props.isSelected}>
                                     <Minus class="h-4 w-4" />
                                 </Match>
-                                <Match when={!isSelected}>
+                                <Match when={!props.isSelected}>
                                     <Plus class="h-4 w-4" />
                                 </Match>
                             </Switch>

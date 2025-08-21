@@ -189,7 +189,7 @@ export function OptimalScheduleDialog(props: OptimalScheduleDialogProps) {
         <Dialog open={open()} onOpenChange={setOpen}>
             <DialogTrigger
                 as={Button}
-                class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-foreground"
             >
                 <Sparkles class="h-4 w-4 mr-2" />
                 Generate Optimal Schedule

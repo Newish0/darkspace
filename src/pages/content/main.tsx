@@ -64,7 +64,7 @@ const routes: RouteDefinition = {
  * NOTE: See the RootLayout component for initialization that concerns the SolidJS Router.
  */
 const App = () => {
-    const storageManager = createLocalStorageManager("vite-ui-theme");
+    const storageManager = createLocalStorageManager("darkspace-ui-theme");
 
     const cleanupAutoContentPreload = initPreloadContentOnNotification(GLOBAL_COURSE_ID);
 

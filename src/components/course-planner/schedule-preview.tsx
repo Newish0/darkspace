@@ -2,6 +2,7 @@ import { createMemo, For, Show } from "solid-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-solid";
 import { ICourse, IMeetingTime } from "@/services/course-scraper/types";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface SchedulePreviewProps {
     courses: ICourse[];
@@ -26,6 +27,7 @@ export function SchedulePreview(props: SchedulePreviewProps) {
 
     // Create schedule grid
     const scheduleGrid = createMemo(() => {
+        console.log("Recomputing schedule grid");
         const grid: { [key: string]: ICourse[] } = {};
 
         props.courses.forEach((course) => {
@@ -38,7 +40,7 @@ export function SchedulePreview(props: SchedulePreviewProps) {
 
                 days.forEach((day) => {
                     if (meetingTime[day as keyof IMeetingTime]) {
-                        for (let hour = startHour; hour < endHour; hour++) {
+                        for (let hour = startHour; hour <= endHour; hour++) {
                             const key = `${day}-${hour}`;
                             if (!grid[key]) grid[key] = [];
                             grid[key].push(course);
@@ -47,6 +49,8 @@ export function SchedulePreview(props: SchedulePreviewProps) {
                 });
             });
         });
+
+        console.log("Schedule grid computed", grid);
 
         return grid;
     });
@@ -85,63 +89,95 @@ export function SchedulePreview(props: SchedulePreviewProps) {
                     </For>
 
                     {/* Time slots */}
-                    <For each={timeSlots}>
-                        {(time) => {
-                            const hour = Number.parseInt(time.split(":")[0]);
-                            return (
-                                <>
-                                    <div class="text-center py-2 text-muted-foreground">{time}</div>
-                                    <For each={days}>
-                                        {(day) => {
-                                            const coursesInSlot = getCoursesInSlot(day, hour);
-                                            return (
-                                                <div class="min-h-[40px] border border-border rounded p-1">
-                                                    <For each={coursesInSlot}>
-                                                        {(course, index) => {
-                                                            const meetingTime =
-                                                                course.meetingsFaculty[0]
-                                                                    ?.meetingTime;
-                                                            return (
-                                                                <div
-                                                                    class={`text-xs p-1 rounded mb-1 ${
-                                                                        coursesInSlot.length > 1
-                                                                            ? "bg-destructive text-destructive-foreground"
-                                                                            : "bg-primary text-primary-foreground"
-                                                                    }`}
-                                                                    title={`${course.subject} ${
-                                                                        course.courseNumber
-                                                                    } - ${course.sequenceNumber}\n${
-                                                                        course.courseTitle
-                                                                    }\n${
-                                                                        meetingTime?.beginTime
-                                                                            ? formatTime(
-                                                                                  meetingTime.beginTime
-                                                                              )
-                                                                            : ""
-                                                                    } - ${
-                                                                        meetingTime?.endTime
-                                                                            ? formatTime(
-                                                                                  meetingTime.endTime
-                                                                              )
-                                                                            : ""
-                                                                    }`}
-                                                                >
-                                                                    {course.subject}{" "}
-                                                                    {course.courseNumber}
-                                                                    <br />
-                                                                    {course.sequenceNumber}
-                                                                </div>
-                                                            );
-                                                        }}
-                                                    </For>
-                                                </div>
-                                            );
-                                        }}
-                                    </For>
-                                </>
-                            );
-                        }}
-                    </For>
+                    <Show when={scheduleGrid()} keyed>
+                        {
+                            <For each={timeSlots}>
+                                {(time) => {
+                                    const hour = Number.parseInt(time.split(":")[0]);
+                                    return (
+                                        <>
+                                            <div class="text-center py-2 text-muted-foreground">
+                                                {time}
+                                            </div>
+                                            <For each={days}>
+                                                {(day) => {
+                                                    const coursesInSlot = getCoursesInSlot(
+                                                        day,
+                                                        hour
+                                                    );
+                                                    return (
+                                                        <div class="min-h-[40px] border border-border rounded p-1">
+                                                            <For each={coursesInSlot}>
+                                                                {(course, index) => {
+                                                                    const meetingTime =
+                                                                        course.meetingsFaculty[0]
+                                                                            ?.meetingTime;
+
+                                                                    // TODO: If slot for course is last, use minutes to get % height as style to scale it to size
+                                                                    return (
+                                                                        <Tooltip>
+                                                                            <TooltipTrigger
+                                                                                as={"div"}
+                                                                                class={`text-center text-xs p-1 rounded mb-1 ${
+                                                                                    coursesInSlot.length >
+                                                                                    1
+                                                                                        ? "bg-destructive text-destructive-foreground"
+                                                                                        : "bg-primary text-primary-foreground"
+                                                                                }`}
+                                                                            >
+                                                                                <div>
+                                                                                    {`${course.subject} ${course.courseNumber}`}
+                                                                                </div>
+                                                                                <div>
+                                                                                    {
+                                                                                        course.sequenceNumber
+                                                                                    }
+                                                                                </div>
+                                                                            </TooltipTrigger>
+                                                                            <TooltipContent>
+                                                                                <div>
+                                                                                    {course.subject}{" "}
+                                                                                    {
+                                                                                        course.courseNumber
+                                                                                    }{" "}
+                                                                                    -{" "}
+                                                                                    {
+                                                                                        course.sequenceNumber
+                                                                                    }
+                                                                                </div>
+                                                                                <div>
+                                                                                    {
+                                                                                        course.courseTitle
+                                                                                    }
+                                                                                </div>
+                                                                                <div>
+                                                                                    {meetingTime?.beginTime
+                                                                                        ? formatTime(
+                                                                                              meetingTime.beginTime
+                                                                                          )
+                                                                                        : ""}{" "}
+                                                                                    -{" "}
+                                                                                    {meetingTime?.endTime
+                                                                                        ? formatTime(
+                                                                                              meetingTime.endTime
+                                                                                          )
+                                                                                        : ""}
+                                                                                </div>
+                                                                            </TooltipContent>
+                                                                        </Tooltip>
+                                                                    );
+                                                                }}
+                                                            </For>
+                                                        </div>
+                                                    );
+                                                }}
+                                            </For>
+                                        </>
+                                    );
+                                }}
+                            </For>
+                        }
+                    </Show>
                 </div>
             </CardContent>
         </Card>

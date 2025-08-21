@@ -1,7 +1,8 @@
-import { A, RouteSectionProps, useMatch, useNavigate } from "@solidjs/router";
+import { A, RouteSectionProps, useNavigate } from "@solidjs/router";
 import { Component, ErrorBoundary, Show } from "solid-js";
 
 import ControlledSuspense from "@/components/controlled-suspense";
+import { GreetingModal } from "@/components/greeting-modal";
 import {
     Accordion,
     AccordionContent,
@@ -15,13 +16,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { createAsyncCached } from "@/hooks/async-cached";
 import { usePersistentNav } from "@/hooks/persistent-nav";
-import { cn } from "@/lib/utils";
+import { useUserMeta } from "@/hooks/user-meta";
 import { getEnrollments, isClassActuallyActive } from "@/services/BS/api/enrollment";
-import { matchD2LUrl, remapD2LUrl } from "@/services/BS/url";
+import { remapD2LUrl } from "@/services/BS/url";
 import { Github, LayoutDashboard, Library, Menu } from "lucide-solid";
 import { createSignal, For } from "solid-js";
-import { GreetingModal } from "@/components/greeting-modal";
-import { useUserMeta } from "@/hooks/user-meta";
 
 const VERSION = __APP_ENV__.VERSION || "unknown";
 
