@@ -3,9 +3,9 @@ import { ParentProps } from "solid-js";
 
 export default function RootLayout(props: ParentProps) {
     return (
-        <div>
+        <div class="flex w-full">
             <AppSidebar />
-            <main>{props.children}</main>
+            <main class="w-full flex-1">{props.children}</main>
         </div>
     );
 }

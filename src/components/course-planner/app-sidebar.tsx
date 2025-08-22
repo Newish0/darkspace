@@ -1,6 +1,6 @@
-import { createSignal, For } from "solid-js";
+import { createSignal, For, onMount } from "solid-js";
 import { cn } from "~/lib/utils";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
 import {
     Select,
     SelectContent,
@@ -9,21 +9,39 @@ import {
     SelectValue,
 } from "~/components/ui/select";
 import { Plus, Book, Github } from "lucide-solid";
+import { useUVicCoursePlannerTerms } from "@/hooks/course-planner/use-course-planner-terms";
+import { useUVicCourseSchedules } from "@/hooks/course-planner/use-course-schedules";
+import { ulid } from "ulid";
+import { A, useNavigate, useParams } from "@solidjs/router";
+import { ICalendarTerm } from "@/services/calendar-term/calendar-terms-service";
 
 export default function AppSidebar() {
-    const [terms] = createSignal(["Fall 2025", "Spring 2025", "Summer 2025"]);
-    const [activeTerm, setActiveTerm] = createSignal("Fall 2025");
+    const params = useParams();
+    const navigate = useNavigate();
+    const { terms, activeTerm, setActiveTerm } = useUVicCoursePlannerTerms(new Date(), 3, 12);
 
-    const [schedules, setSchedules] = createSignal([
-        { id: 1, name: "My Main Schedule" },
-        { id: 2, name: "Backup Schedule" },
-    ]);
-    const [activeSchedule, setActiveSchedule] = createSignal(1);
+    const { courseSchedules, setCourseSchedules, activeSchedule, setActiveSchedule } =
+        useUVicCourseSchedules();
 
     const addSchedule = () => {
-        const newId = schedules().length + 1;
-        setSchedules([...schedules(), { id: newId, name: `Schedule ${newId}` }]);
-        setActiveSchedule(newId);
+        const newSchedule = {
+            name: `${activeTerm()?.name} Schedule`,
+            id: ulid(),
+            createdAt: new Date().toISOString(),
+            courses: [],
+        };
+        setCourseSchedules([...courseSchedules(), newSchedule]);
+    };
+
+    onMount(() => {
+        if (params.term) setActiveTerm(terms().find((t) => t.id === params.term));
+    });
+
+    const setActiveTermAndUrl = (term: ICalendarTerm | undefined) => {
+        if (!term) return;
+
+        setActiveTerm(terms().find((t) => t.id === term.id));
+        navigate(`/${term.id}/`);
     };
 
     return (
@@ -36,16 +54,20 @@ export default function AppSidebar() {
             <div>
                 <h1 class="text-xl font-bold">Course Planner</h1>
                 <Select
-                    value={activeTerm()}
-                    onChange={setActiveTerm}
-                    options={terms()}
+                    value={activeTerm()?.id}
+                    onChange={(id) => setActiveTermAndUrl(terms().find((t) => t.id === id))}
+                    options={terms().map((t) => t.id)}
                     placeholder="Select Term"
                     itemComponent={(props) => (
-                        <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
+                        <SelectItem item={props.item}>
+                            {terms().find((t) => t.id === props.item.rawValue)?.name}
+                        </SelectItem>
                     )}
                 >
                     <SelectTrigger aria-label="Term" class="mt-2 w-full">
-                        <SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
+                        <SelectValue<string>>
+                            {(state) => terms().find((t) => t.id === state.selectedOption())?.name}
+                        </SelectValue>
                     </SelectTrigger>
                     <SelectContent />
                 </Select>
@@ -60,20 +82,22 @@ export default function AppSidebar() {
                     </Button>
                 </div>
                 <ul class="space-y-1">
-                    <For each={schedules()}>
+                    <For each={courseSchedules()}>
                         {(schedule) => (
                             <li>
-                                <Button
-                                    variant="ghost"
+                                <A
                                     onClick={() => setActiveSchedule(schedule.id)}
-                                    class={cn(
-                                        "w-full justify-start text-left hover:bg-accent hover:text-accent-foreground",
-                                        activeSchedule() === schedule.id &&
-                                            "bg-accent text-accent-foreground"
-                                    )}
+                                    class={buttonVariants({
+                                        variant: "ghost",
+                                        class: cn(
+                                            "w-full justify-start text-left hover:bg-accent hover:text-accent-foreground"
+                                        ),
+                                    })}
+                                    activeClass="bg-muted text-muted-foreground"
+                                    href={`/${activeTerm()?.id}/${schedule.id}`}
                                 >
                                     {schedule.name}
-                                </Button>
+                                </A>
                             </li>
                         )}
                     </For>
