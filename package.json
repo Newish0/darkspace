@@ -17,6 +17,7 @@
     "@solid-primitives/scheduled": "^1.4.4",
     "@solid-primitives/storage": "^4.2.1",
     "@solidjs/router": "^0.15.3",
+    "@tanstack/solid-virtual": "^3.13.12",
     "chart.js": "^4.4.6",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

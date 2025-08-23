@@ -11,14 +11,15 @@ export default function Schedule() {
     const courses = createAsyncCached(
         async () => {
             const scraper = new CourseScraper(new ExtensionFetchHttpClient());
-            return await scraper.scrapeCourses("202509");
+            const courses = await scraper.scrapeCourses("202509");
+            return courses;
         },
         {
             keys: () => [`course-planner-uvic-${params.term}-schedule`],
         }
     );
     return (
-        <div>
+        <div class="p-4 h-full">
             <CourseScheduler courses={courses() || []} />
         </div>
     );

@@ -1,14 +1,15 @@
-import { createMemo, For, Show } from "solid-js";
+import { ComponentProps, createMemo, For, Show, splitProps } from "solid-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-solid";
 import { ICourse, IMeetingTime } from "@/services/course-scraper/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
-interface SchedulePreviewProps {
+interface SchedulePreviewProps extends ComponentProps<typeof Card> {
     courses: ICourse[];
 }
 
 export function SchedulePreview(props: SchedulePreviewProps) {
+    const [local, others] = splitProps(props, ["courses"]);
     const timeSlots = [
         "08:00",
         "09:00",
@@ -30,7 +31,7 @@ export function SchedulePreview(props: SchedulePreviewProps) {
         console.log("Recomputing schedule grid");
         const grid: { [key: string]: ICourse[] } = {};
 
-        props.courses.forEach((course) => {
+        local.courses.forEach((course) => {
             course.meetingsFaculty.forEach((meeting) => {
                 const meetingTime = meeting.meetingTime;
                 if (!meetingTime || !meetingTime.beginTime || !meetingTime.endTime) return;
@@ -70,7 +71,7 @@ export function SchedulePreview(props: SchedulePreviewProps) {
     };
 
     return (
-        <Card>
+        <Card {...others}>
             <CardHeader>
                 <CardTitle class="flex items-center gap-2">
                     <Calendar class="h-5 w-5" />

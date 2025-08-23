@@ -60,7 +60,7 @@ export interface ICourse {
     campusDescription: string;
     scheduleTypeDescription: string;
     courseTitle: string;
-    creditHours: number;
+    creditHours: number | null;
     maximumEnrollment: number;
     enrollment: number;
     seatsAvailable: number;

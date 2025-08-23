@@ -1,4 +1,13 @@
-import { createSignal, createMemo, For, Show, Switch, Match } from "solid-js";
+import {
+    createSignal,
+    createMemo,
+    For,
+    Show,
+    Switch,
+    Match,
+    ComponentProps,
+    createEffect,
+} from "solid-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,18 +29,24 @@ import { TextField, TextFieldInput } from "@/components/ui/text-field";
 import { ICourse, IMeetingTime } from "@/services/course-scraper/types";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
+import { createVirtualizer } from "@tanstack/solid-virtual";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+
+const sortOptions = [
+    { name: "Course Title", value: "courseTitle" },
+    { name: "Subject", value: "subject" },
+    { name: "Credit Hours", value: "creditHours" },
+    { name: "Seats Available", value: "seatsAvailable" },
+] as const;
 
 export function CourseScheduler(props: { courses: ICourse[] }) {
     const [searchTerm, setSearchTerm] = createSignal("");
     const [selectedSubject, setSelectedSubject] = createSignal<string>("all");
-    const [selectedCreditHours, setSelectedCreditHours] = createSignal<string>("all");
+    const [selectedCreditHours, setSelectedCreditHours] = createSignal<"all" | number>("all");
     const [selectedInstructionMethod, setSelectedInstructionMethod] = createSignal<string>("all");
-    const [sortBy, setSortBy] = createSignal<string>("courseTitle");
+    const [sortBy, setSortBy] = createSignal<(typeof sortOptions)[number]["value"]>("courseTitle");
     const [selectedCourses, setSelectedCourses] = createSignal<ICourse[]>([]);
     const [showOnlyAvailable, setShowOnlyAvailable] = createSignal(false);
-    const [selectedCourseForDetails, setSelectedCourseForDetails] = createSignal<ICourse | null>(
-        null
-    );
 
     // Get unique subjects for filter
     const subjects = createMemo(() => {
@@ -47,49 +62,56 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
         return Array.from(methodSet).sort();
     });
 
+    const courseCredits = createMemo(() => {
+        const creditSet = new Set(props.courses.map((course) => course.creditHours));
+        return Array.from(creditSet).sort();
+    });
+
     // Filter and sort courses
     const filteredCourses = createMemo(() => {
-        const filtered = props.courses.filter((course) => {
-            const search = searchTerm().toLowerCase();
-            const matchesSearch =
-                course.courseTitle.toLowerCase().includes(search) ||
-                course.subject.toLowerCase().includes(search) ||
-                course.courseNumber.toLowerCase().includes(search) ||
-                course.subjectCourse.toLowerCase().includes(search);
+        const courses = [...props.courses];
 
-            const matchesSubject =
-                selectedSubject() === "all" || course.subject === selectedSubject();
-            const matchesCreditHours =
-                selectedCreditHours() === "all" ||
-                course.creditHours.toString() === selectedCreditHours();
-            const matchesInstructionMethod =
-                selectedInstructionMethod() === "all" ||
-                course.instructionalMethodDescription === selectedInstructionMethod();
-            const matchesAvailability = !showOnlyAvailable() || course.seatsAvailable > 0;
+        const filtered = courses
+            .filter((course) => {
+                const search = searchTerm().toLowerCase();
+                const matchesSearch =
+                    course.courseTitle.toLowerCase().includes(search) ||
+                    course.subject.toLowerCase().includes(search) ||
+                    course.courseNumber.toLowerCase().includes(search) ||
+                    course.subjectCourse.toLowerCase().includes(search);
 
-            return (
-                matchesSearch &&
-                matchesSubject &&
-                matchesCreditHours &&
-                matchesInstructionMethod &&
-                matchesAvailability
-            );
-        });
+                const matchesSubject =
+                    selectedSubject() === "all" || course.subject === selectedSubject();
+                const matchesCreditHours =
+                    selectedCreditHours() === "all" ||
+                    course.creditHours?.toString() == selectedCreditHours();
+                const matchesInstructionMethod =
+                    selectedInstructionMethod() === "all" ||
+                    course.instructionalMethodDescription === selectedInstructionMethod();
+                const matchesAvailability = !showOnlyAvailable() || course.seatsAvailable > 0;
 
-        filtered.sort((a, b) => {
-            switch (sortBy()) {
-                case "courseTitle":
-                    return a.courseTitle.localeCompare(b.courseTitle);
-                case "subject":
-                    return a.subject.localeCompare(b.subject);
-                case "creditHours":
-                    return b.creditHours - a.creditHours;
-                case "seatsAvailable":
-                    return b.seatsAvailable - a.seatsAvailable;
-                default:
-                    return 0;
-            }
-        });
+                return (
+                    matchesSearch &&
+                    matchesSubject &&
+                    matchesCreditHours &&
+                    matchesInstructionMethod &&
+                    matchesAvailability
+                );
+            })
+            .toSorted((a, b) => {
+                switch (sortBy()) {
+                    case "courseTitle":
+                        return a.courseTitle.localeCompare(b.courseTitle);
+                    case "subject":
+                        return a.subject.localeCompare(b.subject);
+                    case "creditHours":
+                        return (b.creditHours ?? 0) - (a.creditHours ?? 0);
+                    case "seatsAvailable":
+                        return b.seatsAvailable - a.seatsAvailable;
+                    default:
+                        return 0;
+                }
+            });
 
         return filtered;
     });
@@ -109,243 +131,296 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
     };
 
     const totalCredits = createMemo(() =>
-        selectedCourses().reduce((sum, course) => sum + course.creditHours, 0)
+        selectedCourses().reduce((sum, course) => sum + (course.creditHours ?? 0), 0)
     );
 
     return (
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 grid-rows-4 gap-6 h-full">
             {/* Search and Filter Panel */}
-            <div class="lg:col-span-2 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="flex items-center gap-2">
-                            <Search class="h-5 w-5" />
-                            Search & Filter Courses
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent class="space-y-4">
-                        {/* Search Input */}
-                        <div class="relative">
-                            <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                            <TextField>
-                                <TextFieldInput
-                                    type="text"
-                                    placeholder="Search by course title, subject, or number..."
-                                    value={searchTerm()}
-                                    onInput={(e) => setSearchTerm(e.currentTarget.value)}
-                                    class="pl-10"
-                                />
-                            </TextField>
-                        </div>
-
-                        {/* Filters Row */}
-                        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            <Select
-                                multiple={false}
-                                value={selectedSubject()}
-                                onChange={setSelectedSubject}
-                                options={["all", ...subjects()]}
-                                itemComponent={(props) => (
-                                    <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
-                                )}
-                                placeholder="Subject"
-                            >
-                                <SelectTrigger>
-                                    <SelectValue<string>>
-                                        {(state) => state.selectedOption()}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent />
-                            </Select>
-
-                            <Select
-                                value={selectedCreditHours()}
-                                onChange={setSelectedCreditHours}
-                                placeholder="Credit Hours"
-                                options={["all", "0", "0.75", "1.5", "3", "4"]}
-                                itemComponent={(props) => (
-                                    <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
-                                )}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue<string>>
-                                        {(state) => state.selectedOption()}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent />
-                            </Select>
-
-                            <Select
-                                value={selectedInstructionMethod()}
-                                onChange={setSelectedInstructionMethod}
-                                placeholder="Instruction Method"
-                                options={["all", ...instructionMethods()]}
-                                itemComponent={(props) => (
-                                    <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
-                                )}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue<string>>
-                                        {(state) => state.selectedOption()}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent />
-                            </Select>
-
-                            <Select
-                                value={sortBy()}
-                                onChange={setSortBy}
-                                placeholder="Sort by"
-                                options={[
-                                    "courseTitle",
-                                    "subject",
-                                    "creditHours",
-                                    "seatsAvailable",
-                                ]}
-                                itemComponent={(props) => (
-                                    <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
-                                )}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue<string>>
-                                        {(state) => state.selectedOption()}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent />
-                            </Select>
-
-                            <div class="flex items-center space-x-2">
-                                <Checkbox
-                                    id="available"
-                                    checked={showOnlyAvailable()}
-                                    onChange={setShowOnlyAvailable}
-                                />
-                                <Label for="available">Available only</Label>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Course List */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="flex items-center justify-between">
-                            <span class="flex items-center gap-2">
-                                <Filter class="h-5 w-5" />
-                                Courses ({filteredCourses().length})
-                            </span>
-                            <OptimalScheduleDialog
-                                onScheduleGenerated={setSelectedCourses}
-                                availableCourses={props.courses}
+            <Card class="lg:col-span-2 row-span-1">
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2">
+                        <Search class="h-5 w-5" />
+                        Search & Filter Courses
+                    </CardTitle>
+                </CardHeader>
+                <CardContent class="space-y-4">
+                    {/* Search Input */}
+                    <div class="relative">
+                        <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <TextField>
+                            <TextFieldInput
+                                type="text"
+                                placeholder="Search by course title, subject, or number..."
+                                value={searchTerm()}
+                                onInput={(e) => setSearchTerm(e.currentTarget.value)}
+                                class="pl-10"
                             />
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ScrollArea class="h-[600px]">
-                            <div class="space-y-3">
-                                <For each={filteredCourses()}>
-                                    {(course) => (
-                                        <CourseCard
-                                            course={course}
-                                            isSelected={selectedCourses().some(
-                                                (c) =>
-                                                    c.courseReferenceNumber ===
-                                                    course.courseReferenceNumber
-                                            )}
-                                            onAdd={() => addCourse(course)}
-                                            onRemove={() =>
-                                                removeCourse(course.courseReferenceNumber)
-                                            }
-                                            onShowDetails={() =>
-                                                setSelectedCourseForDetails(course)
-                                            }
-                                        />
-                                    )}
-                                </For>
-                            </div>
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-            </div>
+                        </TextField>
+                    </div>
 
-            {/* Schedule Preview Panel */}
-            <div class="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="flex items-center gap-2">
-                            <Calendar class="h-5 w-5" />
-                            Selected Courses ({selectedCourses().length})
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between text-sm">
-                                <span>Total Credits:</span>
-                                <Badge variant="secondary">{totalCredits()}</Badge>
-                            </div>
-                            <Separator />
-                            <ScrollArea class="h-32">
-                                <Show
-                                    when={selectedCourses().length > 0}
-                                    fallback={
-                                        <p class="text-sm text-muted-foreground text-center py-4">
-                                            No courses selected
-                                        </p>
+                    {/* Filters Row */}
+                    <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <Select
+                            multiple={false}
+                            value={selectedSubject()}
+                            onChange={setSelectedSubject}
+                            options={["all", ...subjects()]}
+                            itemComponent={(props) => (
+                                <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
+                            )}
+                            placeholder="Subject"
+                        >
+                            <SelectTrigger>
+                                <SelectValue<string>>
+                                    {(state) => state.selectedOption()}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent class="max-h-64 overflow-auto" />
+                        </Select>
+
+                        <Select
+                            value={selectedCreditHours()}
+                            onChange={setSelectedCreditHours}
+                            placeholder="Credit Hours"
+                            options={["all", ...courseCredits()]}
+                            itemComponent={(props) => (
+                                <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
+                            )}
+                        >
+                            <SelectTrigger>
+                                <SelectValue<string>>
+                                    {(state) => state.selectedOption()}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent class="max-h-64 overflow-auto" />
+                        </Select>
+
+                        <Select
+                            value={selectedInstructionMethod()}
+                            onChange={setSelectedInstructionMethod}
+                            placeholder="Instruction Method"
+                            options={["all", ...instructionMethods()]}
+                            itemComponent={(props) => (
+                                <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
+                            )}
+                        >
+                            <SelectTrigger>
+                                <SelectValue<string>>
+                                    {(state) => state.selectedOption()}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent class="max-h-64 overflow-auto" />
+                        </Select>
+
+                        <Select
+                            value={sortBy()}
+                            onChange={setSortBy}
+                            placeholder="Sort by"
+                            options={sortOptions.map((option) => option.value)}
+                            itemComponent={(props) => (
+                                <SelectItem item={props.item}>
+                                    {sortOptions.find((o) => o.value === props.item.rawValue)?.name}
+                                </SelectItem>
+                            )}
+                        >
+                            <SelectTrigger>
+                                <SelectValue<string>>
+                                    {(state) =>
+                                        sortOptions.find((o) => o.value === state.selectedOption())
+                                            ?.name
                                     }
-                                >
-                                    <div class="space-y-2">
-                                        <For each={selectedCourses()}>
-                                            {(course) => (
-                                                <div class="flex items-center justify-between p-2 bg-muted rounded-md">
-                                                    <div>
-                                                        <p class="text-sm font-medium">
-                                                            {course.subject} {course.courseNumber} -{" "}
-                                                            {course.sequenceNumber}
-                                                        </p>
-                                                        <p class="text-xs text-muted-foreground">
-                                                            {course.creditHours} credits
-                                                        </p>
-                                                    </div>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() =>
-                                                            removeCourse(
-                                                                course.courseReferenceNumber
-                                                            )
-                                                        }
-                                                    >
-                                                        <Minus class="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </For>
-                                    </div>
-                                </Show>
-                            </ScrollArea>
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent class="max-h-64 overflow-auto" />
+                        </Select>
+
+                        <div class="flex items-center space-x-2">
+                            <Checkbox
+                                id="available"
+                                checked={showOnlyAvailable()}
+                                onChange={setShowOnlyAvailable}
+                            />
+                            <Label for="available">Available only</Label>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </CardContent>
+            </Card>
 
-                <SchedulePreview courses={selectedCourses()} />
-            </div>
+            {/* Selected Courses in Schedule */}
+            <Card class="lg:col-span-1 row-span-2">
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2">
+                        <Calendar class="h-5 w-5" />
+                        Selected Courses ({selectedCourses().length})
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between text-sm">
+                            <span>Total Credits:</span>
+                            <Badge variant="secondary">{totalCredits()}</Badge>
+                        </div>
+                        <Separator />
+                        <ScrollArea class="h-32">
+                            <Show
+                                when={selectedCourses().length > 0}
+                                fallback={
+                                    <p class="text-sm text-muted-foreground text-center py-4">
+                                        No courses selected
+                                    </p>
+                                }
+                            >
+                                <div class="space-y-2">
+                                    <For each={selectedCourses()}>
+                                        {(course) => (
+                                            <div class="flex items-center justify-between p-2 bg-muted rounded-md">
+                                                <div>
+                                                    <p class="text-sm font-medium">
+                                                        {course.subject} {course.courseNumber} -{" "}
+                                                        {course.sequenceNumber}
+                                                    </p>
+                                                    <p class="text-xs text-muted-foreground">
+                                                        {course.creditHours} credits
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() =>
+                                                        removeCourse(course.courseReferenceNumber)
+                                                    }
+                                                >
+                                                    <Minus class="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </For>
+                                </div>
+                            </Show>
+                        </ScrollArea>
+                    </div>
+                </CardContent>
+            </Card>
 
-            {/* Course Details Modal */}
-            <CourseDetailsModal
-                course={selectedCourseForDetails()}
-                open={!!selectedCourseForDetails()}
-                onOpenChange={(open) => !open && setSelectedCourseForDetails(null)}
-            />
+            {/* Course List */}
+            <Card class="lg:col-span-2 row-span-3 flex flex-col h-full">
+                <CardHeader>
+                    <CardTitle class="flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <Filter class="h-5 w-5" />
+                            Courses ({filteredCourses().length})
+                        </span>
+                        <OptimalScheduleDialog
+                            onScheduleGenerated={setSelectedCourses}
+                            availableCourses={props.courses}
+                        />
+                    </CardTitle>
+                </CardHeader>
+                <CardContent class="flex-1 min-h-0">
+                    <Show when={filteredCourses().length > 0} keyed>
+                        <CourseScrollArea
+                            courses={filteredCourses()}
+                            onAdd={addCourse}
+                            onRemove={(course) => removeCourse(course.courseReferenceNumber)}
+                            selectedCourses={selectedCourses()}
+                        />
+                    </Show>
+                </CardContent>
+            </Card>
+
+            {/* Schedule Preview */}
+            <SchedulePreview courses={selectedCourses()} class="row-span-2" />
         </div>
     );
 }
 
-interface CourseCardProps {
+interface CourseScrollAreaProps {
+    courses: ICourse[];
+    selectedCourses: ICourse[];
+    onAdd: (course: ICourse) => void;
+    onRemove: (course: ICourse) => void;
+}
+
+function CourseScrollArea(props: CourseScrollAreaProps) {
+    let scrollContainer!: HTMLDivElement;
+    const virtualizer = createVirtualizer({
+        count: props.courses.length,
+        estimateSize: () => 172,
+        overscan: 5,
+        getScrollElement: () => scrollContainer,
+    });
+
+    const items = virtualizer.getVirtualItems();
+
+    return (
+        <div
+            ref={scrollContainer}
+            style={{
+                height: scrollContainer.parentElement
+                    ? `${
+                          scrollContainer.parentElement.offsetHeight -
+                          parseFloat(getComputedStyle(scrollContainer.parentElement).paddingTop) -
+                          parseFloat(getComputedStyle(scrollContainer.parentElement).paddingBottom)
+                      }px`
+                    : "400px",
+                "overflow-y": "auto",
+            }}
+        >
+            <div
+                style={{
+                    height: `${virtualizer.getTotalSize()}px`,
+                    width: "100%",
+                    position: "relative",
+                }}
+            >
+                <div
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        transform: `translateY(${items[0]?.start}px)`,
+                    }}
+                >
+                    <For each={items}>
+                        {(virtualRow) => {
+                            return (
+                                <div
+                                    data-index={virtualRow.index}
+                                    ref={(el) =>
+                                        queueMicrotask(() => virtualizer.measureElement(el))
+                                    }
+                                >
+                                    <Show when={props.courses[virtualRow.index]}>
+                                        {(course) => (
+                                            <CourseCard
+                                                course={course()}
+                                                isSelected={props.selectedCourses.includes(
+                                                    course()
+                                                )}
+                                                onAdd={() => props.onAdd(course())}
+                                                onRemove={() => props.onRemove(course())}
+                                                withSpacing={true}
+                                            />
+                                        )}
+                                    </Show>
+                                </div>
+                            );
+                        }}
+                    </For>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface CourseCardProps extends ComponentProps<typeof Card> {
     course: ICourse;
     isSelected: boolean;
     onAdd: () => void;
     onRemove: () => void;
-    onShowDetails: () => void;
+    withSpacing?: boolean;
 }
 
 function CourseCard(props: CourseCardProps) {
@@ -386,7 +461,8 @@ function CourseCard(props: CourseCardProps) {
         <Card
             class={cn(
                 "transition-all duration-200 hover:shadow-md",
-                props.isSelected ? "ring-2 ring-primary" : ""
+                props.isSelected ? "bg-muted/50" : "",
+                props.withSpacing ? "mb-2" : ""
             )}
         >
             <CardContent class="p-4">
@@ -415,17 +491,16 @@ function CourseCard(props: CourseCardProps) {
                             <Show when={props.course.seatsAvailable === 0}>
                                 <Badge variant="destructive">Full</Badge>
                             </Show>
-                            <Show when={props.course.isSectionLinked}>
-                                <Badge variant="outline">Linked</Badge>
-                            </Show>
                         </div>
 
-                        <h3
-                            class="font-semibold text-lg leading-tight cursor-pointer hover:text-primary"
-                            onClick={props.onShowDetails}
-                        >
-                            {props.course.courseTitle}
-                        </h3>
+                        <CourseDetailsModal
+                            course={props.course}
+                            triggerProps={{
+                                as: "h3",
+                                class: "font-semibold text-lg leading-tight cursor-pointer hover:text-primary",
+                                children: props.course.courseTitle,
+                            }}
+                        />
 
                         <div class="space-y-2">
                             <For each={props.course.meetingsFaculty}>
@@ -494,27 +569,53 @@ function CourseCard(props: CourseCardProps) {
                                 </div>
                             </Show>
                             <div class="flex items-center gap-1">
-                                <Users class="h-3 w-3" />
-                                {props.course.seatsAvailable}/{props.course.maximumEnrollment} seats
+                                <Tooltip>
+                                    <TooltipTrigger class="flex items-center gap-1">
+                                        <Users class="h-3 w-3" />
+                                        {props.course.enrollment}/{props.course.maximumEnrollment}{" "}
+                                        seats
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {props.course.seatsAvailable} seats available
+                                    </TooltipContent>
+                                </Tooltip>
                                 <Show when={props.course.waitCapacity > 0}>
-                                    <span class="ml-1">
-                                        | Waitlist: {props.course.waitAvailable}/
-                                        {props.course.waitCapacity}
-                                    </span>
+                                    <>
+                                        <Separator orientation="vertical" class="mx-2" />
+                                        <Tooltip>
+                                            <TooltipTrigger class="flex items-center gap-1">
+                                                <Clock class="h-3 w-3" />
+                                                Waitlist {props.course.waitCount}/
+                                                {props.course.waitCapacity}
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                {props.course.waitAvailable} waitlist seats
+                                                available
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </>
                                 </Show>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <Button size="sm" variant="ghost" onClick={props.onShowDetails}>
+                        <CourseDetailsModal
+                            course={props.course}
+                            triggerProps={{
+                                as: Button,
+                                size: "sm",
+                                variant: "ghost",
+                                children: <Info class="h-4 w-4" />,
+                            }}
+                        />
+                        {/* <Button size="sm" variant="ghost">
                             <Info class="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                         <Button
                             size="sm"
                             variant={props.isSelected ? "destructive" : "default"}
                             onClick={props.isSelected ? props.onRemove : props.onAdd}
-                            disabled={!props.isSelected && props.course.seatsAvailable === 0}
                         >
                             <Switch>
                                 <Match when={props.isSelected}>

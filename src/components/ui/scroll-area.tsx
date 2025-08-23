@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { children, Component, JSX, splitProps } from "solid-js";
 
 interface ScrollAreaProps extends JSX.HTMLAttributes<HTMLDivElement> {
@@ -10,7 +11,7 @@ export const ScrollArea: Component<ScrollAreaProps> = (props) => {
     const resolved = children(() => local.children);
 
     return (
-        <div class={`relative overflow-hidden ${local.class || ""}`} {...others}>
+        <div class={cn(`relative overflow-hidden`, local.class)} {...others}>
             <div class="h-full w-full overflow-auto">{resolved()}</div>
             {/* <div class="absolute right-1.5 top-1.5 bottom-1.5 w-2.5 transition-all">
                 <div class="relative h-full w-full rounded-full bg-border opacity-0 transition-opacity hover:opacity-100">

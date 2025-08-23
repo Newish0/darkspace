@@ -5,7 +5,7 @@ export default function RootLayout(props: ParentProps) {
     return (
         <div class="flex w-full">
             <AppSidebar />
-            <main class="w-full flex-1">{props.children}</main>
+            <main class="w-full flex-1 h-screen">{props.children}</main>
         </div>
     );
 }
