@@ -1,16 +1,11 @@
-import {
-    createSignal,
-    createMemo,
-    For,
-    Show,
-    Switch,
-    Match,
-    ComponentProps,
-    createEffect,
-} from "solid-js";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CourseDetailsModal } from "@/components/course-planner/course-details-modal";
+import { OptimalScheduleDialog } from "@/components/course-planner/optimal-schedule-dialog";
+import { SchedulePreview } from "@/components/course-planner/schedule-preview";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Select,
     SelectContent,
@@ -18,18 +13,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Filter, Calendar, Clock, Users, MapPin, Plus, Minus, Info } from "lucide-solid";
-import { SchedulePreview } from "@/components/course-planner/schedule-preview";
-import { OptimalScheduleDialog } from "@/components/course-planner/optimal-schedule-dialog";
-import { CourseDetailsModal } from "@/components/course-planner/course-details-modal";
 import { TextField, TextFieldInput } from "@/components/ui/text-field";
-import { ICourse, IMeetingTime } from "@/services/course-scraper/types";
-import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
+import { ICourse, IMeetingTime } from "@/services/course-scraper/types";
 import { createVirtualizer } from "@tanstack/solid-virtual";
+import { Calendar, Clock, Filter, Info, MapPin, Minus, Plus, Search, Users } from "lucide-solid";
+import { ComponentProps, createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
+import { Label } from "../ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 const sortOptions = [
@@ -42,16 +33,24 @@ const sortOptions = [
 export function CourseScheduler(props: { courses: ICourse[] }) {
     const [searchTerm, setSearchTerm] = createSignal("");
     const [selectedSubject, setSelectedSubject] = createSignal<string>("all");
+    const [selectedScheduleType, setSelectedScheduleType] = createSignal<string>("all");
     const [selectedCreditHours, setSelectedCreditHours] = createSignal<"all" | number>("all");
     const [selectedInstructionMethod, setSelectedInstructionMethod] = createSignal<string>("all");
     const [sortBy, setSortBy] = createSignal<(typeof sortOptions)[number]["value"]>("courseTitle");
     const [selectedCourses, setSelectedCourses] = createSignal<ICourse[]>([]);
+    const [previewCourses, setPreviewCourses] = createSignal<ICourse[]>([]);
     const [showOnlyAvailable, setShowOnlyAvailable] = createSignal(false);
 
     // Get unique subjects for filter
     const subjects = createMemo(() => {
         const subjectSet = new Set(props.courses.map((course) => course.subject));
         return Array.from(subjectSet).sort();
+    });
+
+    // Get unique schedule type for filter
+    const scheduleTypes = createMemo(() => {
+        const typeSet = new Set(props.courses.map((course) => course.scheduleTypeDescription));
+        return Array.from(typeSet).sort();
     });
 
     // Get unique instruction methods for filter
@@ -82,6 +81,9 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
 
                 const matchesSubject =
                     selectedSubject() === "all" || course.subject === selectedSubject();
+                const matchScheduleType =
+                    selectedScheduleType() === "all" ||
+                    course.scheduleTypeDescription === selectedScheduleType();
                 const matchesCreditHours =
                     selectedCreditHours() === "all" ||
                     course.creditHours?.toString() == selectedCreditHours();
@@ -92,6 +94,7 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
 
                 return (
                     matchesSearch &&
+                    matchScheduleType &&
                     matchesSubject &&
                     matchesCreditHours &&
                     matchesInstructionMethod &&
@@ -127,6 +130,20 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
     const removeCourse = (courseReferenceNumber: string) => {
         setSelectedCourses(
             selectedCourses().filter((c) => c.courseReferenceNumber !== courseReferenceNumber)
+        );
+    };
+
+    const addPreviewCourse = (course: ICourse) => {
+        if (
+            !previewCourses().find((c) => c.courseReferenceNumber === course.courseReferenceNumber)
+        ) {
+            setPreviewCourses([...previewCourses(), course]);
+        }
+    };
+
+    const removePreviewCourse = (courseReferenceNumber: string) => {
+        setPreviewCourses(
+            previewCourses().filter((c) => c.courseReferenceNumber !== courseReferenceNumber)
         );
     };
 
@@ -170,6 +187,24 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
                                 <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
                             )}
                             placeholder="Subject"
+                        >
+                            <SelectTrigger>
+                                <SelectValue<string>>
+                                    {(state) => state.selectedOption()}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent class="max-h-64 overflow-auto" />
+                        </Select>
+
+                        <Select
+                            multiple={false}
+                            value={selectedScheduleType()}
+                            onChange={setSelectedScheduleType}
+                            options={["all", ...scheduleTypes()]}
+                            itemComponent={(props) => (
+                                <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
+                            )}
+                            placeholder="Schedule Type"
                         >
                             <SelectTrigger>
                                 <SelectValue<string>>
@@ -324,13 +359,23 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
                             onAdd={addCourse}
                             onRemove={(course) => removeCourse(course.courseReferenceNumber)}
                             selectedCourses={selectedCourses()}
+                            onAddPreview={addPreviewCourse}
+                            onRemovePreview={(course) =>
+                                removePreviewCourse(course.courseReferenceNumber)
+                            }
                         />
                     </Show>
                 </CardContent>
             </Card>
 
             {/* Schedule Preview */}
-            <SchedulePreview courses={selectedCourses()} class="row-span-2" />
+            <SchedulePreview
+                courses={[
+                    ...selectedCourses(),
+                    ...previewCourses().map((c) => ({ ...c, isPreview: true })),
+                ]}
+                class="row-span-2"
+            />
         </div>
     );
 }
@@ -340,6 +385,8 @@ interface CourseScrollAreaProps {
     selectedCourses: ICourse[];
     onAdd: (course: ICourse) => void;
     onRemove: (course: ICourse) => void;
+    onAddPreview: (course: ICourse) => void;
+    onRemovePreview: (course: ICourse) => void;
 }
 
 function CourseScrollArea(props: CourseScrollAreaProps) {
@@ -402,6 +449,10 @@ function CourseScrollArea(props: CourseScrollAreaProps) {
                                                 onAdd={() => props.onAdd(course())}
                                                 onRemove={() => props.onRemove(course())}
                                                 withSpacing={true}
+                                                onAddPreview={() => props.onAddPreview(course())}
+                                                onRemovePreview={() =>
+                                                    props.onRemovePreview(course())
+                                                }
                                             />
                                         )}
                                     </Show>
@@ -421,6 +472,8 @@ interface CourseCardProps extends ComponentProps<typeof Card> {
     onAdd: () => void;
     onRemove: () => void;
     withSpacing?: boolean;
+    onAddPreview?: () => void;
+    onRemovePreview?: () => void;
 }
 
 function CourseCard(props: CourseCardProps) {
@@ -616,6 +669,8 @@ function CourseCard(props: CourseCardProps) {
                             size="sm"
                             variant={props.isSelected ? "destructive" : "default"}
                             onClick={props.isSelected ? props.onRemove : props.onAdd}
+                            onMouseEnter={() => !props.isSelected && props.onAddPreview?.()}
+                            onMouseLeave={props.onRemovePreview}
                         >
                             <Switch>
                                 <Match when={props.isSelected}>

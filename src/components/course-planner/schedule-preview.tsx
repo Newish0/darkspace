@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-solid";
 import { ICourse, IMeetingTime } from "@/services/course-scraper/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { cn } from "@/lib/utils";
 
+type PreviewableCourse = ICourse & { isPreview?: boolean };
 interface SchedulePreviewProps extends ComponentProps<typeof Card> {
-    courses: ICourse[];
+    courses: PreviewableCourse[];
 }
 
 export function SchedulePreview(props: SchedulePreviewProps) {
@@ -29,7 +31,7 @@ export function SchedulePreview(props: SchedulePreviewProps) {
     // Create schedule grid
     const scheduleGrid = createMemo(() => {
         console.log("Recomputing schedule grid");
-        const grid: { [key: string]: ICourse[] } = {};
+        const grid: { [key: string]: PreviewableCourse[] } = {};
 
         local.courses.forEach((course) => {
             course.meetingsFaculty.forEach((meeting) => {
@@ -119,12 +121,16 @@ export function SchedulePreview(props: SchedulePreviewProps) {
                                                                         <Tooltip>
                                                                             <TooltipTrigger
                                                                                 as={"div"}
-                                                                                class={`text-center text-xs p-1 rounded mb-1 ${
+                                                                                class={cn(
+                                                                                    "text-center text-xs p-1 rounded mb-1",
                                                                                     coursesInSlot.length >
-                                                                                    1
+                                                                                        1
                                                                                         ? "bg-destructive text-destructive-foreground"
-                                                                                        : "bg-primary text-primary-foreground"
-                                                                                }`}
+                                                                                        : "bg-primary text-primary-foreground",
+                                                                                    course.isPreview
+                                                                                        ? "opacity-30"
+                                                                                        : ""
+                                                                                )}
                                                                             >
                                                                                 <div>
                                                                                     {`${course.subject} ${course.courseNumber}`}
