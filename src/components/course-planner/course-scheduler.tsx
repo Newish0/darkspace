@@ -668,7 +668,10 @@ function CourseCard(props: CourseCardProps) {
                         <Button
                             size="sm"
                             variant={props.isSelected ? "destructive" : "default"}
-                            onClick={props.isSelected ? props.onRemove : props.onAdd}
+                            onClick={() => {
+                                props.isSelected ? props.onRemove() : props.onAdd();
+                                props.onRemovePreview?.();
+                            }}
                             onMouseEnter={() => !props.isSelected && props.onAddPreview?.()}
                             onMouseLeave={props.onRemovePreview}
                         >
