@@ -20,7 +20,7 @@ export default function Schedule() {
     );
     return (
         <div class="p-4 h-full">
-            <CourseScheduler courses={courses() || []} />
+            <CourseScheduler courses={courses() || []} scheduleId={params.scheduleId} />
         </div>
     );
 }

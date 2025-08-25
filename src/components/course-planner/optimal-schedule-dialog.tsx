@@ -35,8 +35,8 @@ export function OptimalScheduleDialog(props: OptimalScheduleDialogProps) {
     const [preferences, setPreferences] = createSignal({
         selectedSubjectCourses: [] as string[],
         selectedSubjects: [] as string[],
-        minCredits: 12,
-        maxCredits: 18,
+        minCredits: 0,
+        maxCredits: 3,
         preferredGapLength: 30,
         avoidEarlyMorning: true,
         avoidLateEvening: true,

@@ -19,9 +19,20 @@ import { cn } from "@/lib/utils";
 import { ICourse, IMeetingTime } from "@/services/course-scraper/types";
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import { Calendar, Clock, Filter, Info, MapPin, Minus, Plus, Search, Users } from "lucide-solid";
-import { ComponentProps, createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
+import {
+    ComponentProps,
+    createEffect,
+    createMemo,
+    createSignal,
+    For,
+    Match,
+    Show,
+    Switch,
+} from "solid-js";
 import { Label } from "../ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { useUVicCourseSchedule } from "@/hooks/course-planner/use-course-schedules";
+import TimeSlider from "../ui/time-slider";
 
 const sortOptions = [
     { name: "Course Title", value: "courseTitle" },
@@ -30,16 +41,24 @@ const sortOptions = [
     { name: "Seats Available", value: "seatsAvailable" },
 ] as const;
 
-export function CourseScheduler(props: { courses: ICourse[] }) {
+export function CourseScheduler(props: { courses: ICourse[]; scheduleId: string }) {
     const [searchTerm, setSearchTerm] = createSignal("");
     const [selectedSubject, setSelectedSubject] = createSignal<string>("all");
     const [selectedScheduleType, setSelectedScheduleType] = createSignal<string>("all");
     const [selectedCreditHours, setSelectedCreditHours] = createSignal<"all" | number>("all");
     const [selectedInstructionMethod, setSelectedInstructionMethod] = createSignal<string>("all");
     const [sortBy, setSortBy] = createSignal<(typeof sortOptions)[number]["value"]>("courseTitle");
-    const [selectedCourses, setSelectedCourses] = createSignal<ICourse[]>([]);
+    const [selectedTimeRange, setSelectedTimeRange] = createSignal<[number, number]>([510, 1080]); // default range: 8:30 - 18:00
+    const { schedule, setSchedule } = useUVicCourseSchedule(props.scheduleId);
     const [previewCourses, setPreviewCourses] = createSignal<ICourse[]>([]);
     const [showOnlyAvailable, setShowOnlyAvailable] = createSignal(false);
+
+    const selectedCourses = createMemo(() => (schedule() ? [...schedule()!.courses] : []));
+    const setSelectedCourses = (courses: ICourse[]) => {
+        const s = schedule();
+        if (!s) return;
+        setSchedule({ ...s, courses });
+    };
 
     // Get unique subjects for filter
     const subjects = createMemo(() => {
@@ -92,13 +111,31 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
                     course.instructionalMethodDescription === selectedInstructionMethod();
                 const matchesAvailability = !showOnlyAvailable() || course.seatsAvailable > 0;
 
+                const matchesTimeRange = course.meetingsFaculty.some((meeting) => {
+                    const startTimeHour = Number.parseInt(
+                        meeting.meetingTime.beginTime?.slice(0, 2)
+                    );
+                    const endTimeHour = Number.parseInt(meeting.meetingTime.endTime?.slice(0, 2));
+                    const startTimeMinutes = Number.parseInt(
+                        meeting.meetingTime.beginTime?.slice(3, 5)
+                    );
+                    const endTimeMinutes = Number.parseInt(
+                        meeting.meetingTime.endTime?.slice(3, 5)
+                    );
+                    return (
+                        startTimeHour * 60 + startTimeMinutes >= selectedTimeRange()[0] &&
+                        endTimeHour * 60 + endTimeMinutes <= selectedTimeRange()[1]
+                    );
+                });
+
                 return (
                     matchesSearch &&
                     matchScheduleType &&
                     matchesSubject &&
                     matchesCreditHours &&
                     matchesInstructionMethod &&
-                    matchesAvailability
+                    matchesAvailability &&
+                    matchesTimeRange
                 );
             })
             .toSorted((a, b) => {
@@ -278,6 +315,11 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
                             />
                             <Label for="available">Available only</Label>
                         </div>
+
+                        <TimeSlider
+                            timeRange={selectedTimeRange()}
+                            onChange={setSelectedTimeRange}
+                        />
                     </div>
                 </CardContent>
             </Card>
@@ -353,7 +395,7 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
                     </CardTitle>
                 </CardHeader>
                 <CardContent class="flex-1 min-h-0">
-                    <Show when={filteredCourses().length > 0} keyed>
+                    <Show when={filteredCourses()} keyed>
                         <CourseScrollArea
                             courses={filteredCourses()}
                             onAdd={addCourse}
@@ -374,7 +416,7 @@ export function CourseScheduler(props: { courses: ICourse[] }) {
                     ...selectedCourses(),
                     ...previewCourses().map((c) => ({ ...c, isPreview: true })),
                 ]}
-                class="row-span-2"
+                class="row-span-2 overflow-auto"
             />
         </div>
     );
@@ -443,8 +485,10 @@ function CourseScrollArea(props: CourseScrollAreaProps) {
                                         {(course) => (
                                             <CourseCard
                                                 course={course()}
-                                                isSelected={props.selectedCourses.includes(
-                                                    course()
+                                                isSelected={props.selectedCourses.some(
+                                                    (c) =>
+                                                        c.courseReferenceNumber ===
+                                                        course().courseReferenceNumber
                                                 )}
                                                 onAdd={() => props.onAdd(course())}
                                                 onRemove={() => props.onRemove(course())}
@@ -662,9 +706,6 @@ function CourseCard(props: CourseCardProps) {
                                 children: <Info class="h-4 w-4" />,
                             }}
                         />
-                        {/* <Button size="sm" variant="ghost">
-                            <Info class="h-4 w-4" />
-                        </Button> */}
                         <Button
                             size="sm"
                             variant={props.isSelected ? "destructive" : "default"}

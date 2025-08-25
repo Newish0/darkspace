@@ -1,7 +1,8 @@
 import { ICourse } from "@/services/course-scraper/types";
 import { AsyncCache } from "@/services/storage/async-cache";
 import { makePersisted } from "@solid-primitives/storage";
-import { createSignal } from "solid-js";
+import { set } from "date-fns";
+import { createMemo, createSignal } from "solid-js";
 
 type CourseSchedule = {
     name: string;
@@ -26,4 +27,16 @@ export const useUVicCourseSchedules = () => {
     );
 
     return { courseSchedules, setCourseSchedules, activeSchedule, setActiveSchedule } as const;
+};
+
+export const useUVicCourseSchedule = (scheduleId: string) => {
+    const { courseSchedules, setCourseSchedules } = useUVicCourseSchedules();
+
+    const setSchedule = (schedule: CourseSchedule) => {
+        setCourseSchedules((prev) => [...prev.filter((s) => s.id !== schedule.id), schedule]);
+    };
+
+    const schedule = createMemo(() => courseSchedules().find((s) => s.id === scheduleId));
+
+    return { schedule, setSchedule } as const;
 };
