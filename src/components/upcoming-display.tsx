@@ -2,10 +2,24 @@ import { createAsyncCached } from "@/hooks/async-cached";
 import { getAssignments, IAssignment } from "@/services/BS/scraper/assignment";
 import { getQuizzes, IQuizInfo } from "@/services/BS/scraper/quizzes";
 import { format as formatDate, isPast } from "date-fns";
-import { Component, createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
+import {
+    Component,
+    createEffect,
+    createSignal,
+    For,
+    Match,
+    Show,
+    Switch,
+} from "solid-js";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { CalendarEvent } from "@/services/BS/calendar/calendar-transformer";
 import { getCourseCalendarEvents } from "@/services/BS/calendar/course-calendar";
 import { A } from "@solidjs/router";
@@ -54,7 +68,8 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
             return item.dueDate ? formatDate(item.dueDate, "PPp") : "Unknown";
         } else if (props.type === "calendar") {
             const event = props.item as CalendarEvent;
-            if (event.eventType === "due") return event.dueDate && formatDate(event.dueDate, "PPp");
+            if (event.eventType === "due")
+                return event.dueDate && formatDate(event.dueDate, "PPp");
         }
     };
 
@@ -131,7 +146,10 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
                 <div class="space-y-2">
                     <Show when={dueDate()}>
                         <div class="flex items-center gap-2">
-                            <CalendarIcon class="text-muted-foreground flex-shrink-0" size={14} />
+                            <CalendarIcon
+                                class="text-muted-foreground flex-shrink-0"
+                                size={14}
+                            />
                             <span class="text-xs">Due: {dueDate()}</span>
                         </div>
                     </Show>
@@ -161,7 +179,10 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
 
                                     <span class="text-xs">
                                         Status:{" "}
-                                        {assignment.status?.replaceAll("-", " ") || "Unknown"}
+                                        {assignment.status?.replaceAll(
+                                            "-",
+                                            " ",
+                                        ) || "Unknown"}
                                     </span>
                                 </div>
                             );
@@ -177,7 +198,8 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
                                     <Switch>
                                         <Match
                                             when={
-                                                status === "not-started" || status === "in-progress"
+                                                status === "not-started" ||
+                                                status === "in-progress"
                                             }
                                         >
                                             <XCircleIcon
@@ -191,7 +213,11 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
                                                 size={14}
                                             />
                                         </Match>
-                                        <Match when={status === "retry-in-progress"}>
+                                        <Match
+                                            when={
+                                                status === "retry-in-progress"
+                                            }
+                                        >
                                             <ClockIcon
                                                 class="text-warning-foreground flex-shrink-0"
                                                 size={14}
@@ -200,7 +226,9 @@ const UpcomingItem: Component<UpcomingItemProps> = (props) => {
                                     </Switch>
 
                                     <span class="text-xs">
-                                        Status: {status?.replaceAll("-", " ") || "Unknown"}
+                                        Status:{" "}
+                                        {status?.replaceAll("-", " ") ||
+                                            "Unknown"}
                                     </span>
                                 </div>
                             );
@@ -220,22 +248,28 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
     const [showPast, setShowPast] = makePersisted(createSignal(false), {
         name: `course-${props.courseId}-show-past`,
     });
-    const [hideMatchedCalenderEvents, setHideMatchedCalenderEvents] = makePersisted(
-        createSignal(true),
-        { name: `course-${props.courseId}-hide-matched-calendar-events` }
-    );
+    const [hideMatchedCalenderEvents, setHideMatchedCalenderEvents] =
+        makePersisted(createSignal(true), {
+            name: `course-${props.courseId}-hide-matched-calendar-events`,
+        });
 
     const quizzes = createAsyncCached(() => getQuizzes(props.courseId), {
         keys: () => ["quizzes", props.courseId],
     });
 
-    const assignments = createAsyncCached(() => getAssignments(props.courseId), {
-        keys: () => ["assignments", props.courseId],
-    });
+    const assignments = createAsyncCached(
+        () => getAssignments(props.courseId),
+        {
+            keys: () => ["assignments", props.courseId],
+        },
+    );
 
-    const calendarEvents = createAsyncCached(() => getCourseCalendarEvents(props.courseId), {
-        keys: () => ["calendar-events", props.courseId],
-    });
+    const calendarEvents = createAsyncCached(
+        () => getCourseCalendarEvents(props.courseId),
+        {
+            keys: () => ["calendar-events", props.courseId],
+        },
+    );
 
     const allItems = () => {
         const assignmentItems =
@@ -244,7 +278,8 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
                 type: "assignment",
             })) ?? [];
 
-        const quizItems = quizzes()?.map((quiz) => ({ item: quiz, type: "quiz" })) ?? [];
+        const quizItems =
+            quizzes()?.map((quiz) => ({ item: quiz, type: "quiz" })) ?? [];
 
         const dueCalendarEventItems =
             calendarEvents()
@@ -252,14 +287,22 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
                 ?.filter((event) => event.eventType === "due")
 
                 // Only topics and unknown because assignments and quizzes are handled above
-                ?.filter((event) => event.itemType === "topic" || event.itemType === "unknown")
+                ?.filter(
+                    (event) =>
+                        event.itemType === "topic" ||
+                        event.itemType === "unknown",
+                )
 
                 // Ignore events that have the same name as some assignment or quiz if hideMatchedCalenderEvents is true
                 ?.filter((event) => {
                     if (!hideMatchedCalenderEvents()) return true;
 
-                    const hasAssignment = assignmentItems.some((a) => a.item.name === event.name);
-                    const hasQuiz = quizItems.some((q) => q.item.name === event.name);
+                    const hasAssignment = assignmentItems.some(
+                        (a) => a.item.name === event.name,
+                    );
+                    const hasQuiz = quizItems.some(
+                        (q) => q.item.name === event.name,
+                    );
                     return !(hasAssignment || hasQuiz);
                 })
 
@@ -272,7 +315,10 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
             .toSorted((a, b) => {
                 const aDate = a?.item?.dueDate;
                 const bDate = b?.item?.dueDate;
-                return new Date(aDate || "").getTime() - new Date(bDate || "").getTime();
+                return (
+                    new Date(aDate || "").getTime() -
+                    new Date(bDate || "").getTime()
+                );
             });
 
         return items as Omit<UpcomingItemProps, "courseId">[];
@@ -284,7 +330,8 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
             // Only show calendar events that are due in the future
             if (item.type === "calendar") {
                 const event = item.item as CalendarEvent;
-                if (event.eventType === "due" && event.dueDate) return !isPast(event.dueDate);
+                if (event.eventType === "due" && event.dueDate)
+                    return !isPast(event.dueDate);
                 else return false;
             }
 
@@ -304,22 +351,30 @@ export default function UpcomingDisplay(props: UpcomingDisplayProps) {
         <ContextMenu>
             <ContextMenuTrigger class="h-full">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center text-base border-b">
+                    <div class="flex items-center text-base border-b w-full">
                         <h2 class="text-xl font-bold px-4 py-2">Upcoming</h2>
-                        <Badge variant={"secondary"}>{upcomingItems().length}</Badge>
+                        <Badge variant={"secondary"}>
+                            {upcomingItems().length}
+                        </Badge>
                     </div>
                 </div>
 
                 <div class="p-4 space-y-2 overflow-auto h-full">
                     <For each={showPast() ? allItems() : upcomingItems()}>
                         {(upcoming, index) => (
-                            <UpcomingItem {...upcoming} courseId={props.courseId} />
+                            <UpcomingItem
+                                {...upcoming}
+                                courseId={props.courseId}
+                            />
                         )}
                     </For>
                 </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
-                <ContextMenuCheckboxItem checked={showPast()} onChange={setShowPast}>
+                <ContextMenuCheckboxItem
+                    checked={showPast()}
+                    onChange={setShowPast}
+                >
                     Show Past
                 </ContextMenuCheckboxItem>
                 <ContextMenuCheckboxItem
